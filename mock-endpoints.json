@@ -1,0 +1,158 @@
+{
+  "items" : [ {
+    "id" : "d407b8b75388414b981f9fac8c2fb691",
+    "title" : "GetCR2Esim",
+    "mockUrl" : "/parse/mock/d407b8b75388414b981f9fac8c2fb691",
+    "requestExample" : {
+      "METHOD" : "GETCR2ESIM",
+      "MSISDN" : "081210001000",
+      "CHANNEL_CODE" : "88"
+    },
+    "responseExample" : {
+      "REPLY" : {
+        "METHOD" : "GETCR2ESIM",
+        "MESSAGE" : "SUCCESSFULLY",
+        "ERROR_CODE" : "000"
+      },
+      "DATA" : {
+        "MSISDN" : "081109100047",
+        "ICCID" : "896210000915100047",
+        "IMSI" : "BBACC467355D95012A",
+        "PIN1" : "1234",
+        "PIN2" : "4212",
+        "PUK1" : "76152381",
+        "PUK2" : "69045013",
+        "KI" : "BBACC467355D95012AC2C18F7E0B52E9",
+        "OPC" : "12AC2C18F7E0B52E9BBACC467355D950",
+        "ENCAESKEY" : "55D95012AC2CBBACC467318F7E0B52E9",
+        "SERIAL_NO" : "0",
+        "SUBSCRIBER_TYPE" : "POSTPAID",
+        "SUBSCRIBER_CLASS" : "REGULER",
+        "ESIM_LOCATION" : "WEST"
+      }
+    },
+    "requiredFields" : [ "METHOD", "MSISDN" ],
+    "raw" : "```json\n{\n  \"title\": \"GetCR2Esim\",\n  \"requestExample\": {\n    \"METHOD\": \"GETCR2ESIM\",\n    \"MSISDN\": \"081210001000\",\n    \"CHANNEL_CODE\": \"88\"\n  },\n  \"responseExample\": {\n    \"REPLY\": {\n      \"METHOD\": \"GETCR2ESIM\",\n      \"MESSAGE\": \"SUCCESSFULLY\",\n      \"ERROR_CODE\": \"000\"\n    },\n    \"DATA\": {\n      \"MSISDN\": \"081109100047\",\n      \"ICCID\": \"896210000915100047\",\n      \"IMSI\": \"BBACC467355D95012A\",\n      \"PIN1\": \"1234\",\n      \"PIN2\": \"4212\",\n      \"PUK1\": \"76152381\",\n      \"PUK2\": \"69045013\",\n      \"KI\": \"BBACC467355D95012AC2C18F7E0B52E9\",\n      \"OPC\": \"12AC2C18F7E0B52E9BBACC467355D950\",\n      \"ENCAESKEY\": \"55D95012AC2CBBACC467318F7E0B52E9\",\n      \"SERIAL_NO\": \"0\",\n      \"SUBSCRIBER_TYPE\": \"POSTPAID\",\n      \"SUBSCRIBER_CLASS\": \"REGULER\",\n      \"ESIM_LOCATION\": \"WEST\"\n    }\n  },\n  \"requiredFields\": [\n    \"METHOD\",\n    \"MSISDN\"\n  ]\n}\n```"
+  }, {
+    "id" : "9012c878e33946db9ba93389dc0e5951",
+    "title" : "CustomerEligibility",
+    "mockUrl" : "/parse/mock/9012c878e33946db9ba93389dc0e5951",
+    "requestExample" : {
+      "CSGHeader" : {
+        "ReferenceID" : "KSK20120530221525000839",
+        "SourceSystemID" : "PPA",
+        "ChannelMedia" : "WEB",
+        "GUID" : "d3979e33-2252-465a-924c-ef175429637e",
+        "BusinessUnit" : "Digi"
+      },
+      "CheckCustomerEligibilityRequest" : {
+        "OrderType" : "0001",
+        "CustomerId" : "123456789012345678901234",
+        "AccountId" : "123456789012345678901234",
+        "MSISDN" : "60165935029",
+        "CorporateGroupId" : "123456789012345678901234",
+        "IdType" : "NRIC",
+        "IdNumber" : "780913102854",
+        "Nationality" : "MYS",
+        "DateOfBirth" : "1990-01-01",
+        "PayType" : "PREPAID",
+        "TelecomType" : "MOBL",
+        "SubscriberType" : "RES",
+        "BusinessRegistrationNumber" : "123456789012345",
+        "FamilyGroupLevel" : "PRINCIPAL"
+      }
+    },
+    "responseExample" : {
+      "CSGHeader" : {
+        "GUID" : "d3979e33-2252-465a-924c-ef175429637e",
+        "ReferenceID" : "KSK20120530221525000839",
+        "SourceSystemId" : "PPA",
+        "ChannelMedia" : "WEB",
+        "UserMessage" : "Success",
+        "BusinessUnit" : "Digi",
+        "Status" : "Successful"
+      },
+      "ValidationResultList" : [ {
+        "RuleChecked" : "01",
+        "RuleType" : "1",
+        "MessageCode" : "0",
+        "MessageDescription" : "Pass"
+      } ]
+    },
+    "requiredFields" : [ "CSGHeader.ReferenceID", "CSGHeader.SourceSystemID", "CSGHeader.ChannelMedia", "CheckCustomerEligibilityRequest.OrderType", "ValidationResultList.MessageCode" ],
+    "raw" : "```json\n{\n  \"title\": \"CustomerEligibility\",\n  \"requestExample\": {\n    \"CSGHeader\": {\n      \"ReferenceID\": \"KSK20120530221525000839\",\n      \"SourceSystemID\": \"PPA\",\n      \"ChannelMedia\": \"WEB\",\n      \"GUID\": \"d3979e33-2252-465a-924c-ef175429637e\",\n      \"BusinessUnit\": \"Digi\"\n    },\n    \"CheckCustomerEligibilityRequest\": {\n      \"OrderType\": \"0001\",\n      \"CustomerId\": \"123456789012345678901234\",\n      \"AccountId\": \"123456789012345678901234\",\n      \"MSISDN\": \"60165935029\",\n      \"CorporateGroupId\": \"123456789012345678901234\",\n      \"IdType\": \"NRIC\",\n      \"IdNumber\": \"780913102854\",\n      \"Nationality\": \"MYS\",\n      \"DateOfBirth\": \"1990-01-01\",\n      \"PayType\": \"PREPAID\",\n      \"TelecomType\": \"MOBL\",\n      \"SubscriberType\": \"RES\",\n      \"BusinessRegistrationNumber\": \"123456789012345\",\n      \"FamilyGroupLevel\": \"PRINCIPAL\"\n    }\n  },\n  \"responseExample\": {\n    \"CSGHeader\": {\n      \"GUID\": \"d3979e33-2252-465a-924c-ef175429637e\",\n      \"ReferenceID\": \"KSK20120530221525000839\",\n      \"SourceSystemId\": \"PPA\",\n      \"ChannelMedia\": \"WEB\",\n      \"UserMessage\": \"Success\",\n      \"BusinessUnit\": \"Digi\",\n      \"Status\": \"Successful\"\n    },\n    \"ValidationResultList\": [\n      {\n        \"RuleChecked\": \"01\",\n        \"RuleType\": \"1\",\n        \"MessageCode\": \"0\",\n        \"MessageDescription\": \"Pass\"\n      }\n    ]\n  },\n  \"requiredFields\": [\n    \"CSGHeader.ReferenceID\",\n    \"CSGHeader.SourceSystemID\",\n    \"CSGHeader.ChannelMedia\",\n    \"CheckCustomerEligibilityRequest.OrderType\",\n    \"ValidationResultList.MessageCode\"\n  ]\n}\n```"
+  }, {
+    "id" : "51d90b334b4140eca04ac841b99924d5",
+    "title" : "PARADISE APPLICATION",
+    "mockUrl" : "/parse/mock/51d90b334b4140eca04ac841b99924d5",
+    "requestExample" : { },
+    "responseExample" : { },
+    "requiredFields" : [ ],
+    "raw" : "```json\n{\n  \"title\": \"PARADISE APPLICATION\",\n  \"requestExample\": {},\n  \"responseExample\": {},\n  \"requiredFields\": []\n}\n```"
+  }, {
+    "id" : "daa117c4f70d44f598748cc5b62b9d0b",
+    "title" : "Customer Eligibility CheckCustomerEligibility",
+    "mockUrl" : "/parse/mock/daa117c4f70d44f598748cc5b62b9d0b",
+    "requestExample" : {
+      "CSGHeader" : {
+        "ReferenceID" : "KSK20120530221525000839",
+        "SourceSystemID" : "PPA",
+        "ChannelMedia" : "WEB",
+        "GUID" : "d3979e33-2252-465a-924c-ef175429637e",
+        "BusinessUnit" : "Digi"
+      },
+      "CheckCustomerEligibilityRequest" : {
+        "OrderType" : "NEW",
+        "CustomerId" : "123456789012345678901234",
+        "AccountId" : "123456789012345678901234",
+        "MSISDN" : "60165935029",
+        "CorporateGroupId" : "CORP123456789012345678",
+        "IdType" : "NRIC",
+        "IdNumber" : "780913102854",
+        "Nationality" : "MYS",
+        "DateOfBirth" : "1990-01-01",
+        "PayType" : "PREPAID",
+        "TelecomType" : "MOB",
+        "SubscriberType" : "RES",
+        "BusinessRegistrationNumber" : "123456789012",
+        "FamilyGroupLevel" : "STANDALONE"
+      }
+    },
+    "responseExample" : {
+      "CSGHeader" : {
+        "ReferenceID" : "KSK20120530221525000839",
+        "SourceSystemId" : "PPA",
+        "ChannelMedia" : "WEB",
+        "Status" : "Successful",
+        "BusinessUnit" : "Digi"
+      },
+      "ValidationResultList" : {
+        "ValidationResultRecord" : [ {
+          "RuleChecked" : "01",
+          "RuleType" : "1",
+          "MessageCode" : "0",
+          "MessageDescription" : "Pass"
+        } ]
+      }
+    },
+    "requiredFields" : [ "CSGHeader.ReferenceID", "CSGHeader.SourceSystemID", "CSGHeader.ChannelMedia", "CheckCustomerEligibilityRequest.OrderType", "response.CSGHeader.ReferenceID", "response.CSGHeader.SourceSystemId", "response.CSGHeader.ChannelMedia", "response.ValidationResultList.ValidationResultRecord.MessageCode" ],
+    "raw" : "{\n  \"title\": \"Customer Eligibility CheckCustomerEligibility\",\n  \"requestExample\": {\n    \"CSGHeader\": {\n      \"ReferenceID\": \"KSK20120530221525000839\",\n      \"SourceSystemID\": \"PPA\",\n      \"ChannelMedia\": \"WEB\",\n      \"GUID\": \"d3979e33-2252-465a-924c-ef175429637e\",\n      \"BusinessUnit\": \"Digi\"\n    },\n    \"CheckCustomerEligibilityRequest\": {\n      \"OrderType\": \"NEW\",\n      \"CustomerId\": \"123456789012345678901234\",\n      \"AccountId\": \"123456789012345678901234\",\n      \"MSISDN\": \"60165935029\",\n      \"CorporateGroupId\": \"CORP123456789012345678\",\n      \"IdType\": \"NRIC\",\n      \"IdNumber\": \"780913102854\",\n      \"Nationality\": \"MYS\",\n      \"DateOfBirth\": \"1990-01-01\",\n      \"PayType\": \"PREPAID\",\n      \"TelecomType\": \"MOB\",\n      \"SubscriberType\": \"RES\",\n      \"BusinessRegistrationNumber\": \"123456789012\",\n      \"FamilyGroupLevel\": \"STANDALONE\"\n    }\n  },\n  \"responseExample\": {\n    \"CSGHeader\": {\n      \"ReferenceID\": \"KSK20120530221525000839\",\n      \"SourceSystemId\": \"PPA\",\n      \"ChannelMedia\": \"WEB\",\n      \"Status\": \"Successful\",\n      \"BusinessUnit\": \"Digi\"\n    },\n    \"ValidationResultList\": {\n      \"ValidationResultRecord\": [\n        {\n          \"RuleChecked\": \"01\",\n          \"RuleType\": \"1\",\n          \"MessageCode\": \"0\",\n          \"MessageDescription\": \"Pass\"\n        }\n      ]\n    }\n  },\n  \"requiredFields\": [\n    \"CSGHeader.ReferenceID\",\n    \"CSGHeader.SourceSystemID\",\n    \"CSGHeader.ChannelMedia\",\n    \"CheckCustomerEligibilityRequest.OrderType\",\n    \"response.CSGHeader.ReferenceID\",\n    \"response.CSGHeader.SourceSystemId\",\n    \"response.CSGHeader.ChannelMedia\",\n    \"response.ValidationResultList.ValidationResultRecord.MessageCode\"\n  ]\n}"
+  }, {
+    "id" : "b0321d326be34e64b8e776f0cc96de98",
+    "title" : "GET CR2 ESIM",
+    "mockUrl" : "/parse/mock/b0321d326be34e64b8e776f0cc96de98",
+    "requestExample" : {
+      "msisdn" : "6281234567890"
+    },
+    "responseExample" : {
+      "status" : "success",
+      "data" : {
+        "msisdn" : "6281234567890",
+        "cr2Data" : "sample_cr2_data_value",
+        "esimLocation" : "sample_esim_location"
+      }
+    },
+    "requiredFields" : [ "request.msisdn", "response.data.msisdn", "response.data.cr2Data", "response.data.esimLocation" ],
+    "raw" : "```json\n{\n  \"title\": \"GET CR2 ESIM\",\n  \"requestExample\": {\n    \"msisdn\": \"6281234567890\"\n  },\n  \"responseExample\": {\n    \"status\": \"success\",\n    \"data\": {\n      \"msisdn\": \"6281234567890\",\n      \"cr2Data\": \"sample_cr2_data_value\",\n      \"esimLocation\": \"sample_esim_location\"\n    }\n  },\n  \"requiredFields\": [\n    \"request.msisdn\",\n    \"response.data.msisdn\",\n    \"response.data.cr2Data\",\n    \"response.data.esimLocation\"\n  ]\n}\n```"
+  } ]
+}

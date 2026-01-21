@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>API 在线调试 - 最终版</title>
+<style>
+    /* --- 基础变量 --- */
+    :root {
+        --primary: #2563EB;
+        --bg-body: #F3F4F6;
+        --bg-card: #FFFFFF;
+        --border: #E5E7EB;
+        --text-main: #1F2937;
+        --text-sub: #6B7280;
+        --code-bg: #111827;
+        --terminal-bg: #1E1E1E;
+        --header-height: 60px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
+        padding: 20px;
+        overflow: hidden;
+    }
+
+    /* --- 1. 顶部 URL 操作栏 --- */
+    .top-bar {
+        display: flex;
+        gap: 16px;
+        margin-bottom: 20px;
+        flex-shrink: 0;
+    }
+    .url-wrapper {
+        flex: 1;
+        display: flex;
+        background: var(--bg-card);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        overflow: hidden;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+        align-items: center;
+    }
+    .method-select {
+        background: #F3F4F6;
+        border: none;
+        border-right: 1px solid var(--border);
+        padding: 0 16px;
+        height: 100%;
+        font-weight: 700;
+        color: #059669;
+        font-size: 14px;
+        cursor: pointer;
+        outline: none;
+    }
+    .url-input {
+        flex: 1;
+        border: none;
+        padding: 12px 16px;
+        font-family: Consolas, monospace;
+        font-size: 14px;
+        color: #374151;
+        outline: none;
+    }
+    .btn-send {
+        background-color: var(--primary);
+        color: white;
+        border: none;
+        padding: 0 30px;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
+        transition: all 0.2s;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+    .btn-send:hover { background-color: #1D4ED8; transform: translateY(-1px); }
+
+    /* --- 2. 中间：左右分栏区域 --- */
+    .workspace {
+        display: flex;
+        gap: 20px;
+        flex: 1;
+        min-height: 0; /* 允许滚动 */
+        margin-bottom: 20px;
+    }
+
+    /* 通用列容器 */
+    .column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        background: var(--bg-card);
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    }
+
+    /* 区域标题栏 (标识 Request/Response) */
+    .section-header {
+        padding: 12px 16px;
+        background: #F9FAFB;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+    .section-title {
+        font-size: 14px;
+        font-weight: 700;
+        color: #374151;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+    .icon-box {
+        width: 24px; height: 24px;
+        border-radius: 4px;
+        display: flex; align-items: center; justify-content: center;
+        font-size: 12px;
+    }
+    /* 请求图标蓝底，响应图标绿底 */
+    .icon-req { background: #DBEAFE; color: #1E40AF; }
+    .icon-res { background: #DCFCE7; color: #166534; }
+
+    /* Tabs 导航 */
+    .tabs-bar {
+        display: flex;
+        padding: 0 8px;
+        border-bottom: 1px solid var(--border);
+        background: white;
+    }
+    .tab {
+        padding: 10px 16px;
+        font-size: 13px;
+        color: var(--text-sub);
+        cursor: pointer;
+        border-bottom: 2px solid transparent;
+        font-weight: 500;
+    }
+    .tab.active { color: var(--primary); border-bottom-color: var(--primary); }
+
+    /* 内容区域 */
+    .col-content {
+        flex: 1;
+        padding: 16px;
+        overflow-y: auto;
+        display: flex;
+        flex-direction: column;
+    }
+
+    /* 必填字段 */
+    .required-box {
+        margin-bottom: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px dashed var(--border);
+    }
+    .req-label { font-size: 11px; color: #9CA3AF; margin-bottom: 6px; font-weight: 700; }
+    .tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .tag { font-size: 12px; background: #F3F4F6; color: #4B5563; padding: 2px 8px; border-radius: 4px; font-family: monospace; border: 1px solid #E5E7EB;}
+    
+    /* 编辑器 */
+    .editor {
+        flex: 1;
+        width: 100%;
+        font-family: Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.6;
+        border: 1px solid var(--border);
+        border-radius: 6px;
+        padding: 12px;
+        resize: none;
+        outline: none;
+        color: #333;
+    }
+    /* 响应结果编辑器 (深色模式) */
+    .editor-dark {
+        background-color: var(--code-bg);
+        color: #E2E8F0;
+        border: none;
+    }
+
+    /* 状态栏 */
+    .status-items { display: flex; gap: 12px; font-size: 12px; font-family: monospace; }
+    .status-badge { background: #D1FAE5; color: #047857; padding: 2px 6px; border-radius: 4px; font-weight: 700; }
+
+    /* --- 3. 底部：cURL 面板 --- */
+    .curl-panel {
+        height: 140px; /* 固定高度 */
+        background: var(--terminal-bg);
+        border-radius: 12px;
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+        box-shadow: 0 -4px 10px rgba(0,0,0,0.1);
+        border: 1px solid #374151;
+        flex-shrink: 0;
+    }
+    .curl-header {
+        padding: 8px 16px;
+        background: #2D2D2D;
+        color: #9CA3AF;
+        font-size: 12px;
+        font-weight: 600;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #374151;
+    }
+    .curl-content {
+        flex: 1;
+        padding: 12px 16px;
+        overflow: auto;
+        color: #A7F3D0; /* 终端绿 */
+        font-family: Consolas, monospace;
+        font-size: 13px;
+        line-height: 1.5;
+        white-space: pre-wrap;
+    }
+    .btn-copy {
+        background: transparent;
+        border: 1px solid #4B5563;
+        color: #D1D5DB;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 11px;
+        cursor: pointer;
+    }
+    .btn-copy:hover { background: #4B5563; color: white; }
+
+</style>
+</head>
+<body>
+
+    <div class="top-bar">
+        <div class="url-wrapper">
+            <select class="method-select">
+                <option>GET</option>
+                <option>POST</option>
+            </select>
+            <input type="text" class="url-input" value="http://localhost:8080/parse/mock/c34a543b805845beb1513bfeaaefb943">
+        </div>
+        <button class="btn-send">
+            <span>▶</span> 发送请求
+        </button>
+    </div>
+
+    <div class="workspace">
+        
+        <div class="column">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="icon-box icon-req">⬇</span>
+                    Request / 请求区
+                </div>
+            </div>
+            
+            <div class="tabs-bar">
+                <div class="tab active">Body (JSON)</div>
+                <div class="tab">Headers</div>
+                <div class="tab">Query Params</div>
+            </div>
+
+            <div class="col-content">
+                <div class="required-box">
+                    <div class="req-label">REQUIRED FIELDS</div>
+                    <div class="tags">
+                        <span class="tag">imei</span>
+                        <span class="tag">imsi</span>
+                        <span class="tag">serviceName</span>
+                    </div>
+                </div>
+                <textarea class="editor" spellcheck="false">{
+  "imei": "89602242243423",
+  "imsi": "123456789012345",
+  "serviceName": "Multi-SIM",
+  "operation": "ACTIVATE"
+}</textarea>
+            </div>
+        </div>
+
+        <div class="column">
+            <div class="section-header">
+                <div class="section-title">
+                    <span class="icon-box icon-res">⬆</span>
+                    Response / 响应结果
+                </div>
+                <div class="status-items">
+                    <span>Status: <span class="status-badge">200 OK</span></span>
+                    <span style="color:#6B7280">Time: 85ms</span>
+                </div>
+            </div>
+
+            <div class="tabs-bar">
+                <div class="tab active">Response Body</div>
+                <div class="tab">Response Headers</div>
+            </div>
+
+            <div class="col-content" style="padding: 0;">
+                <textarea class="editor editor-dark" readonly>{
+  "SourceSystemID": "PCBS",
+  "ReferenceID": "KSK20120530221525000839",
+  "Status": "Successful",
+  "OperationResult": "SUCCESS",
+  "data": {
+     "message": "Entitlement checked successfully",
+     "valid": true
+  }
+}</textarea>
+            </div>
+        </div>
+    </div>
+
+    <div class="curl-panel">
+        <div class="curl-header">
+            <span>💻 Generated cURL</span>
+            <button class="btn-copy">复制命令</button>
+        </div>
+        <div class="curl-content">curl -X POST "http://localhost:8080/parse/mock/c34a..." \ 
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer token123" \
+  -d '{
+    "imei": "89602242243423",
+    "imsi": "123456789012345"
+  }'</div>
+    </div>
+
+</body>
+</html>

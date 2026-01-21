@@ -1,0 +1,8 @@
+{
+  "outputFile" : "E:\\资料\\AI\\mock\\mock.json",
+  "items" : [ {
+    "title" : "Document",
+    "mock" : null,
+    "raw" : "```json\n{\n  \"CSGHeader\": {\n    \"ReferenceID\": \"KSK20120530221525000839\",\n    \"SourceSystemID\": \"PPA\",\n    \"ChannelMedia\": \"WEB\",\n    \"GUID\": \"d3979e33-2252-465a-924c-ef175429637e\",\n    \"Status\": \"Successful\",\n    \"ErrorCode\": \"\",\n    \"ErrorDescription\": \"\",\n    \"UserMessage\": \"\",\n    \"MoreInfo\": \"\",\n    \"BusinessUnit\": \"Digi\"\n  },\n  \"ValidationResultList\": {\n    \"ValidationResultRecord\": [\n      {\n        \"RuleChecked\": \"01\",\n        \"RuleType\": \"1\",\n        \"MessageCode\": \"0\",\n        \"MessageDescription\": \"Pass\"\n      }\n    ]\n  }\n}\n```"
+  } ]
+}
