@@ -106,6 +106,9 @@ public class MockEndpointService {
                 logger.warn("Skip empty endpoint. title={}, fileId={}", chunk.title, sourceFileId);
                 continue;
             }
+            if (item.getTitle() == null || item.getTitle().trim().isEmpty()) {
+                item.setTitle(chunk.title);
+            }
             if (!hasMeaningfulContent(item)) {
                 logger.warn("Skip endpoint without examples. title={}, fileId={}", item.getTitle(), sourceFileId);
                 continue;
@@ -306,6 +309,13 @@ public class MockEndpointService {
         boolean hasRequest = !isEmptyJson(item.getRequestExample());
         boolean hasResponse = !isEmptyJson(item.getResponseExample());
         boolean hasError = !isEmptyJson(item.getErrorResponseExample());
+        boolean hasData = hasRequest || hasResponse || hasError || hasRequired;
+        boolean isGenericTitle = item.getTitle() == null
+                || item.getTitle().trim().isEmpty()
+                || isGenericTitle(item.getTitle());
+        if (hasMethod && !hasData && isGenericTitle) {
+            return false;
+        }
         return hasMethod || hasRequired || hasRequest || hasResponse || hasError;
     }
 
@@ -317,6 +327,23 @@ public class MockEndpointService {
             return node.size() == 0;
         }
         return false;
+    }
+
+    private boolean isGenericTitle(String title) {
+        if (title == null) {
+            return true;
+        }
+        String t = title.trim().toLowerCase(Locale.ROOT);
+        return t.isEmpty()
+                || t.equals("document")
+                || t.equals("api")
+                || t.equals("interface")
+                || t.contains("product introduction")
+                || t.contains("terminologies")
+                || t.contains("abbreviations")
+                || t.contains("overview")
+                || t.contains("note")
+                || t.contains("introduction");
     }
 
     private MockEndpointEntity toEntity(MockEndpointItem item) {
@@ -702,8 +729,9 @@ public class MockEndpointService {
                 + "   - 文档中出现 HTTP Header / Response Header / Header 的字段放入 responseExample.headers。\n"
                 + "   - 其他响应字段放入 responseExample.body。\n"
                 + "6. method 必须是 GET 或 POST，来自文档里的 Request Verb / Method / 请求方式。\n"
-                + "7. requiredFields 使用点号路径，并带上前缀，例如 headers.SourceSystemID, query.msisdn, body.orderId。\n"
-                + "8. 只输出下面固定结构，不要增加字段。\n\n"
+                + "7. 如果片段内存在多个接口，只输出当前标题对应的一个接口。\n"
+                + "8. requiredFields 使用点号路径，并带上前缀，例如 headers.SourceSystemID, query.msisdn, body.orderId。\n"
+                + "9. 只输出下面固定结构，不要增加字段。\n\n"
                 + "输出JSON结构：\n"
                 + "{\n"
                 + "  \"title\": \"\",\n"
@@ -733,16 +761,16 @@ public class MockEndpointService {
         Chunk current = null;
         for (Section section : parsedDocument.getSections()) {
             String title = safe(section.getTitle());
-            boolean isNewApi = isApiSection(section);
+            boolean isNewApi = isEndpointSection(section);
+            String formatted = formatSectionIfRelevant(section);
+            if (formatted.isEmpty()) {
+                continue;
+            }
             if (isNewApi) {
                 if (current != null) {
                     chunks.add(current);
                 }
                 current = new Chunk(title);
-            }
-            String formatted = formatSectionIfRelevant(section);
-            if (formatted.isEmpty()) {
-                continue;
             }
             if (current == null) {
                 current = new Chunk(title.isEmpty() ? "Document" : title);
@@ -755,22 +783,40 @@ public class MockEndpointService {
         return chunks;
     }
 
-    private boolean isApiSection(Section section) {
+    private boolean isEndpointSection(Section section) {
         String title = safe(section.getTitle()).toLowerCase(Locale.ROOT);
         String content = safe(section.getContent()).toLowerCase(Locale.ROOT);
-        if (section.getLevel() > 1) {
+        if (title.isEmpty()) {
             return false;
         }
-        if (!(title.contains("api") || title.contains("接口"))) {
+        if (title.contains("annex") || title.contains("appendix")) {
             return false;
         }
-        if (title.contains("all api") || title.contains("api call") || title.contains("api calls") || title.contains("https")) {
+        if (title.contains("request headers")
+                || title.contains("response headers")
+                || title.contains("request body")
+                || title.contains("response body")
+                || title.contains("request parameters")
+                || title.contains("response parameters")
+                || title.contains("request & response")
+                || title.contains("resource specification")
+                || title.contains("interface message specification")) {
             return false;
         }
-        if (title.contains("spec") || title.contains("request") || title.contains("response") || title.contains("resource")) {
+        if (title.matches("^\\d+(\\.\\d+){1,3}\\s+.+")) {
+            if (title.contains("api") || title.contains("接口")) {
+                return true;
+            }
+            return title.contains("download") || title.contains("order") || title.contains("profile")
+                    || title.contains("get") || title.contains("create") || title.contains("update");
+        }
+        if (title.contains("api") || title.contains("接口")) {
+            if (title.contains("all api") || title.contains("api call") || title.contains("api calls") || title.contains("https")) {
+                return false;
+            }
             return true;
         }
-        return containsUrl(content) || containsRequestResponseExample(content);
+        return false;
     }
 
     private String formatSectionIfRelevant(Section section) {
@@ -809,7 +855,7 @@ public class MockEndpointService {
         }
         if (section.getTables() != null) {
             for (TableData table : section.getTables()) {
-                if (containsKeywordsFromTable(table) || containsRequestResponseExampleFromTable(table)) {
+                if (containsKeywordsFromTable(table) || containsRequestResponseExampleFromTable(table) || looksLikeApiTable(table)) {
                     return true;
                 }
             }
@@ -878,6 +924,39 @@ public class MockEndpointService {
                 String h = safe(header).toLowerCase(Locale.ROOT);
                 if (containsRequestResponseExample(h)) {
                     return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean looksLikeApiTable(TableData table) {
+        if (table == null) {
+            return false;
+        }
+        if (table.getHeaders() != null) {
+            for (String header : table.getHeaders()) {
+                String h = safe(header).toLowerCase(Locale.ROOT);
+                if (h.contains("element name")
+                        || h.contains("header field")
+                        || h.contains("request parameters")
+                        || h.contains("response parameters")
+                        || h.contains("data type")
+                        || h.contains("parameter")
+                        || h.contains("m/o")
+                        || h.contains("mo")
+                        || h.contains("length")) {
+                    return true;
+                }
+            }
+        }
+        if (table.getRows() != null) {
+            for (List<String> row : table.getRows()) {
+                for (String cell : row) {
+                    String c = safe(cell).toLowerCase(Locale.ROOT);
+                    if (c.contains("header") || c.contains("request") || c.contains("response") || c.contains("parameter")) {
+                        return true;
+                    }
                 }
             }
         }

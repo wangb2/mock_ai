@@ -17,6 +17,12 @@ import org.apache.poi.xwpf.usermodel.XWPFTable;
 import org.apache.poi.xwpf.usermodel.XWPFTableRow;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import technology.tabula.ObjectExtractor;
+import technology.tabula.Page;
+import technology.tabula.Table;
+import technology.tabula.extractors.BasicExtractionAlgorithm;
+import technology.tabula.extractors.SpreadsheetExtractionAlgorithm;
+import technology.tabula.RectangularTextContainer;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -139,6 +145,7 @@ public class DocumentParserService {
         try (PDDocument pdfDocument = PDDocument.load(in)) {
             int totalPages = pdfDocument.getNumberOfPages();
             PDFTextStripper stripper = new PDFTextStripper();
+            ObjectExtractor extractor = new ObjectExtractor(pdfDocument);
 
             for (int page = 1; page <= totalPages; page++) {
                 stripper.setStartPage(page);
@@ -148,6 +155,29 @@ public class DocumentParserService {
                 if (!pageSections.isEmpty()) {
                     sections.addAll(pageSections);
                     current = pageSections.get(pageSections.size() - 1);
+                } else if (current == null) {
+                    current = ensureSection(sections, current, "Page " + page, 0);
+                }
+
+                Page pageObj = extractor.extract(page);
+                List<Table> tables = new SpreadsheetExtractionAlgorithm().extract(pageObj);
+                if (tables == null || tables.isEmpty()) {
+                    tables = new BasicExtractionAlgorithm().extract(pageObj);
+                }
+                if (tables != null && !tables.isEmpty()) {
+                    Section target = ensureSection(sections, current, "Page " + page, 0);
+                    if (target.getTitle() != null && isAuxSectionTitle(target.getTitle())) {
+                        Section fallback = findLastMajorSection(sections);
+                        if (fallback != null) {
+                            target = fallback;
+                        }
+                    }
+                    for (Table table : tables) {
+                        TableData data = convertTable(table);
+                        if (!data.getHeaders().isEmpty() || !data.getRows().isEmpty()) {
+                            target.getTables().add(data);
+                        }
+                    }
                 }
 
             }
@@ -194,6 +224,32 @@ public class DocumentParserService {
             return extra;
         }
         return base + "\n" + extra;
+    }
+
+    private boolean isAuxSectionTitle(String title) {
+        if (title == null) {
+            return false;
+        }
+        String t = title.trim().toLowerCase(Locale.ROOT);
+        return t.contains("request headers")
+                || t.contains("response headers")
+                || t.contains("request body")
+                || t.contains("response body")
+                || t.contains("request parameters")
+                || t.contains("response parameters")
+                || t.contains("request & response")
+                || t.contains("resource specification")
+                || t.contains("interface message specification");
+    }
+
+    private Section findLastMajorSection(List<Section> sections) {
+        for (int i = sections.size() - 1; i >= 0; i--) {
+            Section candidate = sections.get(i);
+            if (candidate != null && candidate.getTitle() != null && !isAuxSectionTitle(candidate.getTitle())) {
+                return candidate;
+            }
+        }
+        return null;
     }
 
     private String safeText(String text) {
@@ -271,6 +327,27 @@ public class DocumentParserService {
             List<String> values = new ArrayList<>();
             for (int c = 0; c < row.numCells(); c++) {
                 values.add(safeText(row.getCell(c).text()));
+            }
+            data.getRows().add(values);
+        }
+        return data;
+    }
+
+    private TableData convertTable(Table table) {
+        TableData data = new TableData();
+        if (table == null || table.getRows() == null || table.getRows().isEmpty()) {
+            return data;
+        }
+        List<List<RectangularTextContainer>> rows = table.getRows();
+        List<String> headers = new ArrayList<>();
+        for (RectangularTextContainer cell : rows.get(0)) {
+            headers.add(safeText(cell.getText()));
+        }
+        data.setHeaders(headers);
+        for (int i = 1; i < rows.size(); i++) {
+            List<String> values = new ArrayList<>();
+            for (RectangularTextContainer cell : rows.get(i)) {
+                values.add(safeText(cell.getText()));
             }
             data.getRows().add(values);
         }
