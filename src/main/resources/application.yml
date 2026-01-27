@@ -1,10 +1,17 @@
 zhipu:
-  api-key: ""
+  api-key: "3ebdcf0f03cc4490a19369209528c90d.7GTUcD90dAnC6mBO"
   model: "glm-4.7"
-  temperature: 0.2
+  file-model: "glm-4.6v-flash"
+  temperature: 0
   max-tokens: 2048
 mock:
   upload-dir: "uploads"
+qiniu:
+  enabled: true
+  access-key: "k9Nj7Yw3ahm5S6zT2sKBatfSaMMElhQys4sEBKdX"
+  secret-key: "dHcdXHg9yzHHGN9N8BbWX_JwGVw2j0i-nrGKbMv6"
+  bucket: "redteamobileaigc"
+  domain: ""
 filter:
   keywords: "api,接口,request,response,header,body,parameter,params,sample,example,url,method,请求,响应,参数,示例,地址,接口地址"
   url-regex: "(https?://|/)[\\w\\-./:?&=%#]+"

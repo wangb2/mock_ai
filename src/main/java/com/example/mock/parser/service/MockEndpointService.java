@@ -38,7 +38,7 @@ import java.time.LocalDateTime;
 
 @Service
 public class MockEndpointService {
-    private static final String API_URL = "https://open.bigmodel.cn/api/coding/paas/v4/chat/completions";
+    private static final String API_URL = "https://open.bigmodel.cn/api/paas/v4/chat/completions";
 
     private final RestTemplate restTemplate;
     private final ObjectMapper objectMapper;
@@ -52,6 +52,9 @@ public class MockEndpointService {
 
     @Value("${zhipu.model:glm-4.7}")
     private String model;
+
+    @Value("${zhipu.file-model:glm-4.6v-flash}")
+    private String fileModel;
 
     @Value("${zhipu.max-tokens:2048}")
     private int maxTokens;
@@ -96,6 +99,18 @@ public class MockEndpointService {
                                                 String sceneKeywords) throws IOException {
         if (apiKey == null || apiKey.trim().isEmpty()) {
             throw new IllegalStateException("Missing zhipu.api-key");
+        }
+
+        // 如果 sourceFileUrl 是七牛云URL（以 http:// 或 https:// 开头），使用新模型直接处理文件
+        boolean isQiniuUrl = sourceFileUrl != null && (sourceFileUrl.startsWith("http://") || sourceFileUrl.startsWith("https://"));
+        logger.info("Checking file URL for model selection. fileUrl={}, isQiniuUrl={}, willUseFileModel={}", 
+                sourceFileUrl, isQiniuUrl, isQiniuUrl);
+        
+        if (isQiniuUrl) {
+            logger.info("File uploaded to Qiniu, using file URL model. fileUrl={}, model={}", sourceFileUrl, fileModel);
+            return generateEndpointsWithFileUrl(sourceFileUrl, sourceFileId, sourceFileName, sceneId, sceneName, sceneKeywords);
+        } else {
+            logger.info("File not uploaded to Qiniu or URL is local, using traditional model. fileUrl={}, model={}", sourceFileUrl, model);
         }
 
         List<String> originalKeywords = keywordList;
@@ -171,6 +186,99 @@ public class MockEndpointService {
 
             logOperation("UPLOAD_MOCK", null, sourceFileName, "生成mock接口: " + result.getItems().size());
             logger.info("Generated endpoints done. fileId={}, fileName={}, count={}", sourceFileId, sourceFileName, result.getItems().size());
+            return result;
+        } finally {
+            keywordList = originalKeywords;
+        }
+    }
+
+    /**
+     * 使用文件URL直接调用新模型处理文档
+     */
+    private MockEndpointResult generateEndpointsWithFileUrl(String fileUrl,
+                                                             String sourceFileId,
+                                                             String sourceFileName,
+                                                             String sceneId,
+                                                             String sceneName,
+                                                             String sceneKeywords) throws IOException {
+        List<String> originalKeywords = keywordList;
+        try {
+            if (sceneKeywords != null && !sceneKeywords.trim().isEmpty()) {
+                String combined = sceneKeywords.trim() + "," + keywords;
+                keywordList = splitKeywords(combined);
+            } else {
+                keywordList = splitKeywords(keywords);
+            }
+            
+            String systemPrompt = buildFileUrlSystemPrompt();
+            String userPrompt = buildFileUrlUserPrompt(sceneKeywords);
+            String raw = callZhipuWithFileUrl(fileUrl, systemPrompt, userPrompt);
+            List<MockEndpointItem> items = parseEndpoints(raw);
+
+            MockEndpointResult result = new MockEndpointResult();
+            java.util.Set<String> seenKeys = new java.util.HashSet<>();
+            if (items == null || items.isEmpty()) {
+                logOperation("UPLOAD_MOCK", null, sourceFileName, "生成mock接口: 0");
+                return result;
+            }
+            
+            for (MockEndpointItem item : items) {
+                if (item == null) {
+                    continue;
+                }
+                String dedupeKey = buildDedupeKey(item);
+                if (!dedupeKey.isEmpty() && !seenKeys.add(dedupeKey)) {
+                    logger.info("Skip duplicate endpoint. key={}, title={}", dedupeKey, item.getTitle());
+                    continue;
+                }
+                // 详细记录检查前的状态
+                logger.debug("Checking hasMeaningfulContent. title={}, method={}, hasRequest={}, hasResponse={}, hasError={}, requiredFields={}", 
+                        item.getTitle(), item.getMethod(),
+                        item.getRequestExample() != null, item.getResponseExample() != null, 
+                        item.getErrorResponseExample() != null,
+                        item.getRequiredFields() != null ? item.getRequiredFields().size() : 0);
+                
+                if (!hasMeaningfulContent(item)) {
+                    logger.warn("Skip endpoint without examples. title={}, method={}, hasRequest={}, hasResponse={}, hasError={}", 
+                            item.getTitle(), item.getMethod(),
+                            item.getRequestExample() != null, item.getResponseExample() != null, 
+                            item.getErrorResponseExample() != null);
+                    continue;
+                }
+                
+                logger.debug("Endpoint passed hasMeaningfulContent check. title={}, method={}", item.getTitle(), item.getMethod());
+                String id = UUID.randomUUID().toString().replace("-", "");
+                item.setId(id);
+                if (item.getApiPath() != null && !item.getApiPath().isEmpty()) {
+                    item.setMockUrl("/mock" + item.getApiPath());
+                } else {
+                    item.setMockUrl("/parse/mock/" + id);
+                }
+                item.setRaw(raw);
+                item.setSourceFileId(sourceFileId);
+                item.setSourceFileName(sourceFileName);
+                item.setSourceFileUrl(fileUrl);
+                item.setSceneId(sceneId);
+                item.setSceneName(sceneName);
+                
+                logger.info("Saving endpoint to database. id={}, title={}, method={}, apiPath={}, sceneId={}, hasRequest={}, hasResponse={}", 
+                        item.getId(), item.getTitle(), item.getMethod(), item.getApiPath(), item.getSceneId(),
+                        item.getRequestExample() != null, item.getResponseExample() != null);
+                try {
+                    MockEndpointEntity entity = toEntity(item);
+                    repository.save(entity);
+                    logger.info("Endpoint saved successfully. id={}, title={}", item.getId(), item.getTitle());
+                } catch (Exception ex) {
+                    logger.error("Failed to save endpoint to database. id={}, title={}, error={}", 
+                            item.getId(), item.getTitle(), ex.getMessage(), ex);
+                    continue;
+                }
+                result.getItems().add(item);
+            }
+
+            logOperation("UPLOAD_MOCK", null, sourceFileName, "生成mock接口: " + result.getItems().size());
+            logger.info("Generated endpoints with file URL. fileId={}, fileName={}, count={}", 
+                    sourceFileId, sourceFileName, result.getItems().size());
             return result;
         } finally {
             keywordList = originalKeywords;
@@ -591,18 +699,42 @@ public class MockEndpointService {
         if (raw == null || raw.trim().isEmpty()) {
             return java.util.Collections.emptyList();
         }
+        
+        // 尝试提取并记录识别结果（第一步的文本输出）
+        String recognitionText = extractRecognitionText(raw);
+        if (recognitionText != null && !recognitionText.trim().isEmpty()) {
+            logger.info("=== 模型识别结果（第一步）===");
+            // 只记录前2000字符，避免日志过长
+            String preview = recognitionText.length() > 2000 ? recognitionText.substring(0, 2000) + "..." : recognitionText;
+            logger.info("识别内容预览：\n{}", preview);
+            if (recognitionText.length() > 2000) {
+                logger.info("（识别内容总长度：{} 字符，已截断）", recognitionText.length());
+            }
+        }
+        
         JsonNode node = readJsonLoosely(raw);
         if (node == null) {
+            logger.warn("parseEndpoints: readJsonLoosely returned null. Raw preview: {}", 
+                raw.length() > 500 ? raw.substring(0, 500) + "..." : raw);
             return java.util.Collections.emptyList();
         }
         List<MockEndpointItem> items = new ArrayList<>();
         if (node.isArray()) {
-            for (JsonNode itemNode : node) {
+            logger.info("parseEndpoints: 解析到JSON数组，包含 {} 个元素", node.size());
+            for (int i = 0; i < node.size(); i++) {
+                JsonNode itemNode = node.get(i);
+                logger.debug("parseEndpoints: 解析数组元素 {}/{}", i + 1, node.size());
                 MockEndpointItem item = parseEndpointNode(itemNode, "");
                 if (item != null) {
+                    logger.debug("parseEndpoints: 成功解析元素 {}. title={}, method={}, hasRequest={}, hasResponse={}", 
+                            i + 1, item.getTitle(), item.getMethod(), 
+                            item.getRequestExample() != null, item.getResponseExample() != null);
                     items.add(item);
+                } else {
+                    logger.warn("parseEndpoints: 解析数组元素 {} 失败，parseEndpointNode返回null", i + 1);
                 }
             }
+            logger.info("parseEndpoints: 成功解析 {} 个接口", items.size());
             return items;
         }
         JsonNode arr = node.path("items");
@@ -621,11 +753,66 @@ public class MockEndpointService {
         }
         return items;
     }
-
-    private MockEndpointItem parseEndpointNode(JsonNode node, String fallbackTitle) {
-        if (node == null || !node.isObject()) {
+    
+    /**
+     * 从混合内容中提取识别结果文本（第一步的输出）
+     * 识别结果通常在JSON数组之前，以 "### 第一步" 或 "=== 接口" 等标记开始
+     */
+    private String extractRecognitionText(String raw) {
+        String trimmed = raw.trim();
+        // 查找识别结果的开始标记
+        int recognitionStart = -1;
+        String[] startMarkers = {
+            "### 第一步",
+            "第一步：",
+            "=== 接口",
+            "接口1：",
+            "接口："
+        };
+        for (String marker : startMarkers) {
+            int idx = trimmed.indexOf(marker);
+            if (idx >= 0) {
+                recognitionStart = idx;
+                break;
+            }
+        }
+        if (recognitionStart < 0) {
             return null;
         }
+        
+        // 查找JSON数组或对象的开始位置（识别结果的结束位置）
+        int jsonStart = Math.max(
+            trimmed.indexOf('['),
+            trimmed.indexOf('{')
+        );
+        if (jsonStart < 0) {
+            // 如果没有找到JSON，返回从识别开始到结尾的所有内容
+            return trimmed.substring(recognitionStart);
+        }
+        
+        // 返回识别结果部分（从识别开始到JSON开始之前）
+        if (jsonStart > recognitionStart) {
+            return trimmed.substring(recognitionStart, jsonStart).trim();
+        }
+        return null;
+    }
+
+    private MockEndpointItem parseEndpointNode(JsonNode node, String fallbackTitle) {
+        if (node == null) {
+            logger.warn("parseEndpointNode: node is null");
+            return null;
+        }
+        if (!node.isObject()) {
+            logger.warn("parseEndpointNode: node is not an object. Node type: {}, Node value: {}", 
+                node.getNodeType(), node.toString().length() > 200 ? node.toString().substring(0, 200) + "..." : node.toString());
+            return null;
+        }
+        
+        // 打印节点的所有字段，用于调试
+        List<String> fields = new ArrayList<>();
+        node.fieldNames().forEachRemaining(fields::add);
+        logger.debug("parseEndpointNode: node fields: {}", String.join(", ", fields));
+        
         MockEndpointItem item = new MockEndpointItem();
         item.setTitle(textOr(node.path("title"), fallbackTitle));
         item.setMethod(textOr(node.path("method"), ""));
@@ -664,11 +851,26 @@ public class MockEndpointService {
             List<String> requiredFields = new ArrayList<>();
             for (JsonNode field : required) {
                 if (field.isTextual() && !field.asText().trim().isEmpty()) {
-                    requiredFields.add(field.asText().trim());
+                    String fieldPath = field.asText().trim();
+                    // 修复路径格式：response.headers.xxx -> headers.xxx, response.body.xxx -> body.xxx
+                    if (fieldPath.startsWith("response.headers.")) {
+                        fieldPath = fieldPath.replace("response.headers.", "headers.");
+                    } else if (fieldPath.startsWith("response.body.")) {
+                        fieldPath = fieldPath.replace("response.body.", "body.");
+                    }
+                    requiredFields.add(fieldPath);
                 }
             }
             item.setRequiredFields(requiredFields);
         }
+        
+        // 添加日志以便调试
+        logger.info("parseEndpointNode: parsed item. title={}, method={}, hasRequest={}, hasResponse={}, hasError={}, requiredFields={}", 
+                item.getTitle(), item.getMethod(), 
+                item.getRequestExample() != null, item.getResponseExample() != null, 
+                item.getErrorResponseExample() != null,
+                item.getRequiredFields() != null ? item.getRequiredFields().size() : 0);
+        
         return item;
     }
 
@@ -1376,8 +1578,21 @@ public class MockEndpointService {
             return objectMapper.readTree(trimmed);
         } catch (IOException ex) {
             logger.debug("readJsonLoosely: direct parse failed, trying to extract JSON. Error: {}", ex.getMessage());
-            // Try to extract JSON from code fences or surrounding text.
-            String extracted = extractJsonObject(trimmed);
+            // Try to extract JSON array first (for file URL mode with multiple APIs)
+            String extracted = extractJsonArray(trimmed);
+            if (extracted != null) {
+                logger.debug("readJsonLoosely: extracted JSON array length: {}", extracted.length());
+                try {
+                    JsonNode node = objectMapper.readTree(extracted);
+                    if (node.isArray()) {
+                        return node;
+                    }
+                } catch (IOException inner) {
+                    logger.debug("readJsonLoosely: extracted array parse failed, trying object. Error: {}", inner.getMessage());
+                }
+            }
+            // Try to extract JSON object (for single API or chunk mode)
+            extracted = extractJsonObject(trimmed);
             if (extracted == null) {
                 logger.warn("readJsonLoosely: extractJsonObject returned null. Raw preview: {}", 
                     trimmed.length() > 300 ? trimmed.substring(0, 300) + "..." : trimmed);
@@ -1394,6 +1609,156 @@ public class MockEndpointService {
         }
     }
 
+    /**
+     * 提取JSON数组（从 '[' 开始，匹配到对应的 ']'）
+     * 优先查找包含接口对象的数组（包含 "title" 字段），而不是 requiredFields 数组
+     */
+    private String extractJsonArray(String text) {
+        String cleaned = stripCodeFence(text);
+        
+        // 查找所有可能的 JSON 数组，选择最大的、包含 "title" 字段的数组
+        List<ArrayCandidate> candidates = new ArrayList<>();
+        int searchStart = 0;
+        
+        while (true) {
+            int start = cleaned.indexOf('[', searchStart);
+            if (start < 0) {
+                break;
+            }
+            
+            // 提取这个数组
+            int depth = 0;
+            int end = -1;
+            boolean inString = false;
+            char stringChar = 0;
+            for (int i = start; i < cleaned.length(); i++) {
+                char ch = cleaned.charAt(i);
+                // Handle string literals to avoid counting brackets inside strings
+                if (!inString && (ch == '"' || ch == '\'')) {
+                    inString = true;
+                    stringChar = ch;
+                } else if (inString && ch == stringChar) {
+                    // Check if it's escaped
+                    if (i == 0 || cleaned.charAt(i - 1) != '\\') {
+                        inString = false;
+                    }
+                }
+                if (!inString) {
+                    if (ch == '[') {
+                        depth++;
+                    } else if (ch == ']') {
+                        depth--;
+                        if (depth == 0) {
+                            end = i;
+                            break;
+                        }
+                    }
+                }
+            }
+            
+            if (end > start) {
+                String arrayText = cleaned.substring(start, end + 1);
+                // 检查这个数组是否包含接口对象的特征字段
+                boolean containsTitle = arrayText.contains("\"title\"") || arrayText.contains("'title'");
+                boolean containsMethod = arrayText.contains("\"method\"") || arrayText.contains("'method'");
+                boolean containsRequestExample = arrayText.contains("\"requestExample\"") || arrayText.contains("'requestExample'");
+                boolean containsResponseExample = arrayText.contains("\"responseExample\"") || arrayText.contains("'responseExample'");
+                boolean containsApiPath = arrayText.contains("\"apiPath\"") || arrayText.contains("'apiPath'");
+                
+                // 如果包含多个接口特征字段，认为是接口数组
+                int apiFeatureCount = 0;
+                if (containsTitle) apiFeatureCount++;
+                if (containsMethod) apiFeatureCount++;
+                if (containsRequestExample) apiFeatureCount++;
+                if (containsResponseExample) apiFeatureCount++;
+                if (containsApiPath) apiFeatureCount++;
+                
+                boolean isApiArray = apiFeatureCount >= 2; // 至少包含2个接口特征字段
+                
+                int length = arrayText.length();
+                candidates.add(new ArrayCandidate(start, end, arrayText, containsTitle, length));
+                logger.debug("extractJsonArray: Found array candidate at [{}, {}], length={}, containsTitle={}, isApiArray={}, apiFeatureCount={}", 
+                    start, end, length, containsTitle, isApiArray, apiFeatureCount);
+            }
+            
+            searchStart = start + 1;
+        }
+        
+        if (candidates.isEmpty()) {
+            logger.debug("extractJsonArray: No '[' found in text. Text length: {}, Preview: {}", 
+                cleaned.length(), cleaned.length() > 200 ? cleaned.substring(0, 200) + "..." : cleaned);
+            return null;
+        }
+        
+        // 优先选择接口数组（包含多个接口特征字段的数组）
+        ArrayCandidate best = null;
+        for (ArrayCandidate candidate : candidates) {
+            if (candidate.isApiArray) {
+                // 优先选择包含 "title" 的接口数组，如果多个，选择特征字段最多的，然后选择最大的
+                if (best == null || 
+                    (!best.containsTitle && candidate.containsTitle) ||
+                    (best.containsTitle == candidate.containsTitle && candidate.apiFeatureCount > best.apiFeatureCount) ||
+                    (best.containsTitle == candidate.containsTitle && candidate.apiFeatureCount == best.apiFeatureCount && candidate.length > best.length)) {
+                    best = candidate;
+                }
+            }
+        }
+        
+        // 如果没有找到接口数组，选择最大的数组（但至少要包含对象结构，避免选择简单的字符串数组）
+        if (best == null) {
+            for (ArrayCandidate candidate : candidates) {
+                // 至少应该包含对象结构（包含 { 和 }）
+                if (candidate.text.contains("{") && candidate.text.contains("}")) {
+                    if (best == null || candidate.length > best.length) {
+                        best = candidate;
+                    }
+                }
+            }
+        }
+        
+        if (best != null) {
+            logger.info("extractJsonArray: Selected array at [{}, {}], length={}, containsTitle={}, isApiArray={}, apiFeatureCount={}", 
+                best.start, best.end, best.length, best.containsTitle, best.isApiArray, best.apiFeatureCount);
+            return best.text;
+        }
+        
+        return null;
+    }
+    
+    private static class ArrayCandidate {
+        final int start;
+        final int end;
+        final String text;
+        final boolean containsTitle;
+        final int length;
+        final boolean isApiArray;
+        final int apiFeatureCount;
+        
+        ArrayCandidate(int start, int end, String text, boolean containsTitle, int length) {
+            this.start = start;
+            this.end = end;
+            this.text = text;
+            this.containsTitle = containsTitle;
+            this.length = length;
+            
+            // 计算接口特征字段数量
+            boolean containsMethod = text.contains("\"method\"") || text.contains("'method'");
+            boolean containsRequestExample = text.contains("\"requestExample\"") || text.contains("'requestExample'");
+            boolean containsResponseExample = text.contains("\"responseExample\"") || text.contains("'responseExample'");
+            boolean containsApiPath = text.contains("\"apiPath\"") || text.contains("'apiPath'");
+            
+            this.apiFeatureCount = (containsTitle ? 1 : 0) + 
+                                  (containsMethod ? 1 : 0) + 
+                                  (containsRequestExample ? 1 : 0) + 
+                                  (containsResponseExample ? 1 : 0) + 
+                                  (containsApiPath ? 1 : 0);
+            this.isApiArray = this.apiFeatureCount >= 2; // 至少包含2个接口特征字段
+        }
+    }
+
+    /**
+     * 提取JSON对象（从 '{' 开始，匹配到对应的 '}'）
+     */
     private String extractJsonObject(String text) {
         String cleaned = stripCodeFence(text);
         int start = cleaned.indexOf('{');
@@ -1402,14 +1767,29 @@ public class MockEndpointService {
         }
         int depth = 0;
         int end = -1;
+        boolean inString = false;
+        char stringChar = 0;
         for (int i = start; i < cleaned.length(); i++) {
             char ch = cleaned.charAt(i);
-            if (ch == '{') {
-                depth++;
-            } else if (ch == '}') {
-                depth--;
-                if (depth == 0) {
-                    end = i;
+            // Handle string literals to avoid counting braces inside strings
+            if (!inString && (ch == '"' || ch == '\'')) {
+                inString = true;
+                stringChar = ch;
+            } else if (inString && ch == stringChar) {
+                // Check if it's escaped
+                if (i == 0 || cleaned.charAt(i - 1) != '\\') {
+                    inString = false;
+                }
+            }
+            if (!inString) {
+                if (ch == '{') {
+                    depth++;
+                } else if (ch == '}') {
+                    depth--;
+                    if (depth == 0) {
+                        end = i;
+                        break;
+                    }
                 }
             }
         }
@@ -1449,15 +1829,192 @@ public class MockEndpointService {
         ObjectNode thinking = body.putObject("thinking");
         thinking.put("type", "disabled");
 
-        HttpEntity<String> request = new HttpEntity<>(objectMapper.writeValueAsString(body), headers);
+        String requestBody = objectMapper.writeValueAsString(body);
+        logger.info("Zhipu API Request - URL: {}, Model: {}", API_URL, model);
+        logger.info("Zhipu API Request Body: {}", requestBody);
+        logger.debug("Zhipu API Request Prompt (first 500 chars): {}", 
+                prompt.length() > 500 ? prompt.substring(0, 500) + "..." : prompt);
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(API_URL, request, String.class);
+        
+        logger.info("Zhipu API Response - Status: {}", response.getStatusCode());
+        logger.info("Zhipu API Response Body: {}", response.getBody());
+        
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             throw new IOException("Zhipu API error: " + response.getStatusCode());
         }
 
         JsonNode node = objectMapper.readTree(response.getBody());
         JsonNode content = node.path("choices").path(0).path("message").path("content");
-        return content.isMissingNode() ? response.getBody() : content.asText();
+        String result = content.isMissingNode() ? response.getBody() : content.asText();
+        logger.info("Zhipu API Response Content Length: {}", result != null ? result.length() : 0);
+        return result;
+    }
+
+    /**
+     * 使用文件URL调用新模型API
+     */
+    private String callZhipuWithFileUrl(String fileUrl, String systemPrompt, String userPrompt) throws IOException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+
+        ObjectNode body = objectMapper.createObjectNode();
+        body.put("model", fileModel);
+        body.put("temperature", 0);
+        ArrayNode messages = body.putArray("messages");
+        
+        // 添加system message
+        if (systemPrompt != null && !systemPrompt.trim().isEmpty()) {
+            ObjectNode system = messages.addObject();
+            system.put("role", "system");
+            system.put("content", systemPrompt);
+        }
+
+        // 添加user message
+        ObjectNode user = messages.addObject();
+        user.put("role", "user");
+        
+        // 构建多模态内容：文件URL + 文本提示
+        ArrayNode contentArray = user.putArray("content");
+        
+        // 添加文件URL
+        ObjectNode fileUrlContent = contentArray.addObject();
+        fileUrlContent.put("type", "file_url");
+        ObjectNode fileUrlObj = fileUrlContent.putObject("file_url");
+        fileUrlObj.put("url",fileUrl );
+        
+        // 添加文本提示
+        ObjectNode textContent = contentArray.addObject();
+        textContent.put("type", "text");
+        textContent.put("text", userPrompt);
+        
+        // 添加assistant message（用于引导输出格式）
+        ObjectNode assistant = messages.addObject();
+        assistant.put("role", "assistant");
+        assistant.put("content", "请严格按照以下顺序执行：\n1. 先输出【阶段一：接口识别结果】（纯文本格式，按照要求的格式输出每个接口的详细信息）\n2. 阶段一完成后，必须立即输出【阶段二：JSON数组】（严格JSON格式，不要包含任何解释文字）\n3. 不得跳过阶段一，也不得在阶段一完成后停止输出\n4. 如果阶段一未识别到接口，阶段一说明原因，阶段二仅输出 []\n5. 阶段一和阶段二必须连续输出，中间不要有停顿\n\n现在开始执行【阶段一：接口识别】，完成后立即输出【阶段二：JSON数组】。");
+
+        body.put("max_tokens", maxTokens);
+        ObjectNode thinking = body.putObject("thinking");
+        thinking.put("type", "enabled");
+
+        String requestBody = objectMapper.writeValueAsString(body);
+        logger.info("Zhipu File URL API Request - URL: {}, Model: {}", API_URL, fileModel);
+        logger.info("Zhipu File URL API Request - FileUrl: {}", fileUrl);
+        logger.info("Zhipu File URL API Request Body: {}", requestBody);
+        logger.debug("Zhipu File URL API Request - System Prompt (first 500 chars): {}", 
+                systemPrompt != null && systemPrompt.length() > 500 ? systemPrompt.substring(0, 500) + "..." : systemPrompt);
+        logger.debug("Zhipu File URL API Request - User Prompt (first 500 chars): {}", 
+                userPrompt != null && userPrompt.length() > 500 ? userPrompt.substring(0, 500) + "..." : userPrompt);
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(API_URL, request, String.class);
+        
+        logger.info("Zhipu File URL API Response - Status: {}", response.getStatusCode());
+        logger.info("Zhipu File URL API Response Body: {}", response.getBody());
+        
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            logger.error("Zhipu file URL API error: status={}, body={}", response.getStatusCode(), response.getBody());
+            throw new IOException("Zhipu API error: " + response.getStatusCode());
+        }
+
+        JsonNode node = objectMapper.readTree(response.getBody());
+        JsonNode choice = node.path("choices").path(0);
+        JsonNode message = choice.path("message");
+        
+        // 调试：打印message对象的所有字段
+        if (message.isObject()) {
+            java.util.Iterator<String> fieldNames = message.fieldNames();
+            List<String> fields = new ArrayList<>();
+            while (fieldNames.hasNext()) {
+                fields.add(fieldNames.next());
+            }
+            logger.debug("Message fields: {}", String.join(", ", fields));
+        }
+        
+        String result = null;
+        
+        // 优先使用 message.content（包含阶段一文本 + 阶段二JSON数组）
+        // 注意：在启用thinking模式时，content包含最终输出，reasoning_content只包含思考过程
+        JsonNode content = message.path("content");
+        if (!content.isMissingNode() && content.isTextual()) {
+            String contentText = content.asText();
+            if (contentText != null && !contentText.trim().isEmpty()) {
+                result = contentText;
+                logger.info("Using message.content as response content. Length: {}", result.length());
+            } else {
+                logger.debug("message.content exists but is empty");
+            }
+        } else {
+            logger.debug("message.content is missing or not textual");
+        }
+        
+        // 如果 content 为空，尝试使用 reasoning_content（某些情况下可能在这里）
+        if ((result == null || result.trim().isEmpty())) {
+            JsonNode reasoningContent = message.path("reasoning_content");
+            if (!reasoningContent.isMissingNode()) {
+                if (reasoningContent.isTextual()) {
+                    result = reasoningContent.asText();
+                    logger.info("Using message.reasoning_content as response content. Length: {}", result != null ? result.length() : 0);
+                } else {
+                    logger.warn("message.reasoning_content exists but is not textual. Type: {}", reasoningContent.getNodeType());
+                }
+            } else {
+                logger.debug("message.reasoning_content is missing");
+            }
+        }
+        
+        // 如果还是为空，尝试从 choice 对象中获取 reasoning_content（某些API版本可能在这里）
+        if ((result == null || result.trim().isEmpty())) {
+            JsonNode choiceReasoning = choice.path("reasoning_content");
+            if (!choiceReasoning.isMissingNode() && choiceReasoning.isTextual()) {
+                result = choiceReasoning.asText();
+                logger.info("Using choice.reasoning_content as response content. Length: {}", result != null ? result.length() : 0);
+            }
+        }
+        
+        // 如果还是为空，使用整个响应体（不应该发生）
+        if (result == null || result.trim().isEmpty()) {
+            logger.warn("Content and reasoning_content are both empty, using full response body");
+            result = response.getBody();
+        }
+        
+        logger.info("Zhipu File URL API Response Content Length: {}", result != null ? result.length() : 0);
+        
+        // 打印完整响应内容用于调试
+        if (result != null) {
+            logger.info("=== Zhipu File URL API Full Response Content ===");
+            logger.info("Response Content (first 2000 chars): {}", 
+                    result.length() > 2000 ? result.substring(0, 2000) + "..." : result);
+            if (result.length() > 2000) {
+                logger.info("Response Content (last 500 chars): {}", result.substring(result.length() - 500));
+            }
+            // 检查是否包含JSON数组
+            int jsonArrayStart = result.indexOf('[');
+            int jsonObjectStart = result.indexOf('{');
+            int jsonStart = Math.max(jsonArrayStart, jsonObjectStart);
+            
+            if (jsonArrayStart >= 0) {
+                // 检查这个数组是否包含 "title" 字段（接口数组的特征）
+                String arrayPreview = result.substring(jsonArrayStart, Math.min(jsonArrayStart + 1000, result.length()));
+                boolean containsTitle = arrayPreview.contains("\"title\"") || arrayPreview.contains("'title'");
+                logger.info("Found JSON array at position: {}, containsTitle={}, preview: {}", 
+                        jsonArrayStart, containsTitle, 
+                        arrayPreview.length() > 500 ? arrayPreview.substring(0, 500) + "..." : arrayPreview);
+            }
+            
+            if (jsonObjectStart >= 0 && jsonObjectStart != jsonArrayStart) {
+                logger.info("Found JSON object at position: {}, preview: {}", 
+                        jsonObjectStart, result.substring(jsonObjectStart, Math.min(jsonObjectStart + 500, result.length())));
+            }
+            
+            if (jsonStart < 0) {
+                logger.warn("No JSON array or object found in response! Response only contains stage 1 text.");
+            }
+        }
+        
+        return result;
     }
 
     private String callZhipuWithMessages(java.util.List<Object> messages) throws IOException {
@@ -1527,9 +2084,16 @@ public class MockEndpointService {
         thinking.put("type", "disabled");
 
         String requestBody = objectMapper.writeValueAsString(body);
-        logger.debug("Zhipu API request body length: {}", requestBody.length());
+        logger.info("Zhipu Messages API Request - URL: {}, Model: {}", API_URL, visionModel);
+        logger.info("Zhipu Messages API Request Body: {}", requestBody);
+        logger.debug("Zhipu Messages API request body length: {}", requestBody.length());
+        
         HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
         ResponseEntity<String> response = restTemplate.postForEntity(API_URL, request, String.class);
+        
+        logger.info("Zhipu Messages API Response - Status: {}", response.getStatusCode());
+        logger.info("Zhipu Messages API Response Body: {}", response.getBody());
+        
         if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
             logger.error("Zhipu API error: status={}, body={}", response.getStatusCode(), response.getBody());
             throw new IOException("Zhipu API error: " + response.getStatusCode() + ", body: " + response.getBody());
@@ -1538,7 +2102,7 @@ public class MockEndpointService {
         JsonNode node = objectMapper.readTree(response.getBody());
         JsonNode content = node.path("choices").path(0).path("message").path("content");
         String result = content.isMissingNode() ? response.getBody() : content.asText();
-        logger.info("Zhipu API response length: {}", result != null ? result.length() : 0);
+        logger.info("Zhipu Messages API Response Content Length: {}", result != null ? result.length() : 0);
         return result;
     }
 
@@ -1626,18 +2190,22 @@ public class MockEndpointService {
                 + "1. 只能输出严格JSON，不要包含任何解释文字。\n"
                 + "2. 优先使用文档里的 Sample Request / Sample Response / Error Response 示例。\n"
                 + "3. 如果缺少示例，按字段语义生成合理示例。\n"
-                + "4. 请求示例必须拆分为 headers / query / body 三部分。\n"
-                + "   - 文档中出现 HTTP Header / Request Header / Header 的字段放入 requestExample.headers。\n"
+                + "4. 请求示例必须拆分为 headers / query / body 三部分：\n"
+                + "   - **文档中所有 Request Headers / HTTP Header / Header 表格中的字段必须全部提取到 requestExample.headers，包括字段名和对应的值/示例值，不要遗漏任何字段**\n"
                 + "   - 文档中出现 Query Params / URL Params / Query 的字段放入 requestExample.query。\n"
                 + "   - 文档中出现 Request Body / Body 的字段放入 requestExample.body。\n"
                 + "   - 不要把 header 字段放进 body。\n"
-                + "5. 响应示例必须拆分为 headers / body 两部分。\n"
-                + "   - 文档中出现 HTTP Header / Response Header / Header 的字段放入 responseExample.headers。\n"
+                + "   - 特别注意：如果文档中有 Request Headers 表格，必须将所有字段提取到 headers 中\n"
+                + "5. 响应示例必须拆分为 headers / body 两部分：\n"
+                + "   - **文档中所有 Response Headers / HTTP Header / Header 表格中的字段必须全部提取到 responseExample.headers，包括字段名和对应的值/示例值，不要遗漏任何字段**\n"
                 + "   - 其他响应字段放入 responseExample.body。\n"
-                + "6. method 必须是 GET 或 POST，来自文档里的 Request Verb / Method / 请求方式。\n"
-                + "7. 如果片段内存在多个接口，只输出当前标题对应的一个接口。\n"
-                + "8. requiredFields 使用点号路径，并带上前缀，例如 headers.SourceSystemID, query.msisdn, body.orderId。\n"
-                + "9. 只输出下面固定结构，不要增加字段。\n\n"
+                + "   - 特别注意：如果文档中有 Response Headers 表格，必须将所有字段提取到 headers 中\n"
+                + "6. 错误响应示例也应该包含 headers 和 body 两部分（如果文档中有 Error Response Headers，必须提取）\n"
+                + "7. method 必须是 GET 或 POST，来自文档里的 Request Verb / Method / 请求方式。\n"
+                + "8. 如果片段内存在多个接口，只输出当前标题对应的一个接口。\n"
+                + "9. requiredFields 使用点号路径，并带上前缀，例如 headers.SourceSystemID, query.msisdn, body.orderId。\n"
+                + "10. 只输出下面固定结构，不要增加字段。\n"
+                + "11. 关键：必须从文档中提取所有请求头和响应头字段，包括文档中明确列出的所有 Header 字段，不要遗漏任何字段。\n\n"
                 + "输出JSON结构：\n"
                 + "{\n"
                 + "  \"title\": \"\",\n"
@@ -1656,6 +2224,202 @@ public class MockEndpointService {
                 + "}\n\n"
                 + "接口文档片段：\n"
                 + chunkText;
+    }
+
+    /**
+     * 构建文件URL模式的提示词（支持多API场景）
+     */
+    /**
+     * 构建文件URL模式的System Prompt
+     */
+    private String buildFileUrlSystemPrompt() {
+        return "你是一个【Integration Design Document（IDD）接口识别引擎】，\n" +
+                "用于从 Telco / ESB / CRM / Camel / Fuse 类型的设计文档中\n" +
+                "识别真实存在的 API 接口定义。\n" +
+                "\n" +
+                "【最高优先级规则（Hard Rules）】\n" +
+                "1. 只允许基于用户提供的接口文档原文进行信息提取\n" +
+                "2. 严禁编造、补充、猜测任何文档中不存在的接口、字段或参数\n" +
+                "3. 不得合并、拆分、改写文档中原有的接口定义\n" +
+                "4. 不得引入行业通用字段、默认字段或常识字段\n" +
+                "5. 所有输出必须严格遵守 User Prompt 中定义的输出结构\n" +
+                "6. 若某字段或接口在文档中未出现，必须明确标注为“文档未提供”\n" +
+                "【合法归因授权（仅限 IDD 文档）】\n" +
+                "以下行为不视为“猜测”，属于合法解析：\n" +
+                "- 根据章节标题（如 Request / Response / Interface Message Specification）\n" +
+                "  判断字段所属阶段\n" +
+                "- 根据表格上下文中出现的分类（如 HTTP Header、Query Parameters、\n" +
+                "  deviceList(Array)、OperationResult）确定字段归属\n" +
+                "- 根据字段语义判断 headers / query / body 的归属，\n" +
+                "  前提是字段名称和说明在文档中明确出现\n";
+    }
+
+    /**
+     * 构建文件URL模式的User Prompt
+     */
+    private String buildFileUrlUserPrompt(String sceneKeywords) {
+      return "【重要说明（必须遵守）】\n" +
+              "\n" +
+              "你将接收到的所有 file_url 文件，\n" +
+              "即为【接口文档原文的完整内容】。\n" +
+              "\n" +
+              "这些文件：\n" +
+              "- 是唯一且完整的接口文档事实来源\n" +
+              "- 包含接口路径、请求方式、字段规范等关键信息\n" +
+              "- 不得被视为示例、背景或参考资料\n" +
+              "\n" +
+              "你必须完整阅读并解析这些文件内容，\n" +
+              "并严格基于文件中的信息执行接口识别。\n" +
+              "\n" +
+              "====================\n" +
+              "【文档类型说明】\n" +
+              "====================\n" +
+              "这些文件为 Integration Design Document（IDD）类型文档，\n" +
+              "属于 Telco / ESB / CRM / Camel / Fuse 风格接口设计文档。\n" +
+              "\n" +
+              "文档特点：\n" +
+              "- 接口定义分散在章节与表格中\n" +
+              "- Request / Response 以字段规范表形式给出\n" +
+              "- Header / Query / Body 可能未显式拆分\n" +
+              "\n" +
+              "以下解析规则视为【合法归因】，不属于猜测：\n" +
+              "- 根据章节标题（如 Request / Response / Interface Message Specification）\n" +
+              "- 根据表格上下文（如 HTTP Header、Query Parameters、deviceList(Array)）\n" +
+              "- 根据字段语义（如 SourceSystemID、ReferenceID 属于 Header）\n" +
+              "\n" +
+              "====================\n" +
+              "【任务目标】\n" +
+              "====================\n" +
+              "从上述文件中识别【所有实际存在的 REST API 接口】。\n" +
+              "\n" +
+              "====================\n" +
+              "【强制输出流程（必须遵守）】\n" +
+              "====================\n" +
+              "你必须按照以下顺序执行，不得跳过任何阶段：\n" +
+              "\n" +
+              "【阶段一：接口识别结果（文本输出）】\n" +
+              "- 在生成任何 JSON 之前，必须先输出你从文档中【实际识别到的接口信息】\n" +
+              "- 该阶段仅允许输出【纯文本】，用于人工校验\n" +
+              "- 不得输出 JSON、示例代码或结构化数据\n" +
+              "\n" +
+              "【阶段二：生成 JSON 数组】\n" +
+              "- **必须**在阶段一完成后立即输出JSON数组，不得停止或跳过\n" +
+              "- 只能基于【阶段一已识别并输出的接口信息】生成 JSON\n" +
+              "- 不得新增任何接口、字段或参数\n" +
+              "- JSON数组必须紧跟在阶段一内容之后，中间不要有任何解释文字\n" +
+              "- 如果阶段一识别到接口，阶段二必须输出对应的JSON数组；如果阶段一未识别到接口，阶段二输出空数组 []\n" +
+              "\n" +
+              "【禁止事项】\n" +
+              "- 禁止补全文档中不存在的字段或接口\n" +
+              "- 禁止在阶段一完成后停止输出，必须继续输出阶段二的JSON数组\n" +
+              "- 禁止只输出阶段一而不输出阶段二\n" +
+              "\n" +
+              "====================\n" +
+              "【阶段一：接口识别输出格式】\n" +
+              "====================\n" +
+              "\n" +
+              "对每一个识别到的接口，按以下格式输出（纯文本）：\n" +
+              "\n" +
+              "=== 接口序号：接口标题 / 名称 ===\n" +
+              "请求方式：GET / POST\n" +
+              "请求路径：/xxx/yyy（仅路径，不含域名）\n" +
+              "\n" +
+              "【请求头字段（Request Headers）】\n" +
+              "- 字段名 | 是否必填（M / O） | 示例值（仅当文档中明确给出）\n" +
+              "\n" +
+              "【请求参数（Query Parameters）】\n" +
+              "- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）\n" +
+              "\n" +
+              "【请求体字段（Request Body）】\n" +
+              "- 字段名 | 是否必填 | 示例值\n" +
+              "- 若文档未定义 Request Body，请明确写“文档未提供”\n" +
+              "\n" +
+              "【响应头字段（Response Headers）】\n" +
+              "- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）\n" +
+              "\n" +
+              "【响应体字段（Response Body）】\n" +
+              "- 字段名 | 是否必填 | 示例值 / 枚举值\n" +
+              "- Array 字段需列出子字段\n" +
+              "\n" +
+              "【错误响应信息】\n" +
+              "- 错误字段（如 ErrorCode、ErrorDescription）\n" +
+              "- HTTP 状态码（若文档中提供）\n" +
+              "\n" +
+              "【必填字段路径】\n" +
+              "- headers.xxx\n" +
+              "- query.xxx\n" +
+              "- body.xxx\n" +
+              "\n" +
+              "====================\n" +
+              "【阶段二：JSON 结构定义（固定，不可修改）】\n" +
+              "====================\n" +
+              "[\n" +
+              "  {\n" +
+              "    \"title\": \"\",\n" +
+              "    \"method\": \"GET | POST\",\n" +
+              "    \"apiPath\": \"\",\n" +
+              "    \"requestExample\": {\n" +
+              "      \"headers\": {\"SourceSystemID\": \"CRM\", \"ReferenceID\": \"KSK20120530221525000839\"},\n" +
+              "      \"query\": {\"param1\": \"value1\"},\n" +
+              "      \"body\": {\"field1\": \"value1\"}\n" +
+              "    },\n" +
+              "    \"responseExample\": {\n" +
+              "      \"headers\": {\"SourceSystemID\": \"CRM\", \"Status\": \"200 OK\"},\n" +
+              "      \"body\": {\"result\": \"success\", \"data\": [{\"id\": \"123\"}]}\n" +
+              "    },\n" +
+              "    \"errorResponseExample\": {\n" +
+              "      \"headers\": {\"Status\": \"400 Bad Request\", \"ErrorCode\": \"ERROR001\"},\n" +
+              "      \"body\": {\"ErrorCode\": \"ERROR001\", \"ErrorDescription\": \"Validation failed\"}\n" +
+              "    },\n" +
+              "    \"requiredFields\": [],\n" +
+              "    \"errorHttpStatus\": 400\n" +
+              "  }\n" +
+              "]\n\n" +
+              "====================\n" +
+              "【阶段二：JSON 生成规则】\n" +
+              "====================\n" +
+              "- 只能使用阶段一中已识别的接口和字段\n" +
+              "- requestExample.headers：必须包含所有请求头字段，**每个字段都必须填充合理的Mock值**\n" +
+              "- GET 请求参数只能放在 query，POST 请求参数只能放在 body，**每个参数都必须填充合理的Mock值**\n" +
+              "- responseExample.headers：必须包含所有响应头字段，**每个字段都必须填充合理的Mock值**\n" +
+              "- responseExample.body：仅包含响应体字段（不含响应头），**每个字段都必须填充合理的Mock值**\n" +
+              "- requiredFields：仅包含 Mandatory / Required 字段，使用路径格式 headers.xxx / query.xxx / body.xxx\n" +
+              "- **重要：所有字段都必须有值，不能是空字符串、null或undefined**\n\n" +
+              "【字段值规则】\n" +
+              "- 文档中存在示例值 → 必须使用文档值\n" +
+              "- 文档中不存在示例值 → **必须**根据字段名和字段语义生成合理 Mock 值，不能为空或null\n" +
+              "- 数组字段必须生成数组结构，对象字段必须生成对象结构\n" +
+              "- **所有字段都必须填充Mock数据，包括：**\n" +
+              "  * 请求头字段（headers）：必须为每个字段生成合理的值\n" +
+              "  * 请求参数（query/body）：必须为每个字段生成合理的值\n" +
+              "  * 响应头字段（headers）：必须为每个字段生成合理的值\n" +
+              "  * 响应体字段（body）：必须为每个字段生成合理的值，包括数组中的子字段\n" +
+              "- 如果字段是枚举类型，使用第一个枚举值作为示例\n" +
+              "- 如果字段是数组类型，至少生成1-2个元素的数组，每个元素包含所有子字段\n" +
+              "- 如果字段是对象类型，必须包含所有子字段并填充值\n\n" +
+              "【禁止事项】\n" +
+              "- 禁止新增字段\n" +
+              "- 禁止将 header 字段放入 body\n" +
+              "- 禁止输出 null / undefined\n" +
+              "- 禁止输出任何解释性文字\n" +
+              "- 禁止在阶段一完成后停止输出，必须继续输出阶段二的JSON数组\n\n" +
+              "====================\n" +
+              "【失败兜底规则】\n" +
+              "====================\n" +
+              "如果在文件中未识别到任何 API 接口，\n" +
+              "阶段一请明确输出：\n" +
+              "文档中未识别到任何 API 接口\n" +
+              "阶段二必须输出空数组：[]\n\n" +
+              "====================\n" +
+              "【重要提醒】\n" +
+              "====================\n" +
+              "- 阶段一和阶段二必须连续输出，不能只输出阶段一就停止\n" +
+              "- 阶段一的文本输出完成后，必须立即输出阶段二的JSON数组\n" +
+              "- 如果只输出阶段一而不输出阶段二，视为未完成任务\n" +
+              "- 阶段二JSON数组的输出格式：直接以 [ 开始，以 ] 结束，不要有任何前置说明\n" +
+              "- 示例：阶段一内容结束后，立即输出 [{\"title\":\"...\",...}]\n" +
+              "- **关键：阶段一完成后，必须立即开始输出JSON数组，不要有任何停顿、说明或换行**\n";
+
     }
 
     private String buildManualPrompt(String userInput) {

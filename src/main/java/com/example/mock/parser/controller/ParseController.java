@@ -48,6 +48,7 @@ public class ParseController {
     private final MockEndpointService mockEndpointService;
     private final MockSceneService mockSceneService;
     private final ObjectMapper objectMapper;
+    private final com.example.mock.parser.service.QiniuService qiniuService;
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ParseController.class);
 
     @Value("${mock.upload-dir:uploads}")
@@ -57,12 +58,14 @@ public class ParseController {
                            MockGenerationService mockGenerationService,
                            MockEndpointService mockEndpointService,
                            MockSceneService mockSceneService,
-                           ObjectMapper objectMapper) {
+                           ObjectMapper objectMapper,
+                           com.example.mock.parser.service.QiniuService qiniuService) {
         this.documentParserService = documentParserService;
         this.mockGenerationService = mockGenerationService;
         this.mockEndpointService = mockEndpointService;
         this.mockSceneService = mockSceneService;
         this.objectMapper = objectMapper;
+        this.qiniuService = qiniuService;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -92,12 +95,16 @@ public class ParseController {
         String fileId = UUID.randomUUID().toString().replace("-", "");
         String originalName = file.getOriginalFilename() == null ? "document" : file.getOriginalFilename();
         mockEndpointService.deleteBySourceFileName(originalName);
-        saveUpload(fileId, originalName, file);
+        
+        // 尝试上传到七牛云，如果失败则保存到本地
+        String fileUrl = saveUpload(fileId, originalName, file);
+        logger.info("File upload result. fileId={}, fileName={}, fileUrl={}, isQiniuUrl={}", 
+                fileId, originalName, fileUrl, 
+                fileUrl != null && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")));
 
         ParsedDocument parsedDocument = documentParserService.parse(file);
-        String fileUrl = "/parse/endpoint/file/" + fileId;
-        logger.info("Upload document for mock generation. fileId={}, fileName={}, size={}, fullAi={}",
-                fileId, originalName, file.getSize(), fullAi);
+        logger.info("Upload document for mock generation. fileId={}, fileName={}, size={}, fullAi={}, fileUrl={}",
+                fileId, originalName, file.getSize(), fullAi, fileUrl);
         MockEndpointResult result = mockEndpointService.generateEndpoints(parsedDocument, fileId, originalName, fileUrl,
                 fullAi, scene.getId(), scene.getName(), scene.getKeywords());
         return ResponseEntity.ok(result);
@@ -642,11 +649,31 @@ public class ParseController {
         return builder.toString().trim();
     }
 
-    private void saveUpload(String fileId, String originalName, MultipartFile file) throws IOException {
+    /**
+     * 保存上传的文件
+     * 优先上传到七牛云，如果七牛云未启用或上传失败，则保存到本地
+     * @param fileId 文件ID
+     * @param originalName 原始文件名
+     * @param file 文件
+     * @return 文件访问URL（七牛云URL或本地URL）
+     * @throws IOException IO异常
+     */
+    private String saveUpload(String fileId, String originalName, MultipartFile file) throws IOException {
+        // 尝试上传到七牛云
+        String qiniuUrl = qiniuService.uploadFile(file, fileId, originalName);
+        if (qiniuUrl != null && !qiniuUrl.isEmpty()) {
+            logger.info("File uploaded to Qiniu. fileId={}, fileName={}, url={}", fileId, originalName, qiniuUrl);
+            return qiniuUrl;
+        }
+
+        // 如果七牛云上传失败，保存到本地
         Path dir = Paths.get(uploadDir);
         Files.createDirectories(dir);
         Path target = dir.resolve(fileId + "_" + originalName);
         file.transferTo(target);
+        String localUrl = "/parse/endpoint/file/" + fileId;
+        logger.info("File saved to local. fileId={}, fileName={}, url={}", fileId, originalName, localUrl);
+        return localUrl;
     }
 
     private Path findFileById(Path dir, String fileId) throws IOException {
