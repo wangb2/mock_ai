@@ -34,6 +34,7 @@ import java.util.regex.Pattern;
 
 @Service
 public class DocumentParserService {
+    private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(DocumentParserService.class);
 
     private static final Pattern HEADING_PATTERN = Pattern.compile("^\\s*(\\d+(?:\\.\\d+)*)\\s+(.+)$");
 
@@ -151,6 +152,7 @@ public class DocumentParserService {
                 stripper.setStartPage(page);
                 stripper.setEndPage(page);
                 String pageText = safeText(stripper.getText(pdfDocument));
+                logger.info("PDF page {} text length={}", page, pageText.length());
                 List<Section> pageSections = parseTextSections(pageText);
                 if (!pageSections.isEmpty()) {
                     sections.addAll(pageSections);
@@ -166,12 +168,18 @@ public class DocumentParserService {
                 }
                 if (tables != null && !tables.isEmpty()) {
                     Section target = ensureSection(sections, current, "Page " + page, 0);
-                    if (target.getTitle() != null && isAuxSectionTitle(target.getTitle())) {
-                        Section fallback = findLastMajorSection(sections);
+                    if (target.getTitle() != null && isWeakSectionTitle(target.getTitle())) {
+                        Section fallback = findLastEndpointSection(sections);
                         if (fallback != null) {
                             target = fallback;
+                        } else {
+                            Section major = findLastMajorSection(sections);
+                            if (major != null) {
+                                target = major;
+                            }
                         }
                     }
+                    logger.info("PDF page {} tables={}, attachedTo={}", page, tables.size(), target.getTitle());
                     for (Table table : tables) {
                         TableData data = convertTable(table);
                         if (!data.getHeaders().isEmpty() || !data.getRows().isEmpty()) {
@@ -199,7 +207,7 @@ public class DocumentParserService {
             if (cleaned.isEmpty()) {
                 continue;
             }
-            if (looksLikeHeading(cleaned)) {
+            if (looksLikeHeading(cleaned) && !isWeakSectionTitle(cleaned)) {
                 current = new Section(cleaned.trim(), 1);
                 sections.add(current);
             } else {
@@ -242,10 +250,68 @@ public class DocumentParserService {
                 || t.contains("interface message specification");
     }
 
+    private boolean isWeakSectionTitle(String title) {
+        if (title == null) {
+            return false;
+        }
+        String t = title.trim();
+        if (t.isEmpty()) {
+            return true;
+        }
+        if (looksLikeEndpointTitle(t)) {
+            return false;
+        }
+        if ("Document".equalsIgnoreCase(t)) {
+            return true;
+        }
+        if (isAuxSectionTitle(t)) {
+            return true;
+        }
+        if (looksLikeTocTitle(t)) {
+            return true;
+        }
+        String lower = t.toLowerCase(Locale.ROOT);
+        if (looksLikeMethodLine(lower)) {
+            return true;
+        }
+        return lower.length() > 80 && !(lower.contains("api") || lower.contains("接口") || lower.contains("interface"));
+    }
+
+    private boolean looksLikeTocTitle(String title) {
+        if (title == null) {
+            return false;
+        }
+        String t = title.trim();
+        return t.contains("....") && t.matches(".*\\d+$");
+    }
+
+    private boolean looksLikeMethodLine(String lower) {
+        if (lower == null) {
+            return false;
+        }
+        return (lower.startsWith("get ") || lower.startsWith("post ") || lower.startsWith("put ")
+                || lower.startsWith("delete ") || lower.startsWith("patch "))
+                && (lower.contains("{rootpath}") || lower.contains("http") || lower.contains("/"));
+    }
+
     private Section findLastMajorSection(List<Section> sections) {
         for (int i = sections.size() - 1; i >= 0; i--) {
             Section candidate = sections.get(i);
-            if (candidate != null && candidate.getTitle() != null && !isAuxSectionTitle(candidate.getTitle())) {
+            if (candidate != null && candidate.getTitle() != null && !isWeakSectionTitle(candidate.getTitle())) {
+                return candidate;
+            }
+        }
+        return null;
+    }
+
+    private Section findLastEndpointSection(List<Section> sections) {
+        for (int i = sections.size() - 1; i >= 0; i--) {
+            Section candidate = sections.get(i);
+            if (candidate == null || candidate.getTitle() == null) {
+                continue;
+            }
+            String title = candidate.getTitle();
+            if (looksLikeEndpointTitle(title) || title.matches("^\\d+(\\.\\d+){1,3}\\s+.+")) {
                 return candidate;
             }
         }
@@ -281,9 +347,26 @@ public class DocumentParserService {
         }
         Matcher matcher = HEADING_PATTERN.matcher(text);
         if (matcher.matches()) {
+            String number = matcher.group(1);
+            if (number != null && number.contains(".")) {
+                return true;
+            }
+        }
+        return text.startsWith("接口") || text.startsWith("API") || text.startsWith("Interface") || looksLikeEndpointTitle(text);
+    }
+
+    private boolean looksLikeEndpointTitle(String text) {
+        if (text == null) {
+            return false;
+        }
+        String lower = text.trim().toLowerCase(Locale.ROOT);
+        if (lower.isEmpty() || lower.length() > 120) {
+            return false;
+        }
+        if (lower.contains("api") || lower.contains("interface")) {
             return true;
         }
-        return text.startsWith("接口") || text.startsWith("API") || text.startsWith("Interface");
+        return lower.matches("^(get|post|update|create|delete|list|add|remove|release|cancel|handle|confirm|download|generate).+");
     }
 
     private TableData convertTable(XWPFTable table) {

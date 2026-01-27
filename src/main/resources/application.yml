@@ -1,5 +1,5 @@
 zhipu:
-  api-key: "e53ae59585a343ed87efb11bb966f544.sVcT03J7VJXiJe3t"
+  api-key: ""
   model: "glm-4.7"
   temperature: 0.2
   max-tokens: 2048
@@ -21,3 +21,7 @@ spring:
     multipart:
       max-file-size: "50MB"
       max-request-size: "50MB"
+logging:
+  level:
+    com.example.mock.parser.service.DocumentParserService: DEBUG
+    com.example.mock.parser.service.MockEndpointService: DEBUG

@@ -37,6 +37,12 @@ public class MockEndpointEntity {
     private String sourceFileId;
     private String sourceFileName;
     private String sourceFileUrl;
+    private String sceneId;
+    private String sceneName;
+    @Column(name = "error_http_status")
+    private Integer errorHttpStatus;
+    @Column(length = 512)
+    private String apiPath;
 
     private LocalDateTime createdAt;
 
@@ -141,6 +147,38 @@ public class MockEndpointEntity {
 
     public void setSourceFileUrl(String sourceFileUrl) {
         this.sourceFileUrl = sourceFileUrl;
+    }
+
+    public String getSceneId() {
+        return sceneId;
+    }
+
+    public void setSceneId(String sceneId) {
+        this.sceneId = sceneId;
+    }
+
+    public String getSceneName() {
+        return sceneName;
+    }
+
+    public void setSceneName(String sceneName) {
+        this.sceneName = sceneName;
+    }
+
+    public Integer getErrorHttpStatus() {
+        return errorHttpStatus;
+    }
+
+    public void setErrorHttpStatus(Integer errorHttpStatus) {
+        this.errorHttpStatus = errorHttpStatus;
+    }
+
+    public String getApiPath() {
+        return apiPath;
+    }
+
+    public void setApiPath(String apiPath) {
+        this.apiPath = apiPath;
     }
 
     public LocalDateTime getCreatedAt() {

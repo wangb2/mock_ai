@@ -1,0 +1,2324 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>RSMS 智能Mock系统</title>
+    <style>
+      * { box-sizing: border-box; }
+      body {
+        margin: 0;
+        font-family: "Segoe UI", Arial, sans-serif;
+        background: radial-gradient(1200px 600px at 10% 0%, #eef2ff 0%, #f8fafc 40%, #f5f7fb 100%);
+        color: #0f172a;
+      }
+      a { color: #dc2626; text-decoration: none; }
+      .topbar {
+        background: rgba(255, 255, 255, 0.9);
+        backdrop-filter: blur(8px);
+        border-bottom: 1px solid #e8edf5;
+        padding: 14px 28px;
+        display: flex;
+        align-items: center;
+        gap: 20px;
+        justify-content: space-between;
+      }
+      .brand {
+        display: flex;
+        align-items: center;
+      }
+      .brand-logo {
+        height: 42px;
+        width: auto;
+        max-width: 180px;
+        object-fit: contain;
+        display: inline-block;
+      }
+      .brand small {
+        color: #6b7280;
+        font-weight: 500;
+      }
+      .nav {
+        display: flex;
+        gap: 16px;
+        font-size: 14px;
+        color: #4b5563;
+      }
+      .nav span {
+        padding: 6px 12px;
+        border-radius: 999px;
+        cursor: pointer;
+      }
+      .nav .active {
+        background: #111827;
+        color: #fff;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.18);
+      }
+      .main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 24px 28px 60px;
+      }
+      .hero {
+        background: linear-gradient(135deg, #eef2ff 0%, #fdf2f8 100%);
+        border: 1px solid #e8edf5;
+        border-radius: 16px;
+        padding: 26px;
+        margin-bottom: 16px;
+        box-shadow: 0 16px 40px rgba(15, 23, 42, 0.08);
+      }
+      .hero h1 {
+        margin: 0 0 6px;
+        font-size: 28px;
+      }
+      .hero p {
+        margin: 0;
+        color: #6b7280;
+      }
+      .section-title {
+        margin: 18px 0 10px;
+        font-weight: 600;
+        color: #111827;
+      }
+      .grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .quick-grid {
+        display: grid;
+        grid-template-columns: repeat(5, minmax(0, 1fr));
+        gap: 16px;
+      }
+      .quick {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 16px;
+        padding: 20px 18px;
+        text-align: center;
+        box-shadow: 0 14px 32px rgba(15, 23, 42, 0.08);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .quick:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 20px 44px rgba(15, 23, 42, 0.12);
+      }
+      .quick .icon {
+        width: 54px;
+        height: 54px;
+        border-radius: 14px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 22px;
+        color: #fff;
+        margin-bottom: 10px;
+      }
+      .quick .title {
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+      .quick .desc {
+        font-size: 12px;
+        color: #6b7280;
+      }
+      .card {
+        background: #fff;
+        border-radius: 14px;
+        padding: 18px;
+        box-shadow: 0 12px 32px rgba(15, 23, 42, 0.08);
+        border: 1px solid #eef2f7;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+      .card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 18px 40px rgba(15, 23, 42, 0.12);
+      }
+      .row {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+      .grow { flex: 1 1 auto; }
+      label { font-size: 13px; color: #6b7280; }
+      input[type="text"], input[type="file"], textarea {
+        padding: 10px 12px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        background: #fff;
+        width: 100%;
+      }
+      button {
+        padding: 10px 16px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        color: #0f172a;
+        cursor: pointer;
+        box-shadow: 0 6px 14px rgba(15, 23, 42, 0.06);
+      }
+      .btn-primary {
+        background: #2563eb;
+        color: #fff;
+        border-color: #2563eb;
+      }
+      button.secondary {
+        background: #111827;
+        color: #fff;
+        border-color: #111827;
+        box-shadow: 0 8px 16px rgba(15, 23, 42, 0.15);
+      }
+      button:disabled {
+        background: #9ca3af;
+        cursor: not-allowed;
+        box-shadow: none;
+      }
+      .btn-outline {
+        background: #fff;
+        color: #0f172a;
+        border: 1px solid #e2e8f0;
+        box-shadow: none;
+      }
+      .progress-wrap {
+        margin-top: 10px;
+        background: #fee2e2;
+        border-radius: 999px;
+        height: 8px;
+        overflow: hidden;
+        display: none;
+      }
+      .progress-bar {
+        width: 30%;
+        height: 100%;
+        background: linear-gradient(135deg, #dc2626 0%, #f87171 100%);
+        animation: progressMove 1.2s infinite linear;
+      }
+      @keyframes progressMove {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(400%); }
+      }
+      .doc-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        align-items: stretch;
+      }
+      .doc-card {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 14px;
+        padding: 18px;
+        height: 100%;
+      }
+      .doc-title {
+        font-weight: 700;
+        color: #111827;
+        margin-bottom: 8px;
+      }
+      .upload-area {
+        border: 2px dashed #e2e8f0;
+        border-radius: 12px;
+        padding: 24px;
+        text-align: center;
+        color: #94a3b8;
+        background: #f8fafc;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .upload-area.dragover {
+        border-color: #dc2626;
+        background: #fff1f2;
+        color: #b91c1c;
+      }
+      .upload-area .icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: #fef2f2;
+        color: #dc2626;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 8px;
+        font-size: 18px;
+      }
+      .doc-actions {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-top: 12px;
+      }
+      .doc-actions button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .btn-outline-gray {
+        background: #fff;
+        color: #475569;
+        border: 1px solid #e2e8f0;
+        box-shadow: none;
+      }
+      .doc-list {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .doc-item {
+        border: 1px solid #eef2f7;
+        border-radius: 12px;
+        padding: 12px 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        background: #fff;
+      }
+      .doc-item .action-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        color: #2563eb;
+        border-color: #bfdbfe;
+      }
+      .action-btn.danger {
+        color: #b91c1c;
+        border-color: #fecaca;
+        background: #fff1f2;
+      }
+      .doc-item .name {
+        font-weight: 600;
+        color: #111827;
+      }
+      .doc-item .meta {
+        font-size: 12px;
+        color: #94a3b8;
+        margin-top: 4px;
+      }
+      .doc-file {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px;
+        border: 1px solid #eef2f7;
+        border-radius: 10px;
+        background: #f8fafc;
+      }
+      .doc-file .badge {
+        background: #fee2e2;
+        color: #b91c1c;
+        border: 1px solid #fecaca;
+      }
+      .api-toolbar {
+        display: grid;
+        grid-template-columns: 1fr 1fr auto;
+        gap: 12px;
+        align-items: center;
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 12px;
+        padding: 12px 16px;
+      }
+      .api-toolbar .search {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 10px;
+        background: #f8fafc;
+      }
+      .api-toolbar .search input {
+        border: none;
+        outline: none;
+        background: transparent;
+        padding: 0;
+      }
+      .api-toolbar .summary {
+        color: #6b7280;
+        font-size: 12px;
+      }
+      .api-card {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 14px;
+        padding: 14px 16px;
+        margin-top: 14px;
+        display: grid;
+        grid-template-columns: 1fr 140px;
+        gap: 12px;
+      }
+      .api-card h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+      }
+      .method {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 700;
+        background: #dcfce7;
+        color: #166534;
+      }
+      .method.post { background: #fee2e2; color: #b91c1c; }
+      .api-meta {
+        font-size: 12px;
+        color: #6b7280;
+        margin: 4px 0;
+      }
+      .api-url {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 8px 10px;
+        font-size: 12px;
+        color: #475569;
+      }
+      .api-actions {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-end;
+        justify-content: center;
+      }
+      .api-actions .play {
+        background: #2563eb;
+        padding: 8px 12px;
+        border-radius: 10px;
+        color: #fff;
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .api-actions .json {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        color: #475569;
+        padding: 8px 12px;
+        border-radius: 10px;
+        font-size: 12px;
+      }
+      .debug-topbar {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        gap: 12px;
+        align-items: center;
+      }
+      .debug-url-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        border: 1px solid #e2e8f0;
+        border-radius: 12px;
+        background: #fff;
+        padding: 10px;
+      }
+      .debug-method {
+        padding: 6px 10px;
+        border-radius: 10px;
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 700;
+        font-size: 12px;
+        border: 1px solid #86efac;
+      }
+      .debug-url {
+        flex: 1 1 auto;
+        border: none;
+        outline: none;
+        background: transparent;
+      }
+      .debug-tabs {
+        display: flex;
+        gap: 16px;
+        font-size: 13px;
+        color: #64748b;
+        border-bottom: 1px solid #eef2f7;
+        margin-top: 12px;
+      }
+      .debug-tabs span {
+        padding: 8px 2px;
+        cursor: pointer;
+      }
+      .debug-tabs .active {
+        color: #0f172a;
+        border-bottom: 2px solid #2563eb;
+      }
+      .debug-layout {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+        margin-top: 12px;
+      }
+      .debug-card {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
+      }
+      .debug-card-header {
+        padding: 14px 16px;
+        border-bottom: 1px solid #eef2f7;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        background: #f8fafc;
+      }
+      .debug-card-title {
+        font-weight: 700;
+        color: #0f172a;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .debug-card-title .badge {
+        width: 26px;
+        height: 26px;
+        border-radius: 8px;
+        background: #e0f2fe;
+        color: #0284c7;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+      }
+      .debug-meta {
+        display: flex;
+        gap: 10px;
+        font-size: 12px;
+        color: #64748b;
+        align-items: center;
+      }
+      .debug-meta .ok {
+        padding: 2px 8px;
+        border-radius: 999px;
+        background: #dcfce7;
+        color: #166534;
+        font-weight: 600;
+      }
+      .required-list {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        padding: 10px 12px;
+        border-bottom: 1px dashed #e5e7eb;
+      }
+      .required-list .chip {
+        padding: 4px 10px;
+        border-radius: 999px;
+        background: #f1f5f9;
+        border: 1px solid #e2e8f0;
+        font-size: 12px;
+        color: #475569;
+      }
+      .debug-curl {
+        background: #111827;
+        color: #e5e7eb;
+        border-radius: 14px;
+        border: 1px solid #1f2937;
+        padding: 12px 16px;
+        margin-top: 14px;
+      }
+      .debug-curl .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 8px;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+      .debug-curl pre {
+        background: transparent;
+        color: #d1fae5;
+        max-height: 240px;
+      }
+      .btn-loading {
+        opacity: 0.7;
+        pointer-events: none;
+      }
+      .loading-dot {
+        display: inline-block;
+        margin-left: 6px;
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: #fff;
+        box-shadow: 0 0 0 0 rgba(255,255,255,0.6);
+        animation: pulse 1s infinite;
+      }
+      @keyframes pulse {
+        0% { transform: scale(1); opacity: 0.6; }
+        50% { transform: scale(1.4); opacity: 1; }
+        100% { transform: scale(1); opacity: 0.6; }
+      }
+      .kv-table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12px;
+      }
+      .kv-table th, .kv-table td {
+        border-bottom: 1px solid #eef2f7;
+        padding: 8px;
+        text-align: left;
+      }
+      .kv-table th {
+        color: #94a3b8;
+        text-transform: uppercase;
+        font-size: 11px;
+        letter-spacing: 0.08em;
+      }
+      .kv-input {
+        width: 100%;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 6px 8px;
+        font-size: 12px;
+      }
+      .kv-actions {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 8px 12px;
+        border-top: 1px solid #eef2f7;
+        background: #f8fafc;
+      }
+      .debug-tab-panel {
+        display: none;
+      }
+      .debug-tab-panel.active {
+        display: block;
+      }
+      .debug-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+        margin-top: 12px;
+      }
+      .debug-panel {
+        border: 1px solid #eef2f7;
+        border-radius: 10px;
+        overflow: hidden;
+        background: #fff;
+      }
+      .debug-panel .title {
+        font-size: 12px;
+        color: #64748b;
+        padding: 8px 12px;
+        border-bottom: 1px solid #eef2f7;
+        background: #f8fafc;
+      }
+      .debug-editor {
+        min-height: 360px;
+        max-height: 420px;
+        overflow: auto;
+      }
+      .debug-metrics {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        font-size: 12px;
+        color: #64748b;
+        margin-top: 8px;
+      }
+      .hint { font-size: 12px; color: #6b7280; }
+      .muted { font-size: 12px; color: #6b7280; }
+      pre {
+        background: #0f172a;
+        color: #e2e8f0;
+        padding: 14px;
+        border-radius: 8px;
+        overflow: auto;
+        min-height: 200px;
+        line-height: 1.4;
+      }
+      #output {
+        max-height: 240px;
+      }
+      .chart {
+        background: #f8fafc;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 12px;
+      }
+      .chart .bar {
+        display: grid;
+        grid-template-columns: 120px 1fr 60px;
+        gap: 8px;
+        align-items: center;
+        margin: 8px 0;
+        font-size: 12px;
+        color: #374151;
+      }
+      .chart .track {
+        height: 10px;
+        background: #e5e7eb;
+        border-radius: 999px;
+        overflow: hidden;
+      }
+      .chart .fill {
+        height: 100%;
+        background: linear-gradient(135deg, #2563eb 0%, #22c55e 100%);
+        border-radius: 999px;
+        width: 0%;
+        transition: width 0.2s ease;
+      }
+      .log-cards {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+      }
+      .log-card {
+        background: #fff;
+        border: 1px solid #eef2f7;
+        border-radius: 14px;
+        padding: 18px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.06);
+      }
+      .log-card .title {
+        color: #6b7280;
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+      }
+      .log-card .value {
+        font-size: 32px;
+        font-weight: 700;
+        color: #111827;
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 2px 8px;
+        border-radius: 999px;
+        font-size: 11px;
+        font-weight: 600;
+      }
+      .chip.green { background: #dcfce7; color: #166534; }
+      .chip.blue { background: #dbeafe; color: #1d4ed8; }
+      .chip.orange { background: #ffedd5; color: #c2410c; }
+      .chip.gray { background: #e5e7eb; color: #374151; }
+      .log-trend {
+        display: flex;
+        align-items: flex-end;
+        gap: 8px;
+        height: 70px;
+        margin-top: 12px;
+      }
+      .log-trend .bar {
+        flex: 1 1 0;
+        background: #fee2e2;
+        border-radius: 6px;
+      }
+      .log-table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      .log-table th, .log-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 13px;
+        text-align: left;
+      }
+      .log-table th {
+        color: #94a3b8;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        font-size: 11px;
+      }
+      .log-row:hover {
+        background: #fef2f2;
+      }
+      .status-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 999px;
+        display: inline-block;
+      }
+      .dot-green { background: #22c55e; box-shadow: 0 0 8px rgba(34,197,94,0.5); }
+      .dot-blue { background: #3b82f6; box-shadow: 0 0 8px rgba(59,130,246,0.5); }
+      .dot-red { background: #ef4444; box-shadow: 0 0 8px rgba(239,68,68,0.5); }
+      .dot-orange { background: #f97316; box-shadow: 0 0 8px rgba(249,115,22,0.5); }
+      .dot-gray { background: #9ca3af; }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 8px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 700;
+        border: 1px solid transparent;
+      }
+      .badge.gen { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
+      .badge.hit { background: #dbeafe; color: #1d4ed8; border-color: #bfdbfe; }
+      .badge.err { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
+      .badge.fail { background: #ffedd5; color: #c2410c; border-color: #fed7aa; }
+      .badge.upload { background: #e5e7eb; color: #374151; border-color: #d1d5db; }
+      .action-btn {
+        border: 1px solid #e2e8f0;
+        background: #fff;
+        color: #475569;
+        font-size: 12px;
+        padding: 4px 10px;
+        border-radius: 8px;
+        cursor: pointer;
+      }
+      .modal {
+        position: fixed;
+        inset: 0;
+        background: rgba(15, 23, 42, 0.55);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+      }
+      .modal.open { display: flex; }
+      .modal .content {
+        width: min(980px, 92vw);
+        max-height: 85vh;
+        overflow: auto;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 20px 50px rgba(15,23,42,0.2);
+      }
+      .modal .content pre {
+        min-height: 160px;
+        max-height: 260px;
+      }
+      .modal textarea {
+        min-height: 160px;
+        max-height: 300px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      .pre-small {
+        min-height: 120px;
+        max-height: 220px;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow: auto;
+      }
+      details {
+        border: 1px solid #eef2f7;
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #f9fafb;
+      }
+      details summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: #111827;
+        list-style: none;
+      }
+      details summary::-webkit-details-marker {
+        display: none;
+      }
+      .item {
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 12px;
+        margin-top: 12px;
+        background: #fafbff;
+      }
+      .item h3 {
+        margin: 0 0 6px;
+        font-size: 16px;
+      }
+      .item .meta {
+        font-size: 12px;
+        color: #6b7280;
+        margin-bottom: 6px;
+        word-break: break-all;
+      }
+      .pill {
+        display: inline-block;
+        font-size: 12px;
+        background: #eef2ff;
+        color: #3730a3;
+        padding: 2px 6px;
+        border-radius: 999px;
+        margin-right: 6px;
+        margin-bottom: 6px;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+      .label { font-size: 12px; color: #6b7280; margin-bottom: 6px; }
+      textarea {
+        min-height: 180px;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      }
+      .hidden { display: none; }
+    </style>
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
+      </div>
+      <nav class="nav">
+        <span class="active" data-tab="home">首页</span>
+        <span data-tab="doc">接口文档</span>
+        <span data-tab="api">接口管理</span>
+        <span data-tab="scene">场景管理</span>
+        <span data-tab="debug">在线调试</span>
+        <span data-tab="logs">请求日志</span>
+      </nav>
+    </header>
+    <main class="main">
+      <section class="hero" id="home">
+        <h1>RSMS 智能Mock系统</h1>
+        <p>上传接口文档，自动解析并生成 Mock 服务，支持校验与动态响应。</p>
+        <div class="section-title" style="margin-top: 18px;">快捷入口</div>
+        <div class="quick-grid">
+          <div class="quick" data-jump="doc">
+            <div class="icon" style="background:#3b82f6;">📄</div>
+            <div class="title">接口文档管理</div>
+            <div class="desc">上传并解析接口文档</div>
+          </div>
+          <div class="quick" data-jump="api">
+            <div class="icon" style="background:#8b5cf6;">🗂️</div>
+            <div class="title">接口管理</div>
+            <div class="desc">查看与配置接口定义</div>
+          </div>
+          <div class="quick" data-jump="scene">
+            <div class="icon" style="background:#f97316;">⚡</div>
+            <div class="title">场景管理</div>
+            <div class="desc">配置请求与场景</div>
+          </div>
+          <div class="quick" data-jump="debug">
+            <div class="icon" style="background:#22c55e;">🧪</div>
+            <div class="title">在线调试</div>
+            <div class="desc">实时调试 Mock 接口</div>
+          </div>
+          <div class="quick" data-jump="logs">
+            <div class="icon" style="background:#ec4899;">📜</div>
+            <div class="title">请求日志</div>
+            <div class="desc">查看 Mock 请求记录</div>
+          </div>
+        </div>
+      </section>
+
+      <section id="doc" class="hidden">
+        <div class="section-title">接口文档管理</div>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <div class="doc-title">配置与生成</div>
+            <input id="endpoint" class="grow" type="hidden" value="http://localhost:8080/parse/endpoint" />
+            <div class="label" style="margin-top: 0;">上传文档（Document）</div>
+            <div class="upload-area" id="uploadArea">
+              <div class="icon">📁</div>
+              <div>点击选择或拖拽文件到此处</div>
+              <div class="hint">仅支持 .doc/.docx/.pdf，字段名为 file</div>
+              <input id="fileInput" type="file" accept=".doc,.docx,.pdf" style="margin-top:10px;" />
+            </div>
+            <div class="row" style="margin-top: 10px;">
+              <label>
+                <input id="fullAiToggle" type="checkbox" />
+                全量交给AI（不切分）
+              </label>
+              <span class="hint">适合复杂文档，耗时与费用更高</span>
+            </div>
+            <button id="sendBtn" class="btn-primary" style="width:100%; margin-top: 12px;">✨ 生成 Mock</button>
+            <div class="progress-wrap" id="uploadProgress">
+              <div class="progress-bar"></div>
+            </div>
+            <div class="doc-actions">
+              <button id="copyBtn" class="btn-outline" disabled>📋 复制返回</button>
+              <button id="refreshBtn" class="btn-outline-gray">🔄 刷新历史</button>
+              <span class="hint" id="status">等待上传</span>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-title">接口返回（原始）</div>
+            <pre id="output" class="pre-small">{}</pre>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <strong>已上传文档</strong>
+            <span class="muted">支持下载原始文件</span>
+          </div>
+          <div id="docs"></div>
+        </div>
+      </section>
+
+      <section id="api" class="hidden">
+        <div class="section-title">接口管理</div>
+        <div class="api-toolbar">
+          <div class="search">
+            🔍
+            <input id="apiSearch" type="text" placeholder="搜索 API 路径 / 描述 / MockID..." />
+          </div>
+          <div class="summary">共找到 <span id="apiCount">0</span> 个 Mock 接口</div>
+          <button class="secondary">+ 新建规则</button>
+        </div>
+        <div id="history"></div>
+      </section>
+
+      <section id="debug" class="hidden">
+        <div class="section-title">在线调试</div>
+        <div class="debug-topbar">
+          <div class="debug-url-wrap">
+            <select id="debugMethodSelect" class="debug-method">
+              <option value="POST" selected>POST</option>
+              <option value="GET">GET</option>
+            </select>
+            <input id="mockUrl" class="debug-url" placeholder="http://localhost:8080/parse/mock/{id}" />
+          </div>
+          <button id="sendMockBtn" class="btn-primary">发送请求</button>
+        </div>
+
+        <div class="debug-layout">
+          <div class="debug-card">
+            <div class="debug-card-header">
+              <div class="debug-card-title">
+                <span class="badge">↓</span>
+                REQUEST / 请求区
+              </div>
+            </div>
+            <div class="debug-tabs">
+              <span class="active" data-req-tab="body">Body (JSON)</span>
+              <span data-req-tab="headers">Headers</span>
+              <span data-req-tab="query">Query Params</span>
+            </div>
+            <div class="required-list" id="ruleHint"></div>
+            <div id="reqBodyPanel" class="debug-tab-panel active">
+              <div class="debug-editor">
+                <textarea id="mockBody"></textarea>
+              </div>
+            </div>
+            <div id="reqHeadersPanel" class="debug-tab-panel">
+              <div class="debug-editor">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                  </thead>
+                  <tbody id="headersTable"></tbody>
+                </table>
+              </div>
+              <div class="kv-actions">
+                <button id="addHeaderRow" class="btn-outline">+ 添加参数</button>
+              </div>
+            </div>
+            <div id="reqQueryPanel" class="debug-tab-panel">
+              <div class="debug-editor">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                  </thead>
+                  <tbody id="queryTable"></tbody>
+                </table>
+              </div>
+              <div class="kv-actions">
+                <button id="addQueryRow" class="btn-outline">+ 添加参数</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="debug-card">
+            <div class="debug-card-header">
+              <div class="debug-card-title">
+                <span class="badge" style="background:#dcfce7;color:#166534;">↑</span>
+                RESPONSE / 响应结果
+              </div>
+              <div class="debug-meta">
+                <span id="debugStatus">Status: -</span>
+                <span class="ok" id="debugTime">Time: -</span>
+              </div>
+            </div>
+            <div class="debug-tabs">
+              <span class="active" data-resp-tab="body">Response Body</span>
+              <span data-resp-tab="headers">Response Headers</span>
+            </div>
+            <div id="respBodyPanel" class="debug-tab-panel active">
+              <div class="debug-editor">
+                <pre id="mockResponse">{}</pre>
+              </div>
+            </div>
+            <div id="respHeadersPanel" class="debug-tab-panel">
+              <div class="debug-editor">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th></tr>
+                  </thead>
+                  <tbody id="responseHeadersTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="debug-curl">
+          <div class="header">
+            <div>Generated cURL</div>
+            <button id="copyCurlBtn" class="btn-outline">复制命令</button>
+          </div>
+          <pre id="debugCurl">{}</pre>
+        </div>
+      </section>
+
+      <section id="scene" class="hidden">
+        <div class="section-title">场景管理</div>
+        <div class="card">
+          <div class="muted">待接入</div>
+        </div>
+      </section>
+
+      <section id="logs" class="hidden">
+        <div class="section-title">请求日志</div>
+        <div class="card">
+          <div class="row">
+            <span class="muted">统计（累计 / 24小时）</span>
+            <button id="refreshLogsBtn" class="secondary">刷新日志</button>
+          </div>
+          <div class="log-cards" style="margin-top: 10px;">
+            <div class="log-card">
+              <div>
+                <div class="title">今日累计请求</div>
+                <div class="value" id="statTotal">0</div>
+                <div style="margin-top: 6px;">
+                  <span class="chip green">上传 <span id="statUpload">0</span></span>
+                  <span class="chip blue">缓存 <span id="statHit">0</span></span>
+                </div>
+              </div>
+              <div class="chart" style="width:96px;height:96px;border-radius:999px;border:10px solid #fee2e2;border-top-color:#dc2626;border-right-color:#ef4444;display:flex;align-items:center;justify-content:center;">
+                <span style="color:#dc2626;font-weight:700;font-size:12px;">Running</span>
+              </div>
+            </div>
+            <div class="log-card" style="flex-direction:column;align-items:stretch;">
+              <div class="row" style="justify-content:space-between;">
+                <div>
+                  <div class="title">24小时趋势</div>
+                  <div class="muted">系统负载情况概览</div>
+                </div>
+                <div class="muted" id="statDelta">+0%</div>
+              </div>
+              <div id="logTrend" class="log-trend"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <div class="label">接口维度统计（今日）</div>
+          </div>
+          <div id="endpointTodayStats" class="chart"></div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <div class="label">接口维度统计（近7天）</div>
+          </div>
+          <div id="endpointWeekStats" class="chart"></div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row" style="justify-content:space-between;">
+            <div class="label">最近50条操作日志</div>
+            <div class="muted" id="logUpdatedAt">最后更新 -</div>
+          </div>
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>状态</th>
+                <th>类型 (Type)</th>
+                <th>源文件 (Source)</th>
+                <th>消息 (Message)</th>
+                <th>时间</th>
+                <th style="text-align:right;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="logModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">日志详情</div>
+            <button id="closeLogModal" class="secondary">关闭</button>
+          </div>
+          <pre id="logModalContent">{}</pre>
+        </div>
+      </div>
+
+      <div id="jsonModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">接口 JSON 详情</div>
+            <button id="closeJsonModal" class="secondary">关闭</button>
+          </div>
+          <div class="grid" style="margin-top: 8px;">
+            <div>
+              <div class="label">请求示例</div>
+              <pre id="jsonReq">{}</pre>
+            </div>
+            <div>
+              <div class="label">响应示例</div>
+              <pre id="jsonResp">{}</pre>
+            </div>
+          </div>
+          <div class="label" style="margin-top: 8px;">错误响应示例</div>
+          <pre id="jsonErr">{}</pre>
+        </div>
+      </div>
+
+      <div id="editModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">编辑请求/响应示例</div>
+            <button id="closeEditModal" class="secondary">关闭</button>
+          </div>
+          <div class="grid" style="margin-top: 8px;">
+            <div>
+              <div class="label">请求示例（JSON）</div>
+              <textarea id="editReq"></textarea>
+            </div>
+            <div>
+              <div class="label">响应示例（JSON）</div>
+              <textarea id="editResp"></textarea>
+            </div>
+          </div>
+          <div class="label" style="margin-top: 8px;">错误响应示例（JSON）</div>
+          <textarea id="editErr"></textarea>
+          <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+            <button id="saveEditBtn" class="btn-primary">保存修改</button>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script>
+      const endpointInput = document.getElementById("endpoint");
+      const fileInput = document.getElementById("fileInput");
+      const sendBtn = document.getElementById("sendBtn");
+      const copyBtn = document.getElementById("copyBtn");
+      const refreshBtn = document.getElementById("refreshBtn");
+      const output = document.getElementById("output");
+      const status = document.getElementById("status");
+      const items = document.getElementById("items");
+      const history = document.getElementById("history");
+      const uploadProgress = document.getElementById("uploadProgress");
+      const docs = document.getElementById("docs");
+      const fullAiToggle = document.getElementById("fullAiToggle");
+      const mockUrlInput = document.getElementById("mockUrl");
+      const mockBody = document.getElementById("mockBody");
+      const mockResponse = document.getElementById("mockResponse");
+      const sendMockBtn = document.getElementById("sendMockBtn");
+      const ruleHint = document.getElementById("ruleHint");
+      const debugMethodSelect = document.getElementById("debugMethodSelect");
+      const debugCurl = document.getElementById("debugCurl");
+      const headersTable = document.getElementById("headersTable");
+      const queryTable = document.getElementById("queryTable");
+      const responseHeadersTable = document.getElementById("responseHeadersTable");
+      const addHeaderRow = document.getElementById("addHeaderRow");
+      const addQueryRow = document.getElementById("addQueryRow");
+      const reqBodyPanel = document.getElementById("reqBodyPanel");
+      const reqHeadersPanel = document.getElementById("reqHeadersPanel");
+      const reqQueryPanel = document.getElementById("reqQueryPanel");
+      const respBodyPanel = document.getElementById("respBodyPanel");
+      const respHeadersPanel = document.getElementById("respHeadersPanel");
+      const debugStatus = document.getElementById("debugStatus");
+      const debugTime = document.getElementById("debugTime");
+      const debugSize = document.getElementById("debugSize");
+      const copyCurlBtn = document.getElementById("copyCurlBtn");
+      const apiSearch = document.getElementById("apiSearch");
+      const apiCount = document.getElementById("apiCount");
+      const refreshLogsBtn = document.getElementById("refreshLogsBtn");
+      const logTableBody = document.getElementById("logTableBody");
+      const logUpdatedAt = document.getElementById("logUpdatedAt");
+      const statTotal = document.getElementById("statTotal");
+      const statUpload = document.getElementById("statUpload");
+      const statHit = document.getElementById("statHit");
+      const statDelta = document.getElementById("statDelta");
+      const logTrend = document.getElementById("logTrend");
+      const logModal = document.getElementById("logModal");
+      const closeLogModal = document.getElementById("closeLogModal");
+      const logModalContent = document.getElementById("logModalContent");
+      const jsonModal = document.getElementById("jsonModal");
+      const closeJsonModal = document.getElementById("closeJsonModal");
+      const jsonReq = document.getElementById("jsonReq");
+      const jsonResp = document.getElementById("jsonResp");
+      const jsonErr = document.getElementById("jsonErr");
+      const editModal = document.getElementById("editModal");
+      const closeEditModal = document.getElementById("closeEditModal");
+      const editReq = document.getElementById("editReq");
+      const editResp = document.getElementById("editResp");
+      const editErr = document.getElementById("editErr");
+      const saveEditBtn = document.getElementById("saveEditBtn");
+      let editingMockId = null;
+      const uploadArea = document.getElementById("uploadArea");
+      const endpointTodayStats = document.getElementById("endpointTodayStats");
+      const endpointWeekStats = document.getElementById("endpointWeekStats");
+      let currentMethod = "POST";
+      let selectedFile = null;
+
+      function setStatus(text) {
+        status.textContent = text;
+      }
+
+      async function handleSend() {
+        const endpoint = endpointInput && endpointInput.value ? endpointInput.value.trim() : "";
+        const file = (fileInput && fileInput.files && fileInput.files[0]) || selectedFile;
+
+        const finalEndpoint = endpoint || "/parse/endpoint";
+        const useFullAi = fullAiToggle && fullAiToggle.checked;
+        const requestUrl = useFullAi
+          ? `${finalEndpoint}${finalEndpoint.includes("?") ? "&" : "?"}fullAi=true`
+          : finalEndpoint;
+        if (!file) {
+          setStatus("请选择文档");
+          return;
+        }
+
+        sendBtn.disabled = true;
+        copyBtn.disabled = true;
+        setStatus("解析中...");
+        if (uploadProgress) {
+          uploadProgress.style.display = "block";
+        }
+        output.textContent = "{}";
+        if (items) {
+          items.innerHTML = "";
+        }
+        if (history) {
+          history.innerHTML = "";
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        try {
+          const res = await fetch(requestUrl, {
+            method: "POST",
+            body: formData
+          });
+          const text = await res.text();
+          const parsed = parseJsonLoose(text);
+          if (parsed) {
+            output.textContent = JSON.stringify(parsed, null, 2);
+            if (parsed && Array.isArray(parsed.items)) {
+              renderItems(parsed.items);
+            }
+          } else {
+            output.textContent = prettyPrintFallback(text);
+          }
+          if (!res.ok) {
+            setStatus("请求失败：" + res.status);
+          } else {
+            setStatus("完成");
+            copyBtn.disabled = false;
+            await loadHistory();
+            switchTab("api");
+          }
+        } catch (err) {
+          setStatus("请求异常：" + err.message);
+          output.textContent = "";
+        } finally {
+          sendBtn.disabled = false;
+          if (uploadProgress) {
+            uploadProgress.style.display = "none";
+          }
+        }
+      }
+
+      sendBtn.addEventListener("click", handleSend);
+      if (fileInput) {
+        fileInput.addEventListener("change", () => {
+          selectedFile = fileInput.files && fileInput.files.length ? fileInput.files[0] : null;
+        });
+      }
+      refreshBtn.addEventListener("click", loadHistory);
+      sendMockBtn.addEventListener("click", sendMockRequest);
+      if (refreshLogsBtn) {
+        refreshLogsBtn.addEventListener("click", loadLogs);
+      }
+      if (closeLogModal) {
+        closeLogModal.addEventListener("click", () => logModal.classList.remove("open"));
+      }
+      if (closeJsonModal) {
+        closeJsonModal.addEventListener("click", () => jsonModal.classList.remove("open"));
+      }
+      if (closeEditModal) {
+        closeEditModal.addEventListener("click", () => editModal.classList.remove("open"));
+      }
+
+      if (uploadArea) {
+        uploadArea.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          uploadArea.classList.add("dragover");
+        });
+        uploadArea.addEventListener("dragleave", () => {
+          uploadArea.classList.remove("dragover");
+        });
+        uploadArea.addEventListener("drop", (e) => {
+          e.preventDefault();
+          uploadArea.classList.remove("dragover");
+          const files = e.dataTransfer.files;
+          if (files && files.length) {
+            selectedFile = files[0];
+            try {
+              fileInput.files = files;
+            } catch (err) {
+              // ignore assignment errors in some browsers
+            }
+            handleSend();
+          }
+        });
+      }
+      copyBtn.addEventListener("click", async () => {
+        try {
+          await navigator.clipboard.writeText(output.textContent);
+          setStatus("已复制结果");
+        } catch (err) {
+          setStatus("复制失败");
+        }
+      });
+
+      function renderItems(list) {
+        if (!items) {
+          return;
+        }
+        if (!list.length) {
+          return;
+        }
+        list.forEach((item) => {
+          items.appendChild(buildApiCard(item));
+        });
+      }
+
+      async function loadHistory() {
+        history.innerHTML = "";
+        if (docs) {
+          docs.innerHTML = "";
+        }
+        try {
+          const res = await fetch("/parse/endpoint/history");
+          if (!res.ok) {
+            return;
+          }
+          const json = await res.json();
+          if (!json || !Array.isArray(json.items)) {
+            return;
+          }
+          renderHistory(json.items);
+          renderDocs(json.items);
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      function renderHistory(list) {
+        history.innerHTML = "";
+        if (!list.length) {
+          history.innerHTML = "<div class='hint'>暂无历史数据</div>";
+          if (apiCount) apiCount.textContent = "0";
+          return;
+        }
+        const keyword = (apiSearch ? apiSearch.value.trim().toLowerCase() : "");
+        const filtered = keyword
+          ? list.filter((item) => {
+              const text = `${item.title || ""} ${item.mockUrl || ""} ${item.sourceFileName || ""}`.toLowerCase();
+              return text.includes(keyword);
+            })
+          : list;
+        if (apiCount) apiCount.textContent = String(filtered.length);
+        filtered.forEach((item) => {
+          history.appendChild(buildApiCard(item));
+        });
+      }
+
+      function renderDocs(itemsList) {
+        if (!docs) {
+          return;
+        }
+        const map = new Map();
+        itemsList.forEach((item) => {
+          if (item.sourceFileId) {
+            map.set(item.sourceFileId, item);
+          }
+        });
+        if (!map.size) {
+          docs.innerHTML = "<div class='hint'>暂无上传记录</div>";
+          return;
+        }
+        docs.innerHTML = "";
+        const list = document.createElement("div");
+        list.className = "doc-list";
+        map.forEach((item) => {
+          const div = document.createElement("div");
+          div.className = "doc-item";
+          const downloadUrl = toAbsoluteUrl(item.sourceFileUrl || "");
+          div.innerHTML = `
+            <div>
+              <div class="name">${escapeHtml(item.sourceFileName || "文件")}</div>
+              <div class="meta">文件ID: ${escapeHtml(item.sourceFileId || "-")}</div>
+            </div>
+            <div>
+              ${downloadUrl ? `<a class="action-btn" href="${downloadUrl}" target="_blank">下载原始文件</a>` : ""}
+              <button class="action-btn danger" data-delete-doc="${escapeHtml(item.sourceFileId || "")}">删除</button>
+            </div>
+          `;
+          list.appendChild(div);
+        });
+        docs.appendChild(list);
+        docs.querySelectorAll("[data-delete-doc]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const fileId = btn.getAttribute("data-delete-doc");
+            if (!fileId) return;
+            if (!confirm("确定删除该文档及其关联接口吗？")) return;
+            try {
+              const res = await fetch(`/parse/endpoint/file/${fileId}`, { method: "DELETE" });
+              if (res.ok) {
+                setStatus("已删除文档");
+                await loadHistory();
+              } else {
+                setStatus("删除失败");
+              }
+            } catch (err) {
+              setStatus("删除异常");
+            }
+          });
+        });
+      }
+
+      function buildApiCard(item) {
+        const div = document.createElement("div");
+        div.className = "api-card";
+        const mockUrl = toAbsoluteUrl(item.mockUrl || "");
+        const required = Array.isArray(item.requiredFields) ? item.requiredFields : [];
+        const downloadUrl = toAbsoluteUrl(item.sourceFileUrl || "");
+        const title = item.title || "API";
+        const method = (item.method || "").toUpperCase() || (/post/i.test(title) ? "POST" : "GET");
+        const isPost = method === "POST";
+        div.innerHTML = `
+          <div>
+            <div class="row">
+              <span class="method ${isPost ? "post" : ""}">${method}</span>
+              <h3>${escapeHtml(title)}</h3>
+            </div>
+            <div class="api-meta">Source: ${escapeHtml(item.sourceFileName || "-")} 
+              ${downloadUrl ? `<a href="${downloadUrl}" target="_blank">下载</a>` : ""}
+            </div>
+            <div class="api-url">
+              <span>${escapeHtml(mockUrl)}</span>
+              <button class="action-btn" data-copy="${mockUrl}">复制</button>
+            </div>
+            <div class="api-meta">REQUIRED FIELDS</div>
+            <div class="api-meta">${required.map((r) => `<span class="pill">${escapeHtml(r)}</span>`).join("")}</div>
+          </div>
+          <div class="api-actions">
+            <button class="play" data-use="success">✅ 调试成功响应</button>
+            <button class="action-btn danger" data-use="error">❌ 调试失败响应</button>
+            <button class="json" data-json="1">&lt;/&gt; JSON</button>
+            <button class="action-btn" data-edit="1">编辑</button>
+            <button class="action-btn danger" data-delete-api="${escapeHtml(item.id || "")}">删除</button>
+          </div>
+        `;
+        div.querySelectorAll("button[data-copy]").forEach((btn) => {
+          btn.addEventListener("click", async () => {
+            const value = btn.getAttribute("data-copy") || "";
+            try {
+              await navigator.clipboard.writeText(value);
+              setStatus("已复制");
+            } catch (err) {
+              setStatus("复制失败");
+            }
+          });
+        });
+        div.querySelectorAll("button[data-use]").forEach((btn) => {
+          const mode = btn.getAttribute("data-use");
+          btn.addEventListener("click", () => useMockItem(item, mode === "error"));
+        });
+        const jsonBtn = div.querySelector("button[data-json]");
+        if (jsonBtn) {
+          jsonBtn.addEventListener("click", () => {
+            if (!jsonModal) return;
+            jsonReq.textContent = JSON.stringify(item.requestExample || {}, null, 2);
+            jsonResp.textContent = JSON.stringify(item.responseExample || {}, null, 2);
+            jsonErr.textContent = JSON.stringify(item.errorResponseExample || {}, null, 2);
+            jsonModal.classList.add("open");
+          });
+        }
+        const editBtn = div.querySelector("button[data-edit]");
+        if (editBtn) {
+          editBtn.addEventListener("click", () => {
+            if (!editModal) return;
+            editingMockId = item.id || null;
+            editReq.value = JSON.stringify(item.requestExample || {}, null, 2);
+            editResp.value = JSON.stringify(item.responseExample || {}, null, 2);
+            editErr.value = JSON.stringify(item.errorResponseExample || {}, null, 2);
+            editModal.classList.add("open");
+          });
+        }
+        const delBtn = div.querySelector("button[data-delete-api]");
+        if (delBtn) {
+          delBtn.addEventListener("click", async () => {
+            const id = delBtn.getAttribute("data-delete-api");
+            if (!id) return;
+            if (!confirm("确定删除该 Mock 接口吗？")) return;
+            try {
+              const res = await fetch(`/parse/endpoint/${id}`, { method: "DELETE" });
+              if (res.ok) {
+                setStatus("已删除接口");
+                await loadHistory();
+              } else {
+                setStatus("删除失败");
+              }
+            } catch (err) {
+              setStatus("删除异常");
+            }
+          });
+        }
+        return div;
+      }
+
+      if (jsonModal) {
+        jsonModal.addEventListener("click", (e) => {
+          if (e.target === jsonModal) {
+            jsonModal.classList.remove("open");
+          }
+        });
+      }
+      if (editModal) {
+        editModal.addEventListener("click", (e) => {
+          if (e.target === editModal) {
+            editModal.classList.remove("open");
+          }
+        });
+      }
+
+      if (saveEditBtn) {
+        saveEditBtn.addEventListener("click", async () => {
+          if (!editingMockId) return;
+          let reqJson;
+          let respJson;
+          let errJson;
+          try {
+            reqJson = editReq.value.trim() ? JSON.parse(editReq.value) : {};
+            respJson = editResp.value.trim() ? JSON.parse(editResp.value) : {};
+            errJson = editErr.value.trim() ? JSON.parse(editErr.value) : {};
+          } catch (err) {
+            setStatus("JSON 格式错误");
+            return;
+          }
+          try {
+            const res = await fetch(`/parse/endpoint/${editingMockId}`, {
+              method: "PUT",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                requestExample: reqJson,
+                responseExample: respJson,
+                errorResponseExample: errJson
+              })
+            });
+            if (res.ok) {
+              setStatus("已保存");
+              editModal.classList.remove("open");
+              await loadHistory();
+            } else {
+              setStatus("保存失败");
+            }
+          } catch (err) {
+            setStatus("保存异常");
+          }
+        });
+      }
+
+      function toAbsoluteUrl(path) {
+        if (!path) return "";
+        if (path.startsWith("http://") || path.startsWith("https://")) {
+          return path;
+        }
+        const base = window.location.origin || "http://localhost:8080";
+        return base.replace(/\/$/, "") + "/" + path.replace(/^\//, "");
+      }
+
+      function escapeHtml(text) {
+        return String(text || "")
+          .replace(/&/g, "&amp;")
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")
+          .replace(/"/g, "&quot;")
+          .replace(/'/g, "&#39;");
+      }
+
+      function useMockItem(item, errorMode = false) {
+        const mockUrl = toAbsoluteUrl(item.mockUrl || "");
+        mockUrlInput.value = mockUrl;
+        const req = item.requestExample || {};
+        const title = (item.title || "").toLowerCase();
+        currentMethod = (item.method || "").toUpperCase() || (title.includes("get ") || title.startsWith("get") ? "GET" : "POST");
+        if (debugMethodSelect) {
+          debugMethodSelect.value = currentMethod;
+        }
+        const required = Array.isArray(item.requiredFields) ? item.requiredFields : [];
+        if (req.headers || req.query || req.body) {
+          const parts = normalizeRequestParts(required, {
+            headers: req.headers || {},
+            query: req.query || req.queryParams || {},
+            body: req.body || {}
+          }, currentMethod, req);
+          renderKeyValueTable(headersTable, parts.headers || {});
+          renderKeyValueTable(queryTable, parts.query || {});
+          mockBody.value = JSON.stringify(parts.body || {}, null, 2);
+        } else {
+          const extracted = splitRequestByPath(req);
+          const parts = normalizeRequestParts(required, extracted, currentMethod, req);
+          renderKeyValueTable(headersTable, parts.headers || {});
+          renderKeyValueTable(queryTable, parts.query || {});
+          mockBody.value = JSON.stringify(parts.body || {}, null, 2);
+        }
+        if (!mockBody.value || mockBody.value === "{}") {
+          const fallback = extractBodyFromRequest(req);
+          mockBody.value = JSON.stringify(fallback, null, 2);
+        }
+        if (!mockBody.value) {
+          renderKeyValueTable(headersTable, {});
+          renderKeyValueTable(queryTable, {});
+          mockBody.value = JSON.stringify(req || {}, null, 2);
+        }
+        if (currentMethod === "GET") {
+          mockBody.value = "{}";
+        }
+        if (currentMethod === "POST") {
+          renderKeyValueTable(queryTable, {});
+        }
+        renderRequiredChips(required);
+        if (errorMode) {
+          if (currentMethod === "GET") {
+            setTableValue(queryTable, "__mock_error", "1");
+          } else {
+            try {
+              const parsed = mockBody.value.trim() ? JSON.parse(mockBody.value) : {};
+              parsed.__mock_error = true;
+              mockBody.value = JSON.stringify(parsed, null, 2);
+            } catch (err) {
+              // ignore
+            }
+          }
+        }
+        mockResponse.textContent = "{}";
+        switchTab("debug");
+      }
+
+      async function sendMockRequest() {
+        const url = mockUrlInput.value.trim();
+        if (!url) {
+          setStatus("请输入Mock地址");
+          return;
+        }
+        if (sendMockBtn) {
+          sendMockBtn.classList.add("btn-loading");
+          sendMockBtn.innerHTML = `发送中<span class="loading-dot"></span>`;
+        }
+        if (debugMethodSelect) {
+          currentMethod = debugMethodSelect.value || currentMethod;
+        }
+        let body = {};
+        let headers = {};
+        let query = {};
+        try {
+          body = mockBody.value.trim() ? JSON.parse(mockBody.value) : {};
+          headers = collectTableData(headersTable);
+          query = collectTableData(queryTable);
+        } catch (err) {
+          setStatus("请求JSON格式错误");
+          return;
+        }
+        if (currentMethod === "GET") {
+          body = {};
+        }
+        if (currentMethod === "POST") {
+          query = {};
+        }
+        if ((!mockBody.value || mockBody.value.trim() === "" || mockBody.value.trim() === "{}") && Object.keys(body).length === 0) {
+          const req = mockBody.value.trim() ? JSON.parse(mockBody.value) : {};
+          body = extractBodyFromRequest(req);
+        }
+        setStatus("请求中...");
+        mockResponse.textContent = "{}";
+        if (debugStatus) debugStatus.textContent = "Status: -";
+        if (debugTime) debugTime.textContent = "Time: -";
+        if (debugSize) debugSize.textContent = "Size: ...";
+        try {
+          const start = performance.now();
+          const fullUrl = buildUrlWithQuery(url, query);
+          const res = await fetch(fullUrl, {
+            method: currentMethod,
+            headers: { "Content-Type": "application/json", ...headers },
+            body: currentMethod === "POST" ? JSON.stringify(body) : undefined
+          });
+          const text = await res.text();
+          const elapsed = Math.round(performance.now() - start);
+          try {
+            const json = JSON.parse(text);
+            mockResponse.textContent = JSON.stringify(json, null, 2);
+          } catch (err) {
+            mockResponse.textContent = text;
+          }
+          if (!res.ok) {
+            setStatus("请求失败：" + res.status);
+          } else {
+            setStatus("完成");
+          }
+          if (debugStatus) debugStatus.textContent = `Status: ${res.status}`;
+          if (debugTime) debugTime.textContent = `Time: ${elapsed}ms`;
+          if (debugSize) debugSize.textContent = `Size: ${text.length} bytes`;
+          if (debugCurl) debugCurl.textContent = buildCurl(fullUrl, headers, body, currentMethod);
+          if (responseHeadersTable) {
+            renderKeyValueTableReadonly(responseHeadersTable, res.headers);
+          }
+        } catch (err) {
+          setStatus("请求异常：" + err.message);
+        } finally {
+          if (sendMockBtn) {
+            sendMockBtn.classList.remove("btn-loading");
+            sendMockBtn.textContent = "发送请求";
+          }
+        }
+      }
+
+      if (debugMethodSelect) {
+        debugMethodSelect.addEventListener("change", () => {
+          currentMethod = debugMethodSelect.value;
+          if (currentMethod === "GET") {
+            mockBody.value = "{}";
+          }
+          if (currentMethod === "POST") {
+            renderKeyValueTable(queryTable, {});
+          }
+        });
+      }
+
+      function buildUrlWithQuery(url, query) {
+        if (!query || Object.keys(query).length === 0) {
+          return url;
+        }
+        const params = new URLSearchParams();
+        Object.keys(query).forEach((key) => {
+          const value = query[key];
+          if (value !== undefined && value !== null) {
+            params.append(key, String(value));
+          }
+        });
+        const joiner = url.includes("?") ? "&" : "?";
+        return url + joiner + params.toString();
+      }
+
+      function buildCurl(url, headers, body, method) {
+        const lines = [`curl -X ${method} "${url}"`];
+        Object.keys(headers || {}).forEach((key) => {
+          lines.push(`-H "${key}: ${headers[key]}"`);
+        });
+        if (method === "POST" && body && Object.keys(body).length) {
+          lines.push(`-d '${JSON.stringify(body)}'`);
+        }
+        return lines.join(" \\\n  ");
+      }
+
+      function splitRequestByPath(requestExample) {
+        const headers = {};
+        const query = {};
+        const body = {};
+        if (!requestExample || typeof requestExample !== "object") {
+          return { headers, query, body };
+        }
+        Object.keys(requestExample).forEach((key) => {
+          if (key.startsWith("headers.")) {
+            headers[key.replace("headers.", "")] = requestExample[key];
+          } else if (key.startsWith("query.")) {
+            query[key.replace("query.", "")] = requestExample[key];
+          } else if (key.startsWith("body.")) {
+            body[key.replace("body.", "")] = requestExample[key];
+          }
+        });
+        return { headers, query, body };
+      }
+
+      function extractBodyFromRequest(requestExample) {
+        if (!requestExample || typeof requestExample !== "object") {
+          return {};
+        }
+        if (requestExample.body && typeof requestExample.body === "object") {
+          return requestExample.body;
+        }
+        if (requestExample.request && typeof requestExample.request === "object") {
+          return requestExample.request;
+        }
+        if (requestExample.data && typeof requestExample.data === "object") {
+          return requestExample.data;
+        }
+        return requestExample;
+      }
+
+      document.querySelectorAll("[data-req-tab]").forEach((el) => {
+        el.addEventListener("click", () => {
+          document.querySelectorAll("[data-req-tab]").forEach((n) => n.classList.remove("active"));
+          el.classList.add("active");
+          const tab = el.getAttribute("data-req-tab");
+          if (reqBodyPanel) reqBodyPanel.classList.toggle("active", tab === "body");
+          if (reqHeadersPanel) reqHeadersPanel.classList.toggle("active", tab === "headers");
+          if (reqQueryPanel) reqQueryPanel.classList.toggle("active", tab === "query");
+        });
+      });
+      document.querySelectorAll("[data-resp-tab]").forEach((el) => {
+        el.addEventListener("click", () => {
+          document.querySelectorAll("[data-resp-tab]").forEach((n) => n.classList.remove("active"));
+          el.classList.add("active");
+          const tab = el.getAttribute("data-resp-tab");
+          if (respBodyPanel) respBodyPanel.classList.toggle("active", tab === "body");
+          if (respHeadersPanel) respHeadersPanel.classList.toggle("active", tab === "headers");
+        });
+      });
+
+      function renderKeyValueTable(container, data) {
+        if (!container) return;
+        container.innerHTML = "";
+        Object.keys(data || {}).forEach((key) => {
+          addKeyValueRow(container, key, data[key]);
+        });
+        if (!container.children.length) {
+          addKeyValueRow(container, "", "");
+        }
+      }
+
+      function renderKeyValueTableReadonly(container, headers) {
+        if (!container) return;
+        container.innerHTML = "";
+        if (!headers) return;
+        if (typeof headers.forEach === "function") {
+          headers.forEach((value, key) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td>${escapeHtml(key)}</td><td>${escapeHtml(value)}</td>`;
+            container.appendChild(tr);
+          });
+        }
+      }
+
+      function setTableValue(container, key, value) {
+        if (!container) return;
+        let found = false;
+        Array.from(container.querySelectorAll("tr")).forEach((tr) => {
+          const inputs = tr.querySelectorAll("input");
+          if (inputs.length >= 2 && inputs[0].value.trim() === key) {
+            inputs[1].value = value;
+            found = true;
+          }
+        });
+        if (!found) {
+          addKeyValueRow(container, key, value);
+        }
+      }
+
+      function renderRequiredChips(required) {
+        if (!ruleHint) return;
+        ruleHint.innerHTML = "";
+        if (!required || !required.length) {
+          const span = document.createElement("span");
+          span.className = "chip";
+          span.textContent = "无必填字段";
+          ruleHint.appendChild(span);
+          return;
+        }
+        required.forEach((field) => {
+          const span = document.createElement("span");
+          span.className = "chip";
+          span.textContent = field;
+          ruleHint.appendChild(span);
+        });
+      }
+
+      function parseJsonLoose(text) {
+        if (!text) return null;
+        const trimmed = text.trim();
+        try {
+          return JSON.parse(trimmed);
+        } catch (err) {
+          // continue
+        }
+        if ((trimmed.startsWith("\"") && trimmed.endsWith("\"")) || (trimmed.startsWith("'") && trimmed.endsWith("'"))) {
+          try {
+            const unescaped = JSON.parse(trimmed);
+            if (typeof unescaped === "string") {
+              try {
+                return JSON.parse(unescaped);
+              } catch (err) {
+                return null;
+              }
+            }
+          } catch (err) {
+            // ignore
+          }
+        }
+        const firstObj = trimmed.indexOf("{");
+        const firstArr = trimmed.indexOf("[");
+        let start = -1;
+        if (firstObj !== -1 && firstArr !== -1) {
+          start = Math.min(firstObj, firstArr);
+        } else {
+          start = Math.max(firstObj, firstArr);
+        }
+        const lastObj = trimmed.lastIndexOf("}");
+        const lastArr = trimmed.lastIndexOf("]");
+        const end = Math.max(lastObj, lastArr);
+        if (start !== -1 && end !== -1 && end > start) {
+          const slice = trimmed.slice(start, end + 1);
+          try {
+            return JSON.parse(slice);
+          } catch (err) {
+            return null;
+          }
+        }
+        return null;
+      }
+
+      function prettyPrintFallback(text) {
+        if (!text) return "";
+        const trimmed = text.trim();
+        if (!trimmed) return "";
+        let out = "";
+        let indent = 0;
+        let inString = false;
+        let escape = false;
+        const indentStr = (n) => "  ".repeat(n);
+        for (let i = 0; i < trimmed.length; i++) {
+          const ch = trimmed[i];
+          if (escape) {
+            out += ch;
+            escape = false;
+            continue;
+          }
+          if (ch === "\\") {
+            out += ch;
+            if (inString) escape = true;
+            continue;
+          }
+          if (ch === "\"") {
+            inString = !inString;
+            out += ch;
+            continue;
+          }
+          if (inString) {
+            out += ch;
+            continue;
+          }
+          if (ch === "{" || ch === "[") {
+            out += ch + "\n" + indentStr(++indent);
+            continue;
+          }
+          if (ch === "}" || ch === "]") {
+            out += "\n" + indentStr(--indent) + ch;
+            continue;
+          }
+          if (ch === ",") {
+            out += ch + "\n" + indentStr(indent);
+            continue;
+          }
+          if (ch === ":") {
+            out += ": ";
+            continue;
+          }
+          out += ch;
+        }
+        return out;
+      }
+
+      function normalizeRequestParts(requiredFields, parts, method, source) {
+        const headers = { ...(parts.headers || {}) };
+        const query = { ...(parts.query || {}) };
+        const body = { ...(parts.body || {}) };
+        const required = Array.isArray(requiredFields) ? requiredFields : [];
+        required.forEach((path) => {
+          if (!path) return;
+          const lower = path.toLowerCase();
+          const key = path.split(".").slice(1).join(".");
+          const fallbackValue = findValueByKey(source || {}, key);
+          if (lower.startsWith("headers.") || lower.startsWith("header.")) {
+            if (headers[key] === undefined && body[key] !== undefined) {
+              headers[key] = body[key];
+            }
+            if (headers[key] === undefined && fallbackValue !== undefined) {
+              headers[key] = fallbackValue;
+            }
+          } else if (lower.startsWith("queryparams.") || lower.startsWith("query.")) {
+            if (query[key] === undefined && body[key] !== undefined) {
+              query[key] = body[key];
+              delete body[key];
+            }
+            if (query[key] === undefined && fallbackValue !== undefined) {
+              query[key] = fallbackValue;
+            }
+          } else if (lower.startsWith("body.")) {
+            if (body[key] === undefined && query[key] !== undefined) {
+              body[key] = query[key];
+            }
+            if (body[key] === undefined && fallbackValue !== undefined) {
+              body[key] = fallbackValue;
+            }
+          }
+        });
+        if (method === "GET" && Object.keys(query).length === 0 && Object.keys(body).length > 0) {
+          Object.keys(body).forEach((key) => {
+            if (query[key] === undefined) {
+              query[key] = body[key];
+            }
+          });
+          Object.keys(body).forEach((key) => delete body[key]);
+        }
+        if (method === "POST" && Object.keys(body).length === 0 && Object.keys(query).length > 0) {
+          Object.keys(query).forEach((key) => {
+            if (body[key] === undefined) {
+              body[key] = query[key];
+            }
+          });
+          Object.keys(query).forEach((key) => delete query[key]);
+        }
+        if (method === "GET" && Object.keys(query).length === 0 && source && typeof source === "object") {
+          Object.keys(source).forEach((key) => {
+            if (query[key] === undefined && typeof source[key] !== "object") {
+              query[key] = source[key];
+            }
+          });
+        }
+        if (method === "GET") {
+          return { headers, query: query, body: {} };
+        }
+        if (method === "POST") {
+          return { headers, query: {}, body: body };
+        }
+        return { headers, query, body };
+      }
+
+      function findValueByKey(obj, targetKey) {
+        if (!obj || typeof obj !== "object" || !targetKey) return undefined;
+        const lowerTarget = String(targetKey).toLowerCase();
+        const stack = [obj];
+        while (stack.length) {
+          const current = stack.pop();
+          if (!current || typeof current !== "object") continue;
+          Object.keys(current).forEach((key) => {
+            const value = current[key];
+            if (String(key).toLowerCase() === lowerTarget && value !== undefined) {
+              stack.length = 0;
+              return value;
+            }
+            if (value && typeof value === "object") {
+              stack.push(value);
+            }
+          });
+        }
+        return undefined;
+      }
+
+      function addKeyValueRow(container, key, value) {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><input class="kv-input" value="${escapeHtml(key)}" /></td>
+          <td><input class="kv-input" value="${escapeHtml(String(value ?? ""))}" /></td>
+          <td><button class="action-btn">删除</button></td>
+        `;
+        tr.querySelector(".action-btn").addEventListener("click", () => tr.remove());
+        container.appendChild(tr);
+      }
+
+      function collectTableData(container) {
+        const result = {};
+        if (!container) return result;
+        Array.from(container.querySelectorAll("tr")).forEach((tr) => {
+          const inputs = tr.querySelectorAll("input");
+          if (inputs.length >= 2) {
+            const key = inputs[0].value.trim();
+            const value = inputs[1].value.trim();
+            if (key) {
+              result[key] = value;
+            }
+          }
+        });
+        return result;
+      }
+
+      if (addHeaderRow) {
+        addHeaderRow.addEventListener("click", () => addKeyValueRow(headersTable, "", ""));
+      }
+      if (addQueryRow) {
+        addQueryRow.addEventListener("click", () => addKeyValueRow(queryTable, "", ""));
+      }
+      if (copyCurlBtn) {
+        copyCurlBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(debugCurl ? debugCurl.textContent : "");
+            setStatus("已复制 cURL");
+          } catch (err) {
+            setStatus("复制失败");
+          }
+        });
+      }
+
+      function switchTab(tab) {
+        document.querySelectorAll(".nav span").forEach((el) => {
+          el.classList.toggle("active", el.getAttribute("data-tab") === tab);
+        });
+        document.getElementById("home").classList.toggle("hidden", tab !== "home");
+        document.getElementById("doc").classList.toggle("hidden", tab !== "doc");
+        document.getElementById("api").classList.toggle("hidden", tab !== "api");
+        document.getElementById("scene").classList.toggle("hidden", tab !== "scene");
+        document.getElementById("debug").classList.toggle("hidden", tab !== "debug");
+        document.getElementById("logs").classList.toggle("hidden", tab !== "logs");
+        if (tab === "logs") {
+          loadLogs();
+        }
+      }
+
+      document.querySelectorAll(".nav span").forEach((el) => {
+        el.addEventListener("click", () => switchTab(el.getAttribute("data-tab")));
+      });
+
+      document.querySelectorAll("[data-jump]").forEach((el) => {
+        el.addEventListener("click", () => switchTab(el.getAttribute("data-jump")));
+      });
+
+      if (apiSearch) {
+        apiSearch.addEventListener("input", () => loadHistory());
+      }
+
+      async function loadLogs() {
+        if (!logTableBody) {
+          return;
+        }
+        try {
+          const [statsRes, listRes, todayRes, weekRes] = await Promise.all([
+            fetch("/parse/logs/stats"),
+            fetch("/parse/logs"),
+            fetch("/parse/logs/stats/endpoint-today"),
+            fetch("/parse/logs/stats/endpoint-week")
+          ]);
+          if (statsRes.ok) {
+            const stats = await statsRes.json();
+            const total = (stats.mockHit || 0) + (stats.mockGen || 0) + (stats.mockError || 0) + (stats.mockValidationFail || 0);
+            statTotal.textContent = total;
+            statUpload.textContent = stats.uploadMock || 0;
+            statHit.textContent = stats.mockHit || 0;
+            const delta = stats.mockGen24h ? Math.round((stats.mockGen24h / Math.max(1, total)) * 100) : 0;
+            statDelta.textContent = `+${delta}% 环比`;
+            renderTrend(logTrend, [
+              stats.mockHit24h || 0,
+              stats.mockGen24h || 0,
+              stats.mockError24h || 0,
+              stats.mockValidationFail24h || 0,
+              stats.uploadMock || 0
+            ]);
+          }
+          if (listRes.ok) {
+            const list = await listRes.json();
+            renderLogTable(list);
+          }
+          if (todayRes.ok && endpointTodayStats) {
+            const list = await todayRes.json();
+            renderEndpointBars(endpointTodayStats, list);
+          }
+          if (weekRes.ok && endpointWeekStats) {
+            const list = await weekRes.json();
+            renderEndpointBars(endpointWeekStats, list);
+          }
+        } catch (err) {
+          // ignore
+        }
+      }
+
+      function renderEndpointBars(container, list) {
+        if (!container) return;
+        if (!Array.isArray(list) || !list.length) {
+          container.innerHTML = "<div class='hint'>暂无数据</div>";
+          return;
+        }
+        const sorted = list.slice().sort((a, b) => (b.count || 0) - (a.count || 0));
+        const max = Math.max(1, ...sorted.map((x) => x.count || 0));
+        container.innerHTML = sorted.map((row) => {
+          const width = Math.round(((row.count || 0) / max) * 100);
+          return `
+            <div class="bar">
+              <div>${escapeHtml(row.title || row.mockId || "-")}</div>
+              <div class="track"><div class="fill" style="width:${width}%"></div></div>
+              <div>${row.count || 0}</div>
+            </div>
+          `;
+        }).join("");
+      }
+
+      function renderTrend(container, values) {
+        if (!container) return;
+        const max = Math.max(1, ...values);
+        container.innerHTML = values.map((v, idx) => {
+          const h = Math.max(8, Math.round((v / max) * 100));
+          const color = idx === 2 ? "#ef4444" : idx === 1 ? "#dc2626" : "#fee2e2";
+          return `<div class="bar" style="height:${h}%; background:${color};"></div>`;
+        }).join("");
+      }
+
+      function renderLogTable(list) {
+        logTableBody.innerHTML = "";
+        if (!Array.isArray(list) || !list.length) {
+          logTableBody.innerHTML = "<tr><td colspan='6' class='hint'>暂无日志</td></tr>";
+          return;
+        }
+        const now = new Date();
+        logUpdatedAt.textContent = `最后更新 ${now.toLocaleTimeString()}`;
+        list.forEach((row) => {
+          const type = row.type || "-";
+          const badge = badgeClass(type);
+          const dot = dotClass(type);
+          const tr = document.createElement("tr");
+          tr.className = "log-row";
+          tr.innerHTML = `
+            <td><span class="status-dot ${dot}"></span></td>
+            <td><span class="badge ${badge}">${escapeHtml(type)}</span></td>
+            <td>${escapeHtml(row.sourceFileName || "-")}</td>
+            <td>${escapeHtml(row.message || "-")}</td>
+            <td class="muted">${escapeHtml(row.createdAt || "-")}</td>
+            <td style="text-align:right;">
+              <button class="action-btn">查看JSON</button>
+            </td>
+          `;
+          tr.querySelector(".action-btn").addEventListener("click", () => {
+            if (logModal) {
+              logModalContent.textContent = JSON.stringify(row, null, 2);
+              logModal.classList.add("open");
+            }
+          });
+          logTableBody.appendChild(tr);
+        });
+      }
+
+      function badgeClass(type) {
+        if (type === "MOCK_GEN") return "gen";
+        if (type === "MOCK_HIT") return "hit";
+        if (type === "MOCK_ERROR") return "err";
+        if (type === "MOCK_VALIDATION_FAIL") return "fail";
+        if (type === "UPLOAD_MOCK") return "upload";
+        return "upload";
+      }
+
+      function dotClass(type) {
+        if (type === "MOCK_GEN") return "dot-green";
+        if (type === "MOCK_HIT") return "dot-blue";
+        if (type === "MOCK_ERROR") return "dot-red";
+        if (type === "MOCK_VALIDATION_FAIL") return "dot-orange";
+        return "dot-gray";
+      }
+
+      switchTab("home");
+      loadHistory();
+    </script>
+  </body>
+</html>

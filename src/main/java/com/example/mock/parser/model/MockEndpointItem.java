@@ -18,6 +18,10 @@ public class MockEndpointItem {
     private String sourceFileId;
     private String sourceFileName;
     private String sourceFileUrl;
+    private String sceneId;
+    private String sceneName;
+    private Integer errorHttpStatus;
+    private String apiPath;
 
     public String getId() {
         return id;
@@ -113,5 +117,37 @@ public class MockEndpointItem {
 
     public void setSourceFileUrl(String sourceFileUrl) {
         this.sourceFileUrl = sourceFileUrl;
+    }
+
+    public String getSceneId() {
+        return sceneId;
+    }
+
+    public void setSceneId(String sceneId) {
+        this.sceneId = sceneId;
+    }
+
+    public String getSceneName() {
+        return sceneName;
+    }
+
+    public void setSceneName(String sceneName) {
+        this.sceneName = sceneName;
+    }
+
+    public Integer getErrorHttpStatus() {
+        return errorHttpStatus;
+    }
+
+    public void setErrorHttpStatus(Integer errorHttpStatus) {
+        this.errorHttpStatus = errorHttpStatus;
+    }
+
+    public String getApiPath() {
+        return apiPath;
+    }
+
+    public void setApiPath(String apiPath) {
+        this.apiPath = apiPath;
     }
 }

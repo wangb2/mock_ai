@@ -28,4 +28,24 @@ public interface MockOperationLogRepository extends JpaRepository<MockOperationL
             "GROUP BY mock_id " +
             "ORDER BY cnt DESC", nativeQuery = true)
     List<Object[]> countByMockIdLast7Days();
+
+    @Query(value = "SELECT e.scene_id, e.scene_name, COUNT(1) AS cnt " +
+            "FROM mock_operation_log l " +
+            "JOIN mock_endpoint e ON l.mock_id = e.id " +
+            "WHERE l.type IN ('MOCK_HIT','MOCK_GEN','MOCK_ERROR','MOCK_VALIDATION_FAIL') " +
+            "AND DATE(l.created_at) = CURDATE() " +
+            "AND e.scene_id IS NOT NULL AND e.scene_id <> '' " +
+            "GROUP BY e.scene_id, e.scene_name " +
+            "ORDER BY cnt DESC", nativeQuery = true)
+    List<Object[]> countBySceneIdToday();
+
+    @Query(value = "SELECT e.scene_id, e.scene_name, COUNT(1) AS cnt " +
+            "FROM mock_operation_log l " +
+            "JOIN mock_endpoint e ON l.mock_id = e.id " +
+            "WHERE l.type IN ('MOCK_HIT','MOCK_GEN','MOCK_ERROR','MOCK_VALIDATION_FAIL') " +
+            "AND l.created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY) " +
+            "AND e.scene_id IS NOT NULL AND e.scene_id <> '' " +
+            "GROUP BY e.scene_id, e.scene_name " +
+            "ORDER BY cnt DESC", nativeQuery = true)
+    List<Object[]> countBySceneIdLast7Days();
 }
