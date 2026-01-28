@@ -148,6 +148,7 @@ public class ParseController {
     @PostMapping(path = "/mock/{id}", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> mockById(@PathVariable("id") String id,
                                       @RequestBody JsonNode body,
+                                      @RequestParam java.util.Map<String, String> query,
                                       HttpServletRequest request) {
         ObjectNode headersNode = objectMapper.createObjectNode();
         java.util.Enumeration<String> headerNames = request.getHeaderNames();
@@ -157,6 +158,14 @@ public class ParseController {
         }
         ObjectNode validation = objectMapper.createObjectNode();
         validation.set("headers", headersNode);
+        
+        // 添加 query 参数到 validation 节点
+        ObjectNode queryNode = objectMapper.createObjectNode();
+        for (java.util.Map.Entry<String, String> entry : query.entrySet()) {
+            queryNode.put(entry.getKey(), entry.getValue());
+        }
+        validation.set("query", queryNode);
+        
         validation.set("body", body == null ? objectMapper.createObjectNode() : body);
         return mockByIdInternal(id, validation, body);
     }
@@ -313,10 +322,132 @@ public class ParseController {
 
     private JsonNode buildErrorResponse(MockEndpointItem item, JsonNode body) {
         JsonNode base = item.getErrorResponseExample() != null ? item.getErrorResponseExample() : item.getResponseExample();
-        JsonNode response = deepCopy(base);
-        String code = textOr(body.get("__mock_error_code"), "ERROR");
-        String message = textOr(body.get("__mock_error_message"), "mock error");
-        applyErrorFields(response, code, message);
+        JsonNode response;
+        
+        if (base == null) {
+            // 如果没有错误响应示例，创建一个默认的错误响应结构
+            ObjectNode defaultError = objectMapper.createObjectNode();
+            ObjectNode headers = defaultError.putObject("headers");
+            headers.put("Status", "400 Bad Request");
+            headers.put("ErrorCode", "ERROR");
+            ObjectNode errorBody = defaultError.putObject("body");
+            errorBody.put("ErrorCode", "ERROR");
+            errorBody.put("ErrorDescription", "mock error");
+            response = defaultError;
+        } else {
+            response = deepCopy(base);
+            // 如果 errorResponseExample 没有 headers 和 body 结构，需要包装一下
+            if (response.isObject()) {
+                ObjectNode obj = (ObjectNode) response;
+                // 检查是否已经有 headers 和 body 结构
+                boolean hasHeaders = obj.has("headers") && obj.get("headers").isObject();
+                boolean hasBody = obj.has("body") && obj.get("body").isObject();
+                
+                // 如果没有标准结构，尝试包装
+                if (!hasHeaders && !hasBody) {
+                    // 如果整个对象就是错误信息，包装成标准结构
+                    ObjectNode wrapped = objectMapper.createObjectNode();
+                    ObjectNode headers = wrapped.putObject("headers");
+                    headers.put("Status", "400 Bad Request");
+                    // 尝试从原对象中提取 ErrorCode 到 headers
+                    if (obj.has("ErrorCode")) {
+                        headers.set("ErrorCode", obj.get("ErrorCode"));
+                    }
+                    // 将原对象作为 body
+                    wrapped.set("body", obj);
+                    response = wrapped;
+                } else if (!hasHeaders) {
+                    // 只有 body，添加 headers
+                    ObjectNode headers = ((ObjectNode) response).putObject("headers");
+                    headers.put("Status", "400 Bad Request");
+                    if (obj.has("ErrorCode")) {
+                        headers.set("ErrorCode", obj.get("ErrorCode"));
+                    }
+                } else if (!hasBody) {
+                    // 只有 headers，添加 body
+                    ObjectNode errorBody = ((ObjectNode) response).putObject("body");
+                    // 尝试从原对象中提取错误信息到 body
+                    if (obj.has("ErrorCode")) {
+                        errorBody.set("ErrorCode", obj.get("ErrorCode"));
+                    }
+                    if (obj.has("ErrorDescription")) {
+                        errorBody.set("ErrorDescription", obj.get("ErrorDescription"));
+                    }
+                    if (errorBody.size() == 0) {
+                        errorBody.put("ErrorCode", "ERROR");
+                        errorBody.put("ErrorDescription", "mock error");
+                    }
+                }
+            }
+        }
+        
+        // 确保返回的响应包含 headers 和 body 结构
+        // 如果 response 没有标准结构，确保包装成标准结构
+        if (response.isObject()) {
+            ObjectNode obj = (ObjectNode) response;
+            boolean hasHeaders = obj.has("headers") && obj.get("headers").isObject();
+            boolean hasBody = obj.has("body") && obj.get("body").isObject();
+            
+            // 如果既没有 headers 也没有 body，说明整个对象就是错误信息，需要包装
+            if (!hasHeaders && !hasBody) {
+                ObjectNode wrapped = objectMapper.createObjectNode();
+                ObjectNode headers = wrapped.putObject("headers");
+                headers.put("Status", "400 Bad Request");
+                // 尝试从原对象中提取 ErrorCode 到 headers
+                if (obj.has("ErrorCode")) {
+                    headers.set("ErrorCode", obj.get("ErrorCode"));
+                }
+                // 将原对象作为 body
+                wrapped.set("body", obj);
+                response = wrapped;
+            } else if (!hasHeaders) {
+                // 只有 body，添加 headers
+                ObjectNode headers = ((ObjectNode) response).putObject("headers");
+                headers.put("Status", "400 Bad Request");
+                // 尝试从 body 中提取 ErrorCode 到 headers
+                JsonNode bodyNode = obj.get("body");
+                if (bodyNode != null && bodyNode.isObject() && bodyNode.has("ErrorCode")) {
+                    headers.set("ErrorCode", bodyNode.get("ErrorCode"));
+                }
+            } else if (!hasBody) {
+                // 只有 headers，添加 body
+                ObjectNode errorBody = ((ObjectNode) response).putObject("body");
+                // 尝试从 headers 中提取 ErrorCode 到 body
+                JsonNode headersNode = obj.get("headers");
+                if (headersNode != null && headersNode.isObject() && headersNode.has("ErrorCode")) {
+                    errorBody.set("ErrorCode", headersNode.get("ErrorCode"));
+                }
+                // 如果原对象有其他字段，也添加到 body
+                java.util.Iterator<String> fieldNames = obj.fieldNames();
+                while (fieldNames.hasNext()) {
+                    String fieldName = fieldNames.next();
+                    if (!"headers".equals(fieldName) && !"body".equals(fieldName)) {
+                        errorBody.set(fieldName, obj.get(fieldName));
+                    }
+                }
+                if (errorBody.size() == 0) {
+                    errorBody.put("ErrorCode", "ERROR");
+                    errorBody.put("ErrorDescription", "mock error");
+                }
+            }
+        }
+        
+        // 只有在明确提供了自定义错误代码和消息时，才覆盖 errorResponseExample 中的值
+        // 否则，直接返回 errorResponseExample 的原始值
+        JsonNode customCode = body.get("__mock_error_code");
+        JsonNode customMessage = body.get("__mock_error_message");
+        
+        if (customCode != null && !customCode.isMissingNode() && !customCode.asText().trim().isEmpty()) {
+            String code = customCode.asText().trim();
+            String message = textOr(body.get("__mock_error_message"), "mock error");
+            applyErrorFields(response, code, message);
+        } else if (customMessage != null && !customMessage.isMissingNode() && !customMessage.asText().trim().isEmpty()) {
+            // 只提供了自定义消息，使用 errorResponseExample 中的 ErrorCode
+            String message = customMessage.asText().trim();
+            applyErrorFields(response, null, message);
+        }
+        // 如果都没有提供，直接返回 errorResponseExample 的原始值，不进行覆盖
+        
         return response;
     }
 
@@ -333,11 +464,12 @@ public class ParseController {
             }
             for (String key : fields) {
                 String lower = key.toLowerCase(java.util.Locale.ROOT);
-                if (lower.contains("error") && lower.contains("code")) {
+                // 只有在提供了 code 或 message 时才覆盖
+                if (code != null && lower.contains("error") && lower.contains("code")) {
                     obj.put(key, code);
-                } else if (lower.contains("error") && (lower.contains("message") || lower.contains("desc"))) {
+                } else if (message != null && lower.contains("error") && (lower.contains("message") || lower.contains("desc"))) {
                     obj.put(key, message);
-                } else if (lower.equals("message") || lower.equals("msg")) {
+                } else if (message != null && (lower.equals("message") || lower.equals("msg"))) {
                     obj.put(key, message);
                 }
                 applyErrorFields(obj.get(key), code, message);
@@ -692,6 +824,24 @@ public class ParseController {
         }
         for (String path : requiredFields) {
             if (!existsPath(body, path)) {
+                // 智能匹配：如果 query.xxx 在 query 中找不到，尝试从 body 中查找
+                if (path.startsWith("query.")) {
+                    String fieldName = path.substring("query.".length());
+                    JsonNode bodyNode = body.get("body");
+                    if (bodyNode != null && bodyNode.isObject() && bodyNode.has(fieldName)) {
+                        // 在 body 中找到了，不视为缺失
+                        continue;
+                    }
+                }
+                // 智能匹配：如果 body.xxx 在 body 中找不到，尝试从 query 中查找
+                if (path.startsWith("body.")) {
+                    String fieldName = path.substring("body.".length());
+                    JsonNode queryNode = body.get("query");
+                    if (queryNode != null && queryNode.isObject() && queryNode.has(fieldName)) {
+                        // 在 query 中找到了，不视为缺失
+                        continue;
+                    }
+                }
                 missing.add(path);
             }
         }

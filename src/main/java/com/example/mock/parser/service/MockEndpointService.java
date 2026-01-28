@@ -194,6 +194,9 @@ public class MockEndpointService {
 
     /**
      * 使用文件URL直接调用新模型处理文档
+     * 两步处理：
+     * 1. 使用 fileModel (glm-4.6v-flash) 提取 API 信息（文本格式）
+     * 2. 使用 model (glm-4.7) 将文本转换为标准 JSON
      */
     private MockEndpointResult generateEndpointsWithFileUrl(String fileUrl,
                                                              String sourceFileId,
@@ -210,10 +213,31 @@ public class MockEndpointService {
                 keywordList = splitKeywords(keywords);
             }
             
+            // 第一步：使用 fileModel (glm-4.6v-flash) 提取 API 信息（文本格式）
+            logger.info("Step 1: Extracting API information using fileModel ({})", fileModel);
             String systemPrompt = buildFileUrlSystemPrompt();
             String userPrompt = buildFileUrlUserPrompt(sceneKeywords);
-            String raw = callZhipuWithFileUrl(fileUrl, systemPrompt, userPrompt);
-            List<MockEndpointItem> items = parseEndpoints(raw);
+            String recognitionText = callZhipuWithFileUrl(fileUrl, systemPrompt, userPrompt);
+            
+            // 提取识别结果文本（阶段一输出）
+            String extractedRecognition = extractRecognitionText(recognitionText);
+            if (extractedRecognition == null || extractedRecognition.trim().isEmpty()) {
+                logger.warn("Step 1: No recognition text extracted. Using full response.");
+                extractedRecognition = recognitionText;
+            }
+            
+            logger.info("Step 1 completed. Recognition text length: {}", extractedRecognition.length());
+            
+            // 第二步：使用 model (glm-4.7) 将文本转换为标准 JSON
+            logger.info("Step 2: Converting recognition text to JSON using model ({})", model);
+            String jsonPrompt = buildJsonConversionPrompt(extractedRecognition);
+            // 第二步需要更大的 max_tokens，因为要生成完整的 JSON 数组
+            String jsonResponse = callZhipuForJsonConversion(jsonPrompt);
+            
+            logger.info("Step 2 completed. JSON response length: {}", jsonResponse != null ? jsonResponse.length() : 0);
+            
+            // 解析 JSON 响应
+            List<MockEndpointItem> items = parseEndpoints(jsonResponse);
 
             MockEndpointResult result = new MockEndpointResult();
             java.util.Set<String> seenKeys = new java.util.HashSet<>();
@@ -254,7 +278,7 @@ public class MockEndpointService {
                 } else {
                     item.setMockUrl("/parse/mock/" + id);
                 }
-                item.setRaw(raw);
+                item.setRaw(jsonResponse != null ? jsonResponse : recognitionText);
                 item.setSourceFileId(sourceFileId);
                 item.setSourceFileName(sourceFileName);
                 item.setSourceFileUrl(fileUrl);
@@ -1658,27 +1682,34 @@ public class MockEndpointService {
             
             if (end > start) {
                 String arrayText = cleaned.substring(start, end + 1);
-                // 检查这个数组是否包含接口对象的特征字段
+                // 检查这个数组是否包含 "title" 字段（接口数组的特征）
                 boolean containsTitle = arrayText.contains("\"title\"") || arrayText.contains("'title'");
-                boolean containsMethod = arrayText.contains("\"method\"") || arrayText.contains("'method'");
-                boolean containsRequestExample = arrayText.contains("\"requestExample\"") || arrayText.contains("'requestExample'");
-                boolean containsResponseExample = arrayText.contains("\"responseExample\"") || arrayText.contains("'responseExample'");
-                boolean containsApiPath = arrayText.contains("\"apiPath\"") || arrayText.contains("'apiPath'");
-                
-                // 如果包含多个接口特征字段，认为是接口数组
-                int apiFeatureCount = 0;
-                if (containsTitle) apiFeatureCount++;
-                if (containsMethod) apiFeatureCount++;
-                if (containsRequestExample) apiFeatureCount++;
-                if (containsResponseExample) apiFeatureCount++;
-                if (containsApiPath) apiFeatureCount++;
-                
-                boolean isApiArray = apiFeatureCount >= 2; // 至少包含2个接口特征字段
-                
                 int length = arrayText.length();
                 candidates.add(new ArrayCandidate(start, end, arrayText, containsTitle, length));
-                logger.debug("extractJsonArray: Found array candidate at [{}, {}], length={}, containsTitle={}, isApiArray={}, apiFeatureCount={}", 
-                    start, end, length, containsTitle, isApiArray, apiFeatureCount);
+                logger.debug("extractJsonArray: Found array candidate at [{}, {}], length={}, containsTitle={}", 
+                    start, end, length, containsTitle);
+            } else {
+                // JSON 可能被截断，尝试提取到最后一个完整的对象
+                // 从 start 开始，向后查找最后一个完整的对象
+                int lastCompleteObjectEnd = findLastCompleteObject(cleaned, start);
+                if (lastCompleteObjectEnd > start) {
+                    // 尝试构造一个有效的数组（即使不完整）
+                    String partialArray = cleaned.substring(start, lastCompleteObjectEnd + 1);
+                    // 如果最后一个字符不是 ]，尝试添加 ]
+                    if (!partialArray.trim().endsWith("]")) {
+                        // 查找最后一个完整的对象
+                        int lastBrace = partialArray.lastIndexOf('}');
+                        if (lastBrace > 0) {
+                            partialArray = partialArray.substring(0, lastBrace + 1);
+                            // 尝试添加 ] 使其成为有效的数组
+                            partialArray = "[" + partialArray.substring(1) + "]";
+                        }
+                    }
+                    boolean containsTitle = partialArray.contains("\"title\"") || partialArray.contains("'title'");
+                    candidates.add(new ArrayCandidate(start, lastCompleteObjectEnd, partialArray, containsTitle, partialArray.length()));
+                    logger.warn("extractJsonArray: Found potentially truncated array at [{}, {}], attempting to extract partial array", 
+                        start, lastCompleteObjectEnd);
+                }
             }
             
             searchStart = start + 1;
@@ -1690,39 +1721,80 @@ public class MockEndpointService {
             return null;
         }
         
-        // 优先选择接口数组（包含多个接口特征字段的数组）
+        // 优先选择包含 "title" 字段的数组，如果多个，选择最大的
         ArrayCandidate best = null;
         for (ArrayCandidate candidate : candidates) {
-            if (candidate.isApiArray) {
-                // 优先选择包含 "title" 的接口数组，如果多个，选择特征字段最多的，然后选择最大的
-                if (best == null || 
-                    (!best.containsTitle && candidate.containsTitle) ||
-                    (best.containsTitle == candidate.containsTitle && candidate.apiFeatureCount > best.apiFeatureCount) ||
-                    (best.containsTitle == candidate.containsTitle && candidate.apiFeatureCount == best.apiFeatureCount && candidate.length > best.length)) {
+            if (candidate.containsTitle) {
+                if (best == null || candidate.length > best.length) {
                     best = candidate;
                 }
             }
         }
         
-        // 如果没有找到接口数组，选择最大的数组（但至少要包含对象结构，避免选择简单的字符串数组）
+        // 如果没有找到包含 "title" 的数组，选择最大的数组
         if (best == null) {
             for (ArrayCandidate candidate : candidates) {
-                // 至少应该包含对象结构（包含 { 和 }）
-                if (candidate.text.contains("{") && candidate.text.contains("}")) {
-                    if (best == null || candidate.length > best.length) {
-                        best = candidate;
-                    }
+                if (best == null || candidate.length > best.length) {
+                    best = candidate;
                 }
             }
         }
         
         if (best != null) {
-            logger.info("extractJsonArray: Selected array at [{}, {}], length={}, containsTitle={}, isApiArray={}, apiFeatureCount={}", 
-                best.start, best.end, best.length, best.containsTitle, best.isApiArray, best.apiFeatureCount);
+            logger.info("extractJsonArray: Selected array at [{}, {}], length={}, containsTitle={}", 
+                best.start, best.end, best.length, best.containsTitle);
             return best.text;
         }
         
         return null;
+    }
+    
+    /**
+     * 查找最后一个完整的 JSON 对象（用于处理被截断的 JSON）
+     * 从指定位置开始，向后查找最后一个完整的对象（以 } 结尾且括号匹配）
+     */
+    private int findLastCompleteObject(String text, int start) {
+        int depth = 0;
+        int lastCompleteEnd = start;
+        boolean inString = false;
+        char stringChar = 0;
+        boolean foundFirstBrace = false;
+        
+        for (int i = start; i < text.length(); i++) {
+            char ch = text.charAt(i);
+            
+            // Handle string literals
+            if (!inString && (ch == '"' || ch == '\'')) {
+                inString = true;
+                stringChar = ch;
+            } else if (inString && ch == stringChar) {
+                if (i == 0 || text.charAt(i - 1) != '\\') {
+                    inString = false;
+                }
+            }
+            
+            if (!inString) {
+                if (ch == '{' || ch == '[') {
+                    if (ch == '{') {
+                        foundFirstBrace = true;
+                    }
+                    depth++;
+                } else if (ch == '}' || ch == ']') {
+                    depth--;
+                    if (depth == 0 && ch == '}' && foundFirstBrace) {
+                        // 找到了一个完整的对象（从 { 开始，到 } 结束，且括号匹配）
+                        lastCompleteEnd = i;
+                    }
+                }
+            }
+        }
+        
+        // 如果没有找到完整的对象，返回 start（表示没有找到）
+        if (lastCompleteEnd == start && !foundFirstBrace) {
+            return start;
+        }
+        
+        return lastCompleteEnd;
     }
     
     private static class ArrayCandidate {
@@ -1731,8 +1803,6 @@ public class MockEndpointService {
         final String text;
         final boolean containsTitle;
         final int length;
-        final boolean isApiArray;
-        final int apiFeatureCount;
         
         ArrayCandidate(int start, int end, String text, boolean containsTitle, int length) {
             this.start = start;
@@ -1740,19 +1810,6 @@ public class MockEndpointService {
             this.text = text;
             this.containsTitle = containsTitle;
             this.length = length;
-            
-            // 计算接口特征字段数量
-            boolean containsMethod = text.contains("\"method\"") || text.contains("'method'");
-            boolean containsRequestExample = text.contains("\"requestExample\"") || text.contains("'requestExample'");
-            boolean containsResponseExample = text.contains("\"responseExample\"") || text.contains("'responseExample'");
-            boolean containsApiPath = text.contains("\"apiPath\"") || text.contains("'apiPath'");
-            
-            this.apiFeatureCount = (containsTitle ? 1 : 0) + 
-                                  (containsMethod ? 1 : 0) + 
-                                  (containsRequestExample ? 1 : 0) + 
-                                  (containsResponseExample ? 1 : 0) + 
-                                  (containsApiPath ? 1 : 0);
-            this.isApiArray = this.apiFeatureCount >= 2; // 至少包含2个接口特征字段
         }
     }
 
@@ -1849,6 +1906,58 @@ public class MockEndpointService {
         JsonNode content = node.path("choices").path(0).path("message").path("content");
         String result = content.isMissingNode() ? response.getBody() : content.asText();
         logger.info("Zhipu API Response Content Length: {}", result != null ? result.length() : 0);
+        return result;
+    }
+
+    /**
+     * 专门用于第二步 JSON 转换的调用方法，使用更大的 max_tokens
+     */
+    private String callZhipuForJsonConversion(String prompt) throws IOException {
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        headers.set("Authorization", "Bearer " + apiKey);
+
+        ObjectNode body = objectMapper.createObjectNode();
+        body.put("model", model);
+        ArrayNode messages = body.putArray("messages");
+        ObjectNode user = messages.addObject();
+        user.put("role", "user");
+        user.put("content", prompt);
+        body.put("temperature", temperature);
+        // 第二步需要更大的 max_tokens，因为要生成完整的 JSON 数组（包含多个接口）
+        // 默认 maxTokens 是 2048，这里增加到 4096
+        int jsonConversionMaxTokens = Math.max(maxTokens * 2, 4096);
+        body.put("max_tokens", jsonConversionMaxTokens);
+        ObjectNode thinking = body.putObject("thinking");
+        thinking.put("type", "disabled");
+
+        String requestBody = objectMapper.writeValueAsString(body);
+        logger.info("Zhipu JSON Conversion API Request - URL: {}, Model: {}, MaxTokens: {}", API_URL, model, jsonConversionMaxTokens);
+        logger.debug("Zhipu JSON Conversion API Request Prompt (first 500 chars): {}", 
+                prompt.length() > 500 ? prompt.substring(0, 500) + "..." : prompt);
+
+        HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
+        ResponseEntity<String> response = restTemplate.postForEntity(API_URL, request, String.class);
+        
+        logger.info("Zhipu JSON Conversion API Response - Status: {}", response.getStatusCode());
+        
+        if (!response.getStatusCode().is2xxSuccessful() || response.getBody() == null) {
+            throw new IOException("Zhipu API error: " + response.getStatusCode());
+        }
+
+        JsonNode node = objectMapper.readTree(response.getBody());
+        JsonNode choice = node.path("choices").path(0);
+        String finishReason = choice.path("finish_reason").asText("");
+        JsonNode content = choice.path("message").path("content");
+        String result = content.isMissingNode() ? response.getBody() : content.asText();
+        
+        logger.info("Zhipu JSON Conversion API Response - FinishReason: {}, Content Length: {}", 
+                finishReason, result != null ? result.length() : 0);
+        
+        if ("length".equals(finishReason)) {
+            logger.warn("JSON conversion response was truncated due to max_tokens limit. Consider increasing max_tokens or simplifying the prompt.");
+        }
+        
         return result;
     }
 
@@ -1991,25 +2100,11 @@ public class MockEndpointService {
                 logger.info("Response Content (last 500 chars): {}", result.substring(result.length() - 500));
             }
             // 检查是否包含JSON数组
-            int jsonArrayStart = result.indexOf('[');
-            int jsonObjectStart = result.indexOf('{');
-            int jsonStart = Math.max(jsonArrayStart, jsonObjectStart);
-            
-            if (jsonArrayStart >= 0) {
-                // 检查这个数组是否包含 "title" 字段（接口数组的特征）
-                String arrayPreview = result.substring(jsonArrayStart, Math.min(jsonArrayStart + 1000, result.length()));
-                boolean containsTitle = arrayPreview.contains("\"title\"") || arrayPreview.contains("'title'");
-                logger.info("Found JSON array at position: {}, containsTitle={}, preview: {}", 
-                        jsonArrayStart, containsTitle, 
-                        arrayPreview.length() > 500 ? arrayPreview.substring(0, 500) + "..." : arrayPreview);
-            }
-            
-            if (jsonObjectStart >= 0 && jsonObjectStart != jsonArrayStart) {
-                logger.info("Found JSON object at position: {}, preview: {}", 
-                        jsonObjectStart, result.substring(jsonObjectStart, Math.min(jsonObjectStart + 500, result.length())));
-            }
-            
-            if (jsonStart < 0) {
+            int jsonStart = Math.max(result.indexOf('['), result.indexOf('{'));
+            if (jsonStart >= 0) {
+                logger.info("Found JSON at position: {}, JSON preview: {}", 
+                        jsonStart, result.substring(jsonStart, Math.min(jsonStart + 500, result.length())));
+            } else {
                 logger.warn("No JSON array or object found in response! Response only contains stage 1 text.");
             }
         }
@@ -2420,6 +2515,67 @@ public class MockEndpointService {
               "- 示例：阶段一内容结束后，立即输出 [{\"title\":\"...\",...}]\n" +
               "- **关键：阶段一完成后，必须立即开始输出JSON数组，不要有任何停顿、说明或换行**\n";
 
+    }
+
+    /**
+     * 构建将识别结果转换为JSON的提示词（第二步）
+     */
+    private String buildJsonConversionPrompt(String recognitionText) {
+        return "你是接口Mock数据生成助手。请根据以下接口识别结果，生成标准的JSON数组格式的接口Mock数据。\n\n"
+                + "**重要要求：**\n"
+                + "1. 只能输出严格JSON数组，不要包含任何解释文字、markdown代码块标记\n"
+                + "2. JSON数组必须直接以 [ 开始，以 ] 结束\n"
+                + "3. 必须严格按照以下JSON结构生成，不要新增或删除字段\n"
+                + "4. 所有字段都必须填充合理的Mock值，不能为空、null或undefined\n"
+                + "5. 数组字段必须生成完整的数组结构，对象字段必须生成完整的对象结构\n\n"
+                + "**JSON结构（固定格式）：**\n"
+                + "[\n"
+                + "  {\n"
+                + "    \"title\": \"接口名称\",\n"
+                + "    \"method\": \"GET | POST\",\n"
+                + "    \"apiPath\": \"接口路径\",\n"
+                + "    \"requestExample\": {\n"
+                + "      \"headers\": {\"字段名\": \"Mock值\"},\n"
+                + "      \"query\": {\"字段名\": \"Mock值\"},\n"
+                + "      \"body\": {\"字段名\": \"Mock值\"}\n"
+                + "    },\n"
+                + "    \"responseExample\": {\n"
+                + "      \"headers\": {\"字段名\": \"Mock值\"},\n"
+                + "      \"body\": {\"字段名\": \"Mock值\", \"数组字段\": [{\"子字段\": \"Mock值\"}]}\n"
+                + "    },\n"
+                + "    \"errorResponseExample\": {\n"
+                + "      \"headers\": {\"Status\": \"400 Bad Request\", \"ErrorCode\": \"ERROR001\"},\n"
+                + "      \"body\": {\"ErrorCode\": \"ERROR001\", \"ErrorDescription\": \"Validation failed\"}\n"
+                + "    },\n"
+                + "    \"requiredFields\": [\"headers.字段名\", \"query.字段名\", \"body.字段名\"],\n"
+                + "    \"errorHttpStatus\": 400\n"
+                + "  }\n"
+                + "]\n\n"
+                + "**字段映射规则：**\n"
+                + "- 识别结果中的【请求头字段】→ requestExample.headers\n"
+                + "- 识别结果中的【请求参数（Query Parameters）】→ requestExample.query（GET请求）\n"
+                + "- 识别结果中的【请求体字段（Request Body）】→ requestExample.body（POST请求）\n"
+                + "- 识别结果中的【响应头字段】→ responseExample.headers\n"
+                + "- 识别结果中的【响应体字段】→ responseExample.body\n"
+                + "- 识别结果中的【必填字段路径】→ requiredFields（格式：headers.xxx / query.xxx / body.xxx）\n"
+                + "- 识别结果中的【HTTP 状态码】→ errorHttpStatus\n\n"
+                + "**字段值填充规则（重要：生成简洁的Mock值，避免过长字符串）：**\n"
+                + "- 如果识别结果中有示例值，使用示例值（但如果示例值过长，使用简化版本）\n"
+                + "- 如果识别结果中没有示例值，根据字段名和语义生成**简洁合理**的Mock值\n"
+                + "- **字符串字段值长度限制：**\n"
+                + "  * ID类字段（如 id, userId, request-id）：6-20个字符，如 \"123456\" 或 \"USER001\"\n"
+                + "  * 名称类字段（如 name, title, label）：5-30个字符，如 \"Test Name\" 或 \"示例名称\"\n"
+                + "  * 长ID类字段（如 eid, iccid, imei）：20-32个字符，如 \"A1B2C3D4E5F6G7H8I9J0\"\n"
+                + "  * URL类字段：50-100个字符，如 \"https://example.com/api/v1/endpoint\"\n"
+                + "  * 描述类字段：20-50个字符，如 \"This is a test description\"\n"
+                + "  * **禁止生成超过100个字符的字符串值**\n"
+                + "- 数组字段必须生成至少1-2个元素的数组，每个元素包含所有子字段\n"
+                + "- 对象字段必须包含所有子字段并填充值\n"
+                + "- 所有字段都不能为空、null或undefined\n\n"
+                + "**接口识别结果：**\n"
+                + recognitionText
+                + "\n\n"
+                + "**请根据以上识别结果，生成标准的JSON数组。只输出JSON，不要有任何解释文字。**";
     }
 
     private String buildManualPrompt(String userInput) {
