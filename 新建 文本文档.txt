@@ -1,0 +1,231 @@
+2026-01-27 19:12:55.584  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : Response Content (first 2000 chars): === 接口序号：请求添加副设备(苹果) ===
+请求方式：POST
+请求路径：/signupForSIMService
+
+【请求头字段（Request Headers）】
+- 字段名 | 是否必填（M / O） | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- ReferenceID | M | KSK20120530221525000839
+
+【请求参数（Query Parameters）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- 无
+
+【请求体字段（Request Body）】
+- 字段名 | 是否必填 | 示例值
+- request-id | M | 123
+- action-name | M | "signupForSIMService"
+- primary-iccid | M | "1234567890123456"
+- eid | M | "副设备EID"
+- secondary-device-iccids | O | ["副设备ICCID1", "副设备ICCID2"]
+- secondary-device-imei | M | "副设备IMEI"
+- secondary-device-meid | O | "副设备MEID"
+- secondary-device-type | O | "watch"
+- associated-subscription | O | 2
+- service | O | "sa-watch"
+
+【响应头字段（Response Headers）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- Status | M | "200 OK"
+
+【响应体字段（Response Body）】
+- 字段名 | 是否必填 | 示例值 / 枚举值
+- response-id | M | 456
+- status | M | 6000
+- signup-url | M | "https://yihaoduozhongduan.com:8088/yhdzd/yhdzdLogin"
+- signup-url-post-data | M | "post-data-id=xxxxxx&primary-msisdn=13810972375&eid=xxxxxx&type=2&sign=xxxxxxxxxxxxxxxxxxxxxx"
+
+【错误响应信息】
+- 错误字段（如 ErrorCode、ErrorDescription）
+- HTTP 状态码（若文档中提供）
+- ErrorCode | M | 6002
+- ErrorDescription | M | "操作被拒绝(包含 TAC 及 EID 不合法)"
+- HTTP 状态码 | 400
+
+【必填字段路径】
+- headers.SourceSystemID
+- headers.ReferenceID
+- body.request-id
+- body.action-name
+- body.primary-iccid
+- body.eid
+- body.secondary-device-imei
+
+=== 接口序号：请求业务查询(苹果) ===
+请求方式：POST
+请求路径：/getSIMStatus
+
+【请求头字段（Request Headers）】
+- 字段名 | 是否必填（M / O） | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- ReferenceID | M | KSK20120530221525000839
+
+【请求参数（Query Parameters）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- 无
+
+【请求体字段（Request Body）】
+- 字段名 | 是否必填 | 示例值
+- request-id | M | 123
+- action-name | M | "getSIMStatus"
+- primary-iccid | M | "1234567890123456"
+- iccid | O | "副设备eSIM卡"
+- eid | O | "副设备EID"
+- imei | O | "副设备IMEI"
+
+【响应头字段（Response Headers）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- Status | M | "200 OK"
+
+【响应体字段（Response Body）】
+- 字段名 | 是否必填 | 示例值 / 枚举值
+- response-id...
+2026-01-27 19:12:55.584  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : Response Content (last 500 chars): ers）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- 无
+
+【请求体字段（Request Body）】
+- 字段名 | 是否必填 | 示例值
+- request-id | M | 123
+- action-name | M | "getEntitlement"
+- entitlement-names | M | ["Multi-SIM", "sa-watch", "eSIM 转移"]
+
+【响应头字段（Response Headers）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- Status | M | "200 OK"
+
+【响应体字段（Response Body）】
+- 字段名 | 是否必填 | 示例值 / 枚举值
+- response-id | M | 456
+- status | M | 6000
+- response | M | [{"entitlement-name": "Multi-SIM", "entitlement-status": 6100}, {"entitlement
+2026-01-27 19:12:55.584  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : Found JSON at position: 2260, JSON preview: {"eid": "副设备EID", "iccid": "副设备ICCID", "activation-status": "Active", "alt-smdp-fqdn": "SM-DP+地址", "associated-subscription": 2}, {"eid": "副设备EID2", "iccid": "副设备ICCID2", "activation-status": "Inactive", "alt-smdp-fqdn": "SM-DP+地址", "associated-subscription": 2}]
+- subscription | M | [{"eid": "副设备EID", "imei": "副设备IMEI", "iccid": "副设备ICCID", "activation-status": "Active", "alt-smdp-fqdn": "SM-DP+地址", "associated-subscription": 2}, {"eid": "副设备EID2", "imei": "副设备IMEI2", "iccid": "副设备ICCID2", "act
+2026-01-27 19:12:55.584  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : === 模型识别结果（第一步）===
+2026-01-27 19:12:55.584  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : 识别内容预览：
+=== 接口序号：请求添加副设备(苹果) ===
+请求方式：POST
+请求路径：/signupForSIMService
+
+【请求头字段（Request Headers）】
+- 字段名 | 是否必填（M / O） | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- ReferenceID | M | KSK20120530221525000839
+
+【请求参数（Query Parameters）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- 无
+
+【请求体字段（Request Body）】
+- 字段名 | 是否必填 | 示例值
+- request-id | M | 123
+- action-name | M | "signupForSIMService"
+- primary-iccid | M | "1234567890123456"
+- eid | M | "副设备EID"
+- secondary-device-iccids | O | ["副设备ICCID1", "副设备ICCID2"]
+- secondary-device-imei | M | "副设备IMEI"
+- secondary-device-meid | O | "副设备MEID"
+- secondary-device-type | O | "watch"
+- associated-subscription | O | 2
+- service | O | "sa-watch"
+
+【响应头字段（Response Headers）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- Status | M | "200 OK"
+
+【响应体字段（Response Body）】
+- 字段名 | 是否必填 | 示例值 / 枚举值
+- response-id | M | 456
+- status | M | 6000
+- signup-url | M | "https://yihaoduozhongduan.com:8088/yhdzd/yhdzdLogin"
+- signup-url-post-data | M | "post-data-id=xxxxxx&primary-msisdn=13810972375&eid=xxxxxx&type=2&sign=xxxxxxxxxxxxxxxxxxxxxx"
+
+【错误响应信息】
+- 错误字段（如 ErrorCode、ErrorDescription）
+- HTTP 状态码（若文档中提供）
+- ErrorCode | M | 6002
+- ErrorDescription | M | "操作被拒绝(包含 TAC 及 EID 不合法)"
+- HTTP 状态码 | 400
+
+【必填字段路径】
+- headers.SourceSystemID
+- headers.ReferenceID
+- body.request-id
+- body.action-name
+- body.primary-iccid
+- body.eid
+- body.secondary-device-imei
+
+=== 接口序号：请求业务查询(苹果) ===
+请求方式：POST
+请求路径：/getSIMStatus
+
+【请求头字段（Request Headers）】
+- 字段名 | 是否必填（M / O） | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- ReferenceID | M | KSK20120530221525000839
+
+【请求参数（Query Parameters）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- 无
+
+【请求体字段（Request Body）】
+- 字段名 | 是否必填 | 示例值
+- request-id | M | 123
+- action-name | M | "getSIMStatus"
+- primary-iccid | M | "1234567890123456"
+- iccid | O | "副设备eSIM卡"
+- eid | O | "副设备EID"
+- imei | O | "副设备IMEI"
+
+【响应头字段（Response Headers）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- Status | M | "200 OK"
+
+【响应体字段（Response Body）】
+- 字段名 | 是否必填 | 示例值 / 枚举值
+- response-id...
+2026-01-27 19:12:55.584  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : （识别内容总长度：2260 字符，已截断）
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : readJsonLoosely: direct parse failed, trying to extract JSON. Error: Unexpected character ('=' (code 61)): expected a valid value (JSON String, Number, Array, Object or token 'null', 'true' or 'false')
+ at [Source: (String)"=== 接口序号：请求添加副设备(苹果) ===
+请求方式：POST
+请求路径：/signupForSIMService
+
+【请求头字段（Request Headers）】
+- 字段名 | 是否必填（M / O） | 示例值（仅当文档中明确给出）
+- SourceSystemID | M | CRM
+- ReferenceID | M | KSK20120530221525000839
+
+【请求参数（Query Parameters）】
+- 字段名 | 是否必填 | 示例值（仅当文档中明确给出）
+- 无
+
+【请求体字段（Request Body）】
+- 字段名 | 是否必填 | 示例值
+- request-id | M | 123
+- action-name | M | "signupForSIMService"
+- primary-iccid | M | "1234567890123456"
+- eid | M | "副设备EID"
+- secondary-device-iccids | O | ["副设备ICCID1", "副设备ICCID2"]
+- secondary-devic"[truncated 4370 chars]; line: 1, column: 2]
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : extractJsonArray: Found array candidate at [456, 481], length=26, containsTitle=false
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : extractJsonArray: Found array candidate at [2259, 2522], length=264, containsTitle=false
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : extractJsonArray: Found array candidate at [2545, 2847], length=303, containsTitle=false
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : extractJsonArray: Found array candidate at [4538, 4573], length=36, containsTitle=false
+2026-01-27 19:12:55.587  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : extractJsonArray: Selected array at [2545, 2847], length=303, containsTitle=false
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : readJsonLoosely: extracted JSON array length: 303
+2026-01-27 19:12:55.587  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpoints: 解析到JSON数组，包含 2 个元素
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpoints: 解析数组元素 1/2
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpointNode: node fields: eid, imei, iccid, activation-status, alt-smdp-fqdn, associated-subscription
+2026-01-27 19:12:55.587  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpointNode: parsed item. title=, method=, hasRequest=false, hasResponse=false, hasError=false, requiredFields=0
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpoints: 成功解析元素 1. title=, method=, hasRequest=false, hasResponse=false
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpoints: 解析数组元素 2/2
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpointNode: node fields: eid, imei, iccid, activation-status, alt-smdp-fqdn, associated-subscription
+2026-01-27 19:12:55.587  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpointNode: parsed item. title=, method=, hasRequest=false, hasResponse=false, hasError=false, requiredFields=0
+2026-01-27 19:12:55.587 DEBUG 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpoints: 成功解析元素 2. title=, method=, hasRequest=false, hasResponse=false
+2026-01-27 19:12:55.588  INFO 40384 --- [io-8080-exec-10] c.e.m.p.service.MockEndpointService      : parseEndpoints: 成功解析 2 个接口

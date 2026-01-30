@@ -11,6 +11,7 @@ import com.example.mock.parser.service.MockEndpointService;
 import com.example.mock.parser.service.MockSceneService;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.FileSystemResource;
@@ -49,6 +50,8 @@ public class ParseController {
     private final MockSceneService mockSceneService;
     private final ObjectMapper objectMapper;
     private final com.example.mock.parser.service.QiniuService qiniuService;
+    private final com.example.mock.parser.service.AsyncMockProcessingService asyncMockProcessingService;
+    private final com.example.mock.parser.repository.UploadedFileRepository uploadedFileRepository;
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ParseController.class);
 
     @Value("${mock.upload-dir:uploads}")
@@ -59,13 +62,17 @@ public class ParseController {
                            MockEndpointService mockEndpointService,
                            MockSceneService mockSceneService,
                            ObjectMapper objectMapper,
-                           com.example.mock.parser.service.QiniuService qiniuService) {
+                           com.example.mock.parser.service.QiniuService qiniuService,
+                           com.example.mock.parser.service.AsyncMockProcessingService asyncMockProcessingService,
+                           com.example.mock.parser.repository.UploadedFileRepository uploadedFileRepository) {
         this.documentParserService = documentParserService;
         this.mockGenerationService = mockGenerationService;
         this.mockEndpointService = mockEndpointService;
         this.mockSceneService = mockSceneService;
         this.objectMapper = objectMapper;
         this.qiniuService = qiniuService;
+        this.asyncMockProcessingService = asyncMockProcessingService;
+        this.uploadedFileRepository = uploadedFileRepository;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -88,25 +95,87 @@ public class ParseController {
     public ResponseEntity<?> generateEndpoints(@RequestParam("file") MultipartFile file,
                                                @RequestParam("sceneId") String sceneId,
                                                @RequestParam(name = "fullAi", defaultValue = "false") boolean fullAi) throws IOException {
+        logger.info("========== 开始处理文档上传请求（异步模式） ==========");
+        logger.info("请求参数: fileName={}, size={}, sceneId={}, fullAi={}", 
+                file.getOriginalFilename(), file.getSize(), sceneId, fullAi);
+        
         MockSceneItem scene = mockSceneService.getScene(sceneId);
         if (scene == null) {
+            logger.error("场景不存在: sceneId={}", sceneId);
             return ResponseEntity.badRequest().body("Scene not found");
         }
+        logger.info("场景信息: sceneId={}, sceneName={}, keywords={}", 
+                scene.getId(), scene.getName(), scene.getKeywords());
+        
         String fileId = UUID.randomUUID().toString().replace("-", "");
         String originalName = file.getOriginalFilename() == null ? "document" : file.getOriginalFilename();
+        
+        logger.info("步骤1: 删除同名文档的旧接口. fileName={}", originalName);
         mockEndpointService.deleteBySourceFileName(originalName);
         
+        logger.info("步骤2: 开始上传文件. fileId={}, fileName={}", fileId, originalName);
         // 尝试上传到七牛云，如果失败则保存到本地
         String fileUrl = saveUpload(fileId, originalName, file);
-        logger.info("File upload result. fileId={}, fileName={}, fileUrl={}, isQiniuUrl={}", 
+        logger.info("步骤2完成: 文件上传完成. fileId={}, fileName={}, fileUrl={}, isQiniuUrl={}", 
                 fileId, originalName, fileUrl, 
                 fileUrl != null && (fileUrl.startsWith("http://") || fileUrl.startsWith("https://")));
 
-        ParsedDocument parsedDocument = documentParserService.parse(file);
-        logger.info("Upload document for mock generation. fileId={}, fileName={}, size={}, fullAi={}, fileUrl={}",
-                fileId, originalName, file.getSize(), fullAi, fileUrl);
-        MockEndpointResult result = mockEndpointService.generateEndpoints(parsedDocument, fileId, originalName, fileUrl,
-                fullAi, scene.getId(), scene.getName(), scene.getKeywords());
+        // 创建上传记录
+        com.example.mock.parser.entity.UploadedFileEntity fileEntity = new com.example.mock.parser.entity.UploadedFileEntity();
+        fileEntity.setFileId(fileId);
+        fileEntity.setFileName(originalName);
+        fileEntity.setFileUrl(fileUrl);
+        fileEntity.setStatus(com.example.mock.parser.entity.UploadedFileEntity.ProcessingStatus.PENDING);
+        fileEntity.setSceneId(scene.getId());
+        fileEntity.setSceneName(scene.getName());
+        fileEntity.setFullAi(fullAi);
+        uploadedFileRepository.save(fileEntity);
+        
+        // 添加到异步处理队列（只传递URL，不保存本地文件）
+        com.example.mock.parser.service.AsyncMockProcessingService.ProcessingTask task = 
+                new com.example.mock.parser.service.AsyncMockProcessingService.ProcessingTask(
+                        fileId, originalName, fileUrl, fullAi, 
+                        scene.getId(), scene.getName(), scene.getKeywords());
+        asyncMockProcessingService.addTask(task);
+        
+        logger.info("文件已添加到处理队列. fileId={}, fileName={}", fileId, originalName);
+        
+        // 立即返回响应
+        ObjectNode response = objectMapper.createObjectNode();
+        response.put("fileId", fileId);
+        response.put("fileName", originalName);
+        response.put("status", "PENDING");
+        response.put("message", "文件上传成功，正在排队处理");
+        
+        return ResponseEntity.ok(response);
+    }
+    
+    /**
+     * 查询上传文件列表
+     */
+    @GetMapping(path = "/uploaded-files")
+    public ResponseEntity<?> getUploadedFiles() {
+        java.util.List<com.example.mock.parser.entity.UploadedFileEntity> files = 
+                uploadedFileRepository.findAllByOrderByUploadedAtDesc();
+        java.util.List<ObjectNode> result = new java.util.ArrayList<>();
+        for (com.example.mock.parser.entity.UploadedFileEntity file : files) {
+            ObjectNode node = objectMapper.createObjectNode();
+            node.put("fileId", file.getFileId());
+            node.put("fileName", file.getFileName());
+            node.put("fileUrl", file.getFileUrl() != null ? file.getFileUrl() : "");
+            node.put("status", file.getStatus().name());
+            node.put("sceneId", file.getSceneId() != null ? file.getSceneId() : "");
+            node.put("sceneName", file.getSceneName() != null ? file.getSceneName() : "");
+            node.put("generatedCount", file.getGeneratedCount() != null ? file.getGeneratedCount() : 0);
+            node.put("errorMessage", file.getErrorMessage() != null ? file.getErrorMessage() : "");
+            if (file.getUploadedAt() != null) {
+                node.put("uploadedAt", file.getUploadedAt().toString());
+            }
+            if (file.getProcessedAt() != null) {
+                node.put("processedAt", file.getProcessedAt().toString());
+            }
+            result.add(node);
+        }
         return ResponseEntity.ok(result);
     }
 
@@ -688,8 +757,21 @@ public class ParseController {
         return ResponseEntity.ok(item);
     }
 
+    @Value("${llm.chat-provider:zhipu}")
+    private String defaultChatProvider;
+    
+    @GetMapping(path = "/endpoint/chat-config")
+    public ResponseEntity<?> getChatConfig() {
+        ObjectNode result = objectMapper.createObjectNode();
+        result.put("defaultProvider", defaultChatProvider);
+        return ResponseEntity.ok(result);
+    }
+    
     @PostMapping(path = "/endpoint/llm-preview", consumes = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> manualPreview(@RequestBody JsonNode body) throws IOException {
+        // 获取模型选择（优先使用请求参数，否则使用配置的默认值）
+        String providerName = textOr(body == null ? null : body.get("provider"), defaultChatProvider);
+        
         // 优先使用 messages 数组（多轮对话，支持多模态）
         JsonNode messagesNode = body == null ? null : body.get("messages");
         List<Object> messages = new ArrayList<>();
@@ -708,8 +790,90 @@ public class ParseController {
                             messages.add(text);
                         }
                     } else if (contentNode.isArray()) {
-                        // 多模态消息（文本+图片），直接传递 JsonNode
-                        messages.add(contentNode);
+                        // 多模态消息（文本+图片），需要处理图片上传
+                        ObjectNode processedContent = objectMapper.createObjectNode();
+                        ArrayNode contentArray = processedContent.putArray("content");
+                        for (JsonNode item : contentNode) {
+                            String type = textOr(item.get("type"), "");
+                            if ("text".equals(type)) {
+                                ObjectNode textItem = contentArray.addObject();
+                                textItem.put("type", "text");
+                                textItem.put("text", textOr(item.get("text"), ""));
+                            } else if ("image_url".equals(type)) {
+                                // 处理图片：如果是 base64，上传到七牛云
+                                JsonNode imageUrlNode = item.get("image_url");
+                                String imageUrl = null;
+                                if (imageUrlNode != null && imageUrlNode.isTextual()) {
+                                    String base64Url = imageUrlNode.asText();
+                                    if (base64Url.startsWith("data:image/")) {
+                                        // Base64 图片，需要上传到七牛云
+                                        try {
+                                            String[] parts = base64Url.split(",");
+                                            if (parts.length == 2) {
+                                                String base64Data = parts[1];
+                                                String mimeType = parts[0].split(";")[0].substring(5); // data:image/png -> image/png
+                                                byte[] imageBytes = java.util.Base64.getDecoder().decode(base64Data);
+                                                
+                                                // 创建临时 MultipartFile
+                                                String fileName = UUID.randomUUID().toString() + "." + 
+                                                    (mimeType.contains("png") ? "png" : 
+                                                     mimeType.contains("jpeg") || mimeType.contains("jpg") ? "jpg" : "png");
+                                                
+                                                // 创建简单的 MultipartFile 实现
+                                                MultipartFile multipartFile = new MultipartFile() {
+                                                    @Override
+                                                    public String getName() { return "image"; }
+                                                    @Override
+                                                    public String getOriginalFilename() { return fileName; }
+                                                    @Override
+                                                    public String getContentType() { return mimeType; }
+                                                    @Override
+                                                    public boolean isEmpty() { return imageBytes.length == 0; }
+                                                    @Override
+                                                    public long getSize() { return imageBytes.length; }
+                                                    @Override
+                                                    public byte[] getBytes() throws IOException { return imageBytes; }
+                                                    @Override
+                                                    public java.io.InputStream getInputStream() throws IOException {
+                                                        return new java.io.ByteArrayInputStream(imageBytes);
+                                                    }
+                                                    @Override
+                                                    public void transferTo(java.io.File dest) throws IOException, IllegalStateException {
+                                                        java.nio.file.Files.write(dest.toPath(), imageBytes);
+                                                    }
+                                                };
+                                                
+                                                // 上传到七牛云
+                                                String fileId = UUID.randomUUID().toString().replace("-", "");
+                                                imageUrl = qiniuService.uploadFile(multipartFile, fileId, fileName);
+                                                if (imageUrl == null) {
+                                                    logger.warn("Failed to upload image to Qiniu, using base64 URL");
+                                                    imageUrl = base64Url; // 如果上传失败，使用原始 base64
+                                                } else {
+                                                    logger.info("Image uploaded to Qiniu. url={}", imageUrl);
+                                                }
+                                            }
+                                        } catch (Exception e) {
+                                            logger.error("Failed to process base64 image", e);
+                                            imageUrl = imageUrlNode.asText(); // 使用原始值
+                                        }
+                                    } else {
+                                        // 已经是 URL
+                                        imageUrl = base64Url;
+                                    }
+                                } else if (imageUrlNode != null && imageUrlNode.isObject()) {
+                                    imageUrl = textOr(imageUrlNode.get("url"), "");
+                                }
+                                
+                                if (imageUrl != null && !imageUrl.isEmpty()) {
+                                    ObjectNode imageItem = contentArray.addObject();
+                                    imageItem.put("type", "image_url");
+                                    ObjectNode imageUrlObj = imageItem.putObject("image_url");
+                                    imageUrlObj.put("url", imageUrl);
+                                }
+                            }
+                        }
+                        messages.add(processedContent.get("content"));
                     } else {
                         // 其他类型，尝试转换为字符串
                         messages.add(contentNode.asText());
@@ -729,8 +893,7 @@ public class ParseController {
         }
         
         // 记录日志用于调试
-        org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ParseController.class);
-        logger.info("Manual preview request. messages count: {}", messages.size());
+        logger.info("Manual preview request. provider={}, messages count: {}", providerName, messages.size());
         for (int i = 0; i < messages.size(); i++) {
             Object msg = messages.get(i);
             if (msg instanceof com.fasterxml.jackson.databind.JsonNode) {
@@ -742,7 +905,7 @@ public class ParseController {
             }
         }
         
-        MockEndpointItem item = mockEndpointService.generateManualPreview(messages);
+        MockEndpointItem item = mockEndpointService.generateManualPreview(messages, providerName);
         if (item == null) {
             logger.warn("Manual preview returned null result");
             return ResponseEntity.badRequest().body("Empty result");
@@ -791,20 +954,23 @@ public class ParseController {
      * @throws IOException IO异常
      */
     private String saveUpload(String fileId, String originalName, MultipartFile file) throws IOException {
+        logger.info("  -> 尝试上传到七牛云. fileId={}, fileName={}, size={}", fileId, originalName, file.getSize());
         // 尝试上传到七牛云
         String qiniuUrl = qiniuService.uploadFile(file, fileId, originalName);
         if (qiniuUrl != null && !qiniuUrl.isEmpty()) {
-            logger.info("File uploaded to Qiniu. fileId={}, fileName={}, url={}", fileId, originalName, qiniuUrl);
+            logger.info("  -> 七牛云上传成功. fileId={}, fileName={}, url={}", fileId, originalName, qiniuUrl);
             return qiniuUrl;
         }
 
+        logger.info("  -> 七牛云上传失败，保存到本地. fileId={}, fileName={}", fileId, originalName);
         // 如果七牛云上传失败，保存到本地
         Path dir = Paths.get(uploadDir);
         Files.createDirectories(dir);
         Path target = dir.resolve(fileId + "_" + originalName);
         file.transferTo(target);
         String localUrl = "/parse/endpoint/file/" + fileId;
-        logger.info("File saved to local. fileId={}, fileName={}, url={}", fileId, originalName, localUrl);
+        logger.info("  -> 本地保存成功. fileId={}, fileName={}, url={}, path={}", 
+                fileId, originalName, localUrl, target.toString());
         return localUrl;
     }
 

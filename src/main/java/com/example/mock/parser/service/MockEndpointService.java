@@ -45,6 +45,7 @@ public class MockEndpointService {
     private final MockEndpointRepository repository;
     private final MockResponseCacheRepository responseCacheRepository;
     private final MockOperationLogRepository logRepository;
+    private final com.example.mock.parser.service.llm.LLMProviderFactory llmProviderFactory;
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockEndpointService.class);
 
     @Value("${zhipu.api-key:}")
@@ -75,12 +76,14 @@ public class MockEndpointService {
                                ObjectMapper objectMapper,
                                MockEndpointRepository repository,
                                MockResponseCacheRepository responseCacheRepository,
-                               MockOperationLogRepository logRepository) {
+                               MockOperationLogRepository logRepository,
+                               com.example.mock.parser.service.llm.LLMProviderFactory llmProviderFactory) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.repository = repository;
         this.responseCacheRepository = responseCacheRepository;
         this.logRepository = logRepository;
+        this.llmProviderFactory = llmProviderFactory;
     }
 
     @PostConstruct
@@ -107,8 +110,22 @@ public class MockEndpointService {
                 sourceFileUrl, isQiniuUrl, isQiniuUrl);
         
         if (isQiniuUrl) {
-            logger.info("File uploaded to Qiniu, using file URL model. fileUrl={}, model={}", sourceFileUrl, fileModel);
-            return generateEndpointsWithFileUrl(sourceFileUrl, sourceFileId, sourceFileName, sceneId, sceneName, sceneKeywords);
+            // 检查文件类型：如果不是PDF，强制使用智谱模型（因为豆包只支持PDF）
+            boolean isPdf = sourceFileName != null && sourceFileName.toLowerCase().endsWith(".pdf");
+            com.example.mock.parser.service.llm.LLMProvider provider;
+            if (isPdf) {
+                // PDF文件：使用当前配置的LLM Provider（可能是豆包或智谱）
+                provider = llmProviderFactory.getProvider();
+                logger.info("File is PDF, using configured LLM provider. provider={}, fileUrl={}", 
+                        provider.getProviderName(), sourceFileUrl);
+            } else {
+                // 非PDF文件（如DOCX）：强制使用智谱模型（因为豆包不支持DOCX）
+                provider = llmProviderFactory.getProvider("zhipu");
+                logger.info("File is not PDF (type: {}), forcing Zhipu LLM provider. fileUrl={}", 
+                        sourceFileName != null ? sourceFileName.substring(sourceFileName.lastIndexOf('.') + 1) : "unknown", 
+                        sourceFileUrl);
+            }
+            return generateEndpointsWithFileUrl(sourceFileUrl, sourceFileId, sourceFileName, sceneId, sceneName, sceneKeywords, provider);
         } else {
             logger.info("File not uploaded to Qiniu or URL is local, using traditional model. fileUrl={}, model={}", sourceFileUrl, model);
         }
@@ -184,6 +201,8 @@ public class MockEndpointService {
                 result.getItems().add(item);
             }
 
+            logger.info("  -> ========== 接口处理和保存完成 ==========");
+            logger.info("  -> 最终结果: 成功保存 {} 个接口", result.getItems().size());
             logOperation("UPLOAD_MOCK", null, sourceFileName, "生成mock接口: " + result.getItems().size());
             logger.info("Generated endpoints done. fileId={}, fileName={}, count={}", sourceFileId, sourceFileName, result.getItems().size());
             return result;
@@ -197,13 +216,16 @@ public class MockEndpointService {
      * 两步处理：
      * 1. 使用 fileModel (glm-4.6v-flash) 提取 API 信息（文本格式）
      * 2. 使用 model (glm-4.7) 将文本转换为标准 JSON
+     * 
+     * @param provider LLM提供者实例（已根据文件类型选择，非PDF强制使用智谱）
      */
     private MockEndpointResult generateEndpointsWithFileUrl(String fileUrl,
                                                              String sourceFileId,
                                                              String sourceFileName,
                                                              String sceneId,
                                                              String sceneName,
-                                                             String sceneKeywords) throws IOException {
+                                                             String sceneKeywords,
+                                                             com.example.mock.parser.service.llm.LLMProvider provider) throws IOException {
         List<String> originalKeywords = keywordList;
         try {
             if (sceneKeywords != null && !sceneKeywords.trim().isEmpty()) {
@@ -213,38 +235,63 @@ public class MockEndpointService {
                 keywordList = splitKeywords(keywords);
             }
             
-            // 第一步：使用 fileModel (glm-4.6v-flash) 提取 API 信息（文本格式）
-            logger.info("Step 1: Extracting API information using fileModel ({})", fileModel);
-            String systemPrompt = buildFileUrlSystemPrompt();
-            String userPrompt = buildFileUrlUserPrompt(sceneKeywords);
-            String recognitionText = callZhipuWithFileUrl(fileUrl, systemPrompt, userPrompt);
+            // 使用传入的 LLM 提供者（已根据文件类型选择）
+            logger.info("  -> 使用的 LLM 提供者: {}", provider.getProviderName());
+            logger.info("  -> 文件URL: {}", fileUrl);
+            logger.info("  -> 场景关键词: {}", sceneKeywords);
+            
+            // 第一步：提取 API 信息（文本格式）
+            logger.info("  -> ========== 阶段一：开始提取 API 信息 ==========");
+            logger.info("  -> 调用大模型进行文档识别. provider={}, fileUrl={}", provider.getProviderName(), fileUrl);
+            long phaseAStartTime = System.currentTimeMillis();
+            // 传递 null 让 provider 从配置文件加载提示词，传递 sceneKeywords 用于提示词定制
+            String recognitionText = provider.callPhaseA(fileUrl, null, null, sceneKeywords);
+            long phaseAEndTime = System.currentTimeMillis();
+            logger.info("  -> 阶段一完成，耗时: {}ms", phaseAEndTime - phaseAStartTime);
             
             // 提取识别结果文本（阶段一输出）
+            logger.info("  -> 提取阶段一识别结果文本. rawResponseLength={}", 
+                    recognitionText != null ? recognitionText.length() : 0);
             String extractedRecognition = extractRecognitionText(recognitionText);
             if (extractedRecognition == null || extractedRecognition.trim().isEmpty()) {
-                logger.warn("Step 1: No recognition text extracted. Using full response.");
+                logger.warn("  -> 警告：未提取到识别文本，使用完整响应");
                 extractedRecognition = recognitionText;
             }
             
-            logger.info("Step 1 completed. Recognition text length: {}", extractedRecognition.length());
+            logger.info("  -> 阶段一识别文本长度: {}", extractedRecognition.length());
+            logger.info("  -> 阶段一识别文本预览（前500字符）: {}", 
+                    extractedRecognition.length() > 500 ? extractedRecognition.substring(0, 500) + "..." : extractedRecognition);
             
-            // 第二步：使用 model (glm-4.7) 将文本转换为标准 JSON
-            logger.info("Step 2: Converting recognition text to JSON using model ({})", model);
-            String jsonPrompt = buildJsonConversionPrompt(extractedRecognition);
-            // 第二步需要更大的 max_tokens，因为要生成完整的 JSON 数组
-            String jsonResponse = callZhipuForJsonConversion(jsonPrompt);
-            
-            logger.info("Step 2 completed. JSON response length: {}", jsonResponse != null ? jsonResponse.length() : 0);
+            // 第二步：将文本转换为标准 JSON
+            logger.info("  -> ========== 阶段二：开始转换为 JSON ==========");
+            logger.info("  -> 调用大模型进行 JSON 转换. provider={}, recognitionTextLength={}", 
+                    provider.getProviderName(), extractedRecognition.length());
+            long phaseBStartTime = System.currentTimeMillis();
+            // 传递 null 让 provider 从配置文件加载提示词（会自动替换 recognitionText）
+            String jsonResponse = provider.callPhaseB(extractedRecognition, null);
+            long phaseBEndTime = System.currentTimeMillis();
+            logger.info("  -> 阶段二完成，耗时: {}ms", phaseBEndTime - phaseBStartTime);
+            logger.info("  -> 阶段二 JSON 响应长度: {}", jsonResponse != null ? jsonResponse.length() : 0);
+            logger.info("  -> 阶段二 JSON 响应预览（前500字符）: {}", 
+                    jsonResponse != null && jsonResponse.length() > 500 ? jsonResponse.substring(0, 500) + "..." : jsonResponse);
             
             // 解析 JSON 响应
+            logger.info("  -> ========== 开始解析 JSON 响应 ==========");
+            logger.info("  -> 调用 parseEndpoints 解析 JSON. jsonResponseLength={}", 
+                    jsonResponse != null ? jsonResponse.length() : 0);
             List<MockEndpointItem> items = parseEndpoints(jsonResponse);
+            logger.info("  -> JSON 解析完成. parsedItemsCount={}", items != null ? items.size() : 0);
 
             MockEndpointResult result = new MockEndpointResult();
             java.util.Set<String> seenKeys = new java.util.HashSet<>();
             if (items == null || items.isEmpty()) {
+                logger.warn("  -> 警告：解析结果为空，未生成任何接口");
                 logOperation("UPLOAD_MOCK", null, sourceFileName, "生成mock接口: 0");
                 return result;
             }
+            
+            logger.info("  -> ========== 开始处理和保存接口 ==========");
+            logger.info("  -> 待处理接口数量: {}", items.size());
             
             for (MockEndpointItem item : items) {
                 if (item == null) {
@@ -285,15 +332,18 @@ public class MockEndpointService {
                 item.setSceneId(sceneId);
                 item.setSceneName(sceneName);
                 
-                logger.info("Saving endpoint to database. id={}, title={}, method={}, apiPath={}, sceneId={}, hasRequest={}, hasResponse={}", 
+                logger.info("  -> 准备保存接口到数据库. id={}, title={}, method={}, apiPath={}, sceneId={}, hasRequest={}, hasResponse={}, hasError={}", 
                         item.getId(), item.getTitle(), item.getMethod(), item.getApiPath(), item.getSceneId(),
-                        item.getRequestExample() != null, item.getResponseExample() != null);
+                        item.getRequestExample() != null, item.getResponseExample() != null, 
+                        item.getErrorResponseExample() != null);
                 try {
                     MockEndpointEntity entity = toEntity(item);
                     repository.save(entity);
-                    logger.info("Endpoint saved successfully. id={}, title={}", item.getId(), item.getTitle());
+                    logger.info("  -> ✓ 接口保存成功. id={}, title={}, mockUrl={}", 
+                            item.getId(), item.getTitle(), item.getMockUrl());
+                    result.getItems().add(item);
                 } catch (Exception ex) {
-                    logger.error("Failed to save endpoint to database. id={}, title={}, error={}", 
+                    logger.error("  -> ✗ 接口保存失败. id={}, title={}, error={}", 
                             item.getId(), item.getTitle(), ex.getMessage(), ex);
                     continue;
                 }
@@ -644,23 +694,108 @@ public class MockEndpointService {
         return parseEndpoint(raw, "");
     }
 
-    public MockEndpointItem generateManualPreview(java.util.List<Object> messages) throws IOException {
+    public MockEndpointItem generateManualPreview(java.util.List<Object> messages, String providerName) throws IOException {
         if (messages == null || messages.isEmpty()) {
             return null;
         }
-        String raw = callZhipuWithMessages(messages);
-        if (raw == null || raw.trim().isEmpty()) {
-            logger.warn("LLM returned empty response");
+        
+        // 获取 LLM Provider
+        com.example.mock.parser.service.llm.LLMProvider provider = llmProviderFactory.getProvider(providerName);
+        logger.info("Using LLM provider: {} for manual preview", provider.getProviderName());
+        
+        // 收集所有图片和文本消息
+        java.util.List<Object> imageMessages = new java.util.ArrayList<>();
+        java.util.List<String> textMessages = new java.util.ArrayList<>();
+        
+        for (Object msg : messages) {
+            if (msg instanceof String) {
+                // 纯文本消息
+                textMessages.add((String) msg);
+            } else if (msg instanceof com.fasterxml.jackson.databind.JsonNode) {
+                // 多模态消息
+                com.fasterxml.jackson.databind.JsonNode node = (com.fasterxml.jackson.databind.JsonNode) msg;
+                if (node.isArray()) {
+                    // 检查是否包含图片
+                    boolean hasImage = false;
+                    for (com.fasterxml.jackson.databind.JsonNode item : node) {
+                        String type = item.path("type").asText("");
+                        if ("image_url".equals(type) || "input_image".equals(type)) {
+                            hasImage = true;
+                            break;
+                        }
+                    }
+                    if (hasImage) {
+                        // 包含图片的消息，需要单独识别
+                        imageMessages.add(msg);
+                    } else {
+                        // 只有文本，提取文本内容
+                        for (com.fasterxml.jackson.databind.JsonNode item : node) {
+                            if ("text".equals(item.path("type").asText(""))) {
+                                textMessages.add(item.path("text").asText(""));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        
+        // 第一步：分别识别每个图片，然后合并结果
+        java.util.List<String> recognitionResults = new java.util.ArrayList<>();
+        
+        // 添加文本消息到识别结果
+        if (!textMessages.isEmpty()) {
+            recognitionResults.add(String.join("\n", textMessages));
+        }
+        
+        // 如果有多个图片，分别识别每个图片
+        if (!imageMessages.isEmpty()) {
+            logger.info("Found {} image(s), will recognize each separately", imageMessages.size());
+            for (int i = 0; i < imageMessages.size(); i++) {
+                Object imageMsg = imageMessages.get(i);
+                logger.info("Recognizing image {}/{}", i + 1, imageMessages.size());
+                
+                // 为每个图片创建单独的消息列表
+                java.util.List<Object> singleImageMessage = new java.util.ArrayList<>();
+                singleImageMessage.add(imageMsg);
+                
+                // 调用模型识别单个图片
+                String imageRecognition = provider.callChat(singleImageMessage);
+                if (imageRecognition != null && !imageRecognition.trim().isEmpty()) {
+                    recognitionResults.add("=== 图片 " + (i + 1) + " 识别结果 ===\n" + imageRecognition);
+                    logger.info("Image {} recognition completed. Length: {}", i + 1, imageRecognition.length());
+                } else {
+                    logger.warn("Image {} recognition returned empty result", i + 1);
+                }
+            }
+        }
+        
+        // 合并所有识别结果
+        String recognitionText = String.join("\n\n", recognitionResults);
+        if (recognitionText == null || recognitionText.trim().isEmpty()) {
+            logger.warn("All recognition results are empty");
             return null;
         }
+        
+        logger.info("Step 1 completed. Total recognition text length: {}, images: {}, text messages: {}", 
+                recognitionText.length(), imageMessages.size(), textMessages.size());
+        
+        // 第二步：将合并后的识别结果转换为标准 JSON
+        logger.info("Step 2: Converting merged recognition text to standard JSON");
+        String jsonResponse = provider.callPhaseB(recognitionText, null);
+        if (jsonResponse == null || jsonResponse.trim().isEmpty()) {
+            logger.warn("LLM returned empty response in step 2");
+            return null;
+        }
+        logger.info("Step 2 completed. JSON response length: {}", jsonResponse.length());
+        
         // 记录原始响应（前500字符用于调试）
-        String preview = raw.length() > 500 ? raw.substring(0, 500) + "..." : raw;
+        String preview = jsonResponse.length() > 500 ? jsonResponse.substring(0, 500) + "..." : jsonResponse;
         logger.info("LLM raw response preview: {}", preview);
-        MockEndpointItem item = parseEndpoint(raw, "");
+        MockEndpointItem item = parseEndpoint(jsonResponse, "");
         if (item == null) {
-            logger.warn("Failed to parse endpoint from LLM response. Raw length: {}", raw.length());
+            logger.warn("Failed to parse endpoint from LLM response. Raw length: {}", jsonResponse.length());
             // 尝试记录更多信息
-            JsonNode node = readJsonLoosely(raw);
+            JsonNode node = readJsonLoosely(jsonResponse);
             if (node == null) {
                 logger.warn("readJsonLoosely returned null. Raw preview: {}", preview);
             } else {
@@ -682,6 +817,11 @@ public class MockEndpointService {
                 item.getRequestExample() != null, item.getResponseExample() != null);
         }
         return item;
+    }
+    
+    // 向后兼容：如果没有提供 providerName，使用默认的智谱
+    public MockEndpointItem generateManualPreview(java.util.List<Object> messages) throws IOException {
+        return generateManualPreview(messages, "zhipu");
     }
 
     private MockEndpointItem parseEndpoint(String raw, String fallbackTitle) {

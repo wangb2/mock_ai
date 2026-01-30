@@ -41,34 +41,49 @@ public class DocumentParserService {
     public ParsedDocument parse(MultipartFile file) throws IOException {
         String fileName = file.getOriginalFilename();
         String lower = fileName == null ? "" : fileName.toLowerCase(Locale.ROOT);
+        
+        logger.info("  -> 开始解析文档. fileName={}, size={}", fileName, file.getSize());
 
         ParsedDocument parsedDocument = new ParsedDocument();
         parsedDocument.setFileName(fileName);
 
         if (lower.endsWith(".docx")) {
             parsedDocument.setFileType("docx");
+            logger.info("  -> 检测到 DOCX 格式，开始解析");
             try (InputStream in = file.getInputStream()) {
-                parsedDocument.setSections(parseDocx(in));
+                List<Section> sections = parseDocx(in);
+                parsedDocument.setSections(sections);
+                logger.info("  -> DOCX 解析完成. sections={}, totalTables={}", 
+                        sections.size(), sections.stream().mapToInt(s -> s.getTables().size()).sum());
             }
             return parsedDocument;
         }
 
         if (lower.endsWith(".doc")) {
             parsedDocument.setFileType("doc");
+            logger.info("  -> 检测到 DOC 格式，开始解析");
             try (InputStream in = file.getInputStream()) {
-                parsedDocument.setSections(parseDoc(in));
+                List<Section> sections = parseDoc(in);
+                parsedDocument.setSections(sections);
+                logger.info("  -> DOC 解析完成. sections={}, totalTables={}", 
+                        sections.size(), sections.stream().mapToInt(s -> s.getTables().size()).sum());
             }
             return parsedDocument;
         }
 
         if (lower.endsWith(".pdf")) {
             parsedDocument.setFileType("pdf");
+            logger.info("  -> 检测到 PDF 格式，开始解析");
             try (InputStream in = file.getInputStream()) {
-                parsedDocument.setSections(parsePdf(in));
+                List<Section> sections = parsePdf(in);
+                parsedDocument.setSections(sections);
+                logger.info("  -> PDF 解析完成. sections={}, totalTables={}", 
+                        sections.size(), sections.stream().mapToInt(s -> s.getTables().size()).sum());
             }
             return parsedDocument;
         }
 
+        logger.error("  -> 不支持的文件类型: {}", fileName);
         throw new IllegalArgumentException("Unsupported file type: " + fileName);
     }
 

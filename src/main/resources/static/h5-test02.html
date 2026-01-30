@@ -860,6 +860,61 @@
         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
       }
       .hidden { display: none; }
+
+      /* --- UI Polish (CSS only, no behavior changes) --- */
+      :where(a, button, input, textarea, select, .nav span):focus-visible {
+        outline: 2px solid rgba(37, 99, 235, 0.45);
+        outline-offset: 2px;
+      }
+
+      .nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+      }
+      .nav::-webkit-scrollbar { height: 0; }
+
+      @media (max-width: 1100px) {
+        .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .doc-grid { grid-template-columns: 1fr; }
+        .debug-layout { grid-template-columns: 1fr; }
+        .grid, .grid-2 { grid-template-columns: 1fr; }
+        .api-card { grid-template-columns: 1fr; }
+        .api-actions { align-items: stretch; }
+      }
+
+      @media (max-width: 720px) {
+        .topbar { padding: 12px 14px; gap: 12px; flex-wrap: wrap; }
+        .main { padding: 16px 14px 40px; }
+        .quick-grid { grid-template-columns: 1fr; gap: 12px; }
+        .nav { width: 100%; }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+      }
+
+      /* --- Large screens: use space without breaking readability --- */
+      .main {
+        max-width: min(1920px, 94vw);
+      }
+      .quick-grid {
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      }
+      @media (min-width: 1600px) {
+        .doc-grid { grid-template-columns: 1.05fr 0.95fr; }
+        .debug-layout { grid-template-columns: 1fr 1fr; }
+      }
+      @media (min-width: 1900px) {
+        .doc-grid { grid-template-columns: 1.15fr 0.85fr; }
+      }
+      /* 4K / ultra-wide desktops */
+      @media (min-width: 2400px) {
+        .main { max-width: min(2600px, 96vw); }
+        .quick-grid { grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); }
+        .doc-grid { grid-template-columns: 1.2fr 0.8fr; gap: 22px; }
+        .debug-layout { gap: 22px; }
+      }
     </style>
   </head>
   <body>

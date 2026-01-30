@@ -16,6 +16,8 @@
         color: #0f172a;
         position: relative;
       }
+      /* Hint UA/OS to render native controls (like <select> dropdown) in dark scheme */
+      html { color-scheme: dark; }
       body::before {
         content: "";
         position: fixed;
@@ -412,11 +414,44 @@
         transition: all 0.3s ease;
         font-size: 13px;
       }
+      /* select: prettier dropdown for dark background (no behavior change) */
+      select {
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        cursor: pointer;
+        padding-right: 44px;
+        background-color: rgba(15, 23, 42, 0.6);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%23A5B4FC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 14px center;
+        background-size: 16px 16px;
+      }
+      select:hover {
+        border-color: rgba(139, 151, 252, 0.45);
+        background-color: rgba(15, 23, 42, 0.72);
+      }
+      select:focus {
+        outline: none;
+        border-color: rgba(139, 151, 252, 0.65);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.16);
+        background-color: rgba(15, 23, 42, 0.82);
+      }
+      select:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+      /* extra hint for some UAs */
+      select { color-scheme: dark; }
+      select option, select optgroup {
+        background: #0b1220;
+        color: #e2e8f0;
+      }
       input[type="text"]:hover, textarea:hover {
         border-color: rgba(139, 151, 252, 0.4);
         background: rgba(15, 23, 42, 0.7);
       }
-      input[type="text"]:focus, textarea:focus {
+      input[type="text"]:focus, textarea:focus, select:focus {
         outline: none;
         border-color: rgba(139, 151, 252, 0.6);
         box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
@@ -809,7 +844,8 @@
       }
       .doc-grid {
         display: grid;
-        grid-template-columns: 1.2fr 1fr;
+        /* keep both panels the same size */
+        grid-template-columns: repeat(2, minmax(0, 1fr));
         gap: 24px;
         align-items: stretch;
         margin-top: 24px;
@@ -979,30 +1015,72 @@
         gap: 12px;
         margin-top: 16px;
       }
+      .scene-toolbar {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        gap: 12px;
+        padding-bottom: 12px;
+        border-bottom: 1px solid rgba(100, 116, 139, 0.22);
+      }
+      .scene-title-row {
+        display: flex;
+        align-items: baseline;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      /* Make "场景列表" more readable on dark background */
+      #scene .scene-title-row strong {
+        color: #f8fafc;
+        font-size: 18px;
+        letter-spacing: 0.2px;
+        text-shadow: 0 1px 0 rgba(0,0,0,0.35);
+      }
+      #scene .scene-title-row .muted {
+        color: rgba(226, 232, 240, 0.72);
+      }
+      .scene-sub {
+        margin-top: 6px;
+        font-size: 12px;
+        color: #94a3b8;
+      }
+      .scene-toolbar-actions {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-shrink: 0;
+      }
+      /* Scene list: one scene per row */
       .scene-list {
         display: flex;
         flex-direction: column;
         gap: 12px;
-        margin-top: 12px;
+        margin-top: 14px;
       }
       .scene-item {
         border: 1px solid rgba(100, 116, 139, 0.3);
-        border-radius: 12px;
+        border-radius: 14px;
         padding: 16px 18px;
         display: flex;
-        justify-content: space-between;
-        align-items: center;
+        flex-direction: column;
+        gap: 10px;
         background: rgba(15, 23, 42, 0.5);
-        transition: all 0.3s ease;
+        transition: all 0.25s ease;
         backdrop-filter: blur(12px);
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-        gap: 12px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.18);
+        min-height: 0;
       }
       .scene-item:hover {
-        border-color: rgba(139, 151, 252, 0.5);
-        background: rgba(15, 23, 42, 0.7);
-        box-shadow: 0 4px 16px rgba(99, 102, 241, 0.15);
-        transform: translateX(3px);
+        border-color: rgba(139, 151, 252, 0.55);
+        background: rgba(15, 23, 42, 0.72);
+        box-shadow: 0 10px 28px rgba(99, 102, 241, 0.16);
+        transform: none;
+      }
+      .scene-head {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        gap: 10px;
       }
       .scene-item .name {
         font-weight: 600;
@@ -1023,11 +1101,41 @@
         margin-top: 5px;
         font-family: 'Courier New', monospace;
       }
+      .scene-desc {
+        font-size: 12px;
+        color: #cbd5e1;
+        line-height: 1.55;
+      }
+      .scene-kws {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 6px;
+      }
+      .scene-kws .pill {
+        margin: 0;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 11px;
+      }
+      /* Always show actions (no hover-reveal) */
       .scene-actions {
         display: flex;
         gap: 8px;
         flex-wrap: wrap;
         justify-content: flex-end;
+        opacity: 1;
+        transform: none;
+      }
+
+      /* Scene form modal sizing */
+      #sceneFormModal.modal.open { align-items: center; padding: 0; }
+      #sceneFormModal .content { width: min(760px, 92vw); max-height: 82vh; }
+
+      @media (max-width: 720px) {
+        .scene-toolbar { flex-direction: column; align-items: stretch; }
+        .scene-toolbar-actions { justify-content: flex-end; }
+        .scene-head { flex-direction: column; }
+        .scene-actions { justify-content: flex-start; }
       }
       .doc-item {
         border: 1px solid rgba(100, 116, 139, 0.3);
@@ -1127,6 +1235,7 @@
         padding: 8px 12px;
         background: rgba(15, 23, 42, 0.45);
         transition: all 0.3s ease;
+        min-height: 40px;
       }
       .api-toolbar .search:focus-within {
         box-shadow: none;
@@ -1155,21 +1264,72 @@
         font-size: 13px;
       }
       .api-toolbar .scene-filter {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        border: none;
-        border-radius: 10px;
-        padding: 8px 12px;
-        background: rgba(15, 23, 42, 0.45);
-        transition: all 0.3s ease;
+        position: relative;
+        display: block;
+        min-height: 40px;
+      }
+      .api-toolbar .scene-filter::after {
+        content: "";
+        position: absolute;
+        right: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        width: 16px;
+        height: 16px;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M7 10l5 5 5-5' stroke='%23A5B4FC' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat center / 16px 16px;
+        opacity: 0.9;
+        pointer-events: none;
+      }
+      .api-toolbar .scene-filter-icon {
+        position: absolute;
+        left: 12px;
+        top: 50%;
+        transform: translateY(-50%);
+        opacity: 0.9;
+        pointer-events: none;
       }
       .api-toolbar .scene-filter select {
-        border: none;
-        outline: none;
-        background: transparent;
-        color: #e2e8f0;
         width: 100%;
+        min-height: 40px;
+        border-radius: 14px; /* rounder */
+        border: 1px solid rgba(100, 116, 139, 0.35);
+        outline: none;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background: rgba(15, 23, 42, 0.45);
+        color: #e2e8f0;
+        padding: 8px 40px 8px 36px; /* left icon + right caret */
+        margin: 0;
+        cursor: pointer;
+        font-size: 13px;
+        transition: all 0.2s ease;
+      }
+      .api-toolbar .scene-filter select:hover {
+        border-color: rgba(139, 151, 252, 0.5);
+        background: rgba(15, 23, 42, 0.55);
+      }
+      .api-toolbar .scene-filter select:focus {
+        border-color: rgba(139, 151, 252, 0.65);
+        box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.16);
+      }
+
+      /* Make "全部场景" filter + "手动录入" look like one design system */
+      #manualCreateBtn {
+        min-height: 40px;
+        padding: 8px 12px;
+        border-radius: 10px;
+        box-shadow: none;
+        border: 1px solid rgba(100, 116, 139, 0.35);
+        background: rgba(15, 23, 42, 0.45);
+        color: #e2e8f0;
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      #manualCreateBtn:hover:not(:disabled) {
+        border-color: rgba(139, 151, 252, 0.5);
+        background: rgba(15, 23, 42, 0.55);
+        transform: none;
       }
       .api-card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
@@ -2503,6 +2663,59 @@
       .badge.err { background: rgba(220, 38, 38, 0.15); color: #ef4444; border-color: rgba(220, 38, 38, 0.3); }
       .badge.fail { background: rgba(249, 115, 22, 0.15); color: #fb923c; border-color: rgba(249, 115, 22, 0.3); }
       .badge.upload { background: rgba(148, 163, 184, 0.15); color: #94a3b8; border-color: rgba(148, 163, 184, 0.3); }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 6px;
+        font-size: 11px;
+        font-weight: 600;
+        margin-right: 8px;
+      }
+      .status-badge.status-pending {
+        background: rgba(148, 163, 184, 0.15);
+        color: #94a3b8;
+        border: 1px solid rgba(148, 163, 184, 0.3);
+      }
+      .status-badge.status-processing {
+        background: rgba(59, 130, 246, 0.15);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.3);
+        animation: pulse 2s infinite;
+      }
+      .status-badge.status-completed {
+        background: rgba(34, 197, 94, 0.15);
+        color: #4ade80;
+        border: 1px solid rgba(34, 197, 94, 0.3);
+      }
+      .status-badge.status-failed {
+        background: rgba(239, 68, 68, 0.15);
+        color: #f87171;
+        border: 1px solid rgba(239, 68, 68, 0.3);
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; }
+        50% { opacity: 0.6; }
+      }
+      .status-info {
+        margin-top: 8px;
+        display: flex;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+      .generated-count {
+        font-size: 11px;
+        color: #94a3b8;
+      }
+      .error-msg {
+        font-size: 11px;
+        color: #f87171;
+        max-width: 300px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
       .action-btn {
         border: 1px solid rgba(100, 116, 139, 0.4);
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
@@ -2552,6 +2765,7 @@
         justify-content: center;
         z-index: 1000;
         animation: fadeIn 0.2s ease;
+        overflow-y: auto;
       }
       @keyframes fadeIn {
         from { opacity: 0; }
@@ -2568,6 +2782,15 @@
         padding: 24px;
         box-shadow: 0 24px 60px rgba(0, 0, 0, 0.5);
         backdrop-filter: blur(12px);
+      }
+
+      /* Manual modal is tall; avoid vertical-centering jump when content height changes */
+      #manualModal.modal.open {
+        align-items: flex-start;
+        padding: 6vh 0;
+      }
+      #manualModal .content {
+        margin: 0 auto;
       }
       /* 确保手动录入模态框的保存按钮区域始终可见 */
       #manualModal .content > .row:last-child {
@@ -2866,6 +3089,88 @@
         from { transform: rotate(0deg); }
         to { transform: rotate(360deg); }
       }
+
+      /* --- UI Polish (CSS only, no behavior changes) --- */
+      :where(a, button, input, textarea, select, .nav span):focus-visible {
+        outline: 2px solid rgba(165, 180, 252, 0.85);
+        outline-offset: 2px;
+      }
+
+      /* smoother scrolling containers */
+      :where(.card, .debug-card, .doc-card, .modal .content) {
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+      }
+
+      /* horizontal nav on small screens (avoid wrapping overflow) */
+      .nav {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none; /* Firefox */
+      }
+      .nav::-webkit-scrollbar { height: 0; }
+
+      /* consistent selection + scrollbar */
+      ::selection { background: rgba(99, 102, 241, 0.35); color: #fff; }
+      *::-webkit-scrollbar { width: 10px; height: 10px; }
+      *::-webkit-scrollbar-thumb {
+        background: rgba(148, 163, 184, 0.25);
+        border-radius: 999px;
+        border: 2px solid rgba(10, 14, 39, 0.9);
+      }
+      *::-webkit-scrollbar-thumb:hover { background: rgba(148, 163, 184, 0.35); }
+      *::-webkit-scrollbar-track { background: rgba(10, 14, 39, 0.6); }
+
+      /* responsive layout */
+      @media (max-width: 1100px) {
+        .quick-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .doc-grid { grid-template-columns: 1fr; }
+        .debug-layout { grid-template-columns: 1fr; }
+        .grid { grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 720px) {
+        .topbar { padding: 12px 14px; gap: 12px; flex-wrap: wrap; }
+        .ui-build { position: static; transform: none; }
+        .main { padding: 16px 14px 40px; }
+        .hero { padding: 34px 18px; border-radius: 18px; }
+        .hero h1 { font-size: 34px; }
+        .hero .tagline { font-size: 16px; }
+        .section-title { font-size: 18px; margin: 20px 0 14px; }
+        .quick-grid { grid-template-columns: 1fr; gap: 12px; }
+        .quick { padding: 18px 14px; border-radius: 16px; }
+        .card { padding: 16px; }
+        .nav { width: 100%; }
+        .nav span { padding: 8px 12px; }
+        .modal .content { width: min(980px, 96vw); padding: 12px; }
+      }
+
+      /* reduce heavy animations when user prefers */
+      @media (prefers-reduced-motion: reduce) {
+        * { animation-duration: 0.001ms !important; animation-iteration-count: 1 !important; transition-duration: 0.001ms !important; scroll-behavior: auto !important; }
+      }
+
+      /* --- Large screens: better use of space, but keep comfortable reading width --- */
+      .main {
+        max-width: min(1920px, 94vw);
+      }
+      .quick-grid {
+        grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      }
+      @media (min-width: 1600px) {
+        .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .debug-layout { grid-template-columns: 1fr 1fr; }
+      }
+      @media (min-width: 1900px) {
+        .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      }
+      /* 4K / ultra-wide desktops */
+      @media (min-width: 2400px) {
+        .main { max-width: min(2600px, 96vw); }
+        .quick-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
+        .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+        .debug-layout { gap: 22px; }
+      }
     </style>
   </head>
   <body>
@@ -2981,7 +3286,7 @@
           </div>
           <div class="summary">共找到 <span id="apiCount">0</span> 个 Mock 接口</div>
           <div class="scene-filter">
-            🧩
+            <span class="scene-filter-icon">🧩</span>
             <select id="apiSceneFilter">
               <option value="">全部场景</option>
             </select>
@@ -3108,39 +3413,50 @@
 
       <section id="scene" class="hidden">
         <div class="section-title">场景管理</div>
-        <div class="grid-2">
-          <div class="card">
-            <div class="row">
-              <strong>场景列表</strong>
-              <span class="muted">点击详情查看场景接口</span>
+        <div class="card">
+          <div class="scene-toolbar">
+            <div>
+              <div class="scene-title-row">
+                <strong>场景列表</strong>
+                <span class="muted">点击“详情”查看该场景接口</span>
+              </div>
+              <div class="scene-sub">新增/编辑将以弹窗方式打开，不再占用列表布局</div>
             </div>
-            <div id="sceneList" class="scene-list"></div>
-          </div>
-          <div class="card">
-            <div class="row">
-              <strong id="sceneFormTitle">新增场景</strong>
-              <span class="muted">简单描述业务场景</span>
-            </div>
-            <div style="margin-top: 12px;">
-              <div class="label">场景名称</div>
-              <input id="sceneNameInput" type="text" placeholder="例如：开户办理、状态查询" />
-            </div>
-            <div style="margin-top: 12px;">
-              <div class="label">场景描述</div>
-              <textarea id="sceneDescInput" placeholder="简单描述该场景用途"></textarea>
-            </div>
-            <div style="margin-top: 12px;">
-              <div class="label">场景规则关键词</div>
-              <textarea id="sceneKeywordsInput" placeholder="多个关键词用英文逗号分隔，例如：order,profile,download"></textarea>
-              <div class="hint">用于接口识别；会与系统默认关键词合并</div>
-            </div>
-            <div class="row" style="margin-top: 12px; justify-content:flex-end;">
-              <button id="sceneCancelBtn" class="secondary hidden">取消编辑</button>
-              <button id="sceneSaveBtn" class="btn-primary">保存场景</button>
+            <div class="scene-toolbar-actions">
+              <button id="sceneCreateBtn" class="secondary">+ 新增场景</button>
             </div>
           </div>
+          <div id="sceneList" class="scene-list"></div>
         </div>
       </section>
+
+      <!-- Scene form modal -->
+      <div id="sceneFormModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label" id="sceneFormTitle" style="font-size: 14px; font-weight: 700; color: #e2e8f0;">新增场景</div>
+            <button id="closeSceneFormModal" class="secondary">关闭</button>
+          </div>
+          <div class="muted" style="margin-top: 6px;">简单描述业务场景（名称建议包含“默认”以便自动选中）</div>
+          <div style="margin-top: 12px;">
+            <div class="label">场景名称</div>
+            <input id="sceneNameInput" type="text" placeholder="例如：开户办理、状态查询" />
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="label">场景描述</div>
+            <textarea id="sceneDescInput" placeholder="简单描述该场景用途"></textarea>
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="label">场景规则关键词</div>
+            <textarea id="sceneKeywordsInput" placeholder="多个关键词用英文逗号分隔，例如：order,profile,download"></textarea>
+            <div class="hint">用于接口识别；会与系统默认关键词合并</div>
+          </div>
+          <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+            <button id="sceneCancelBtn" class="secondary hidden">取消编辑</button>
+            <button id="sceneSaveBtn" class="secondary">保存场景</button>
+          </div>
+        </div>
+      </div>
 
       <section id="logs" class="hidden">
         <div class="section-title">请求日志</div>
@@ -3294,8 +3610,8 @@
           </div>
           <div class="row" style="margin-top: 8px; justify-content:space-between; align-items:center;">
             <div class="manual-mode-tabs">
-              <button id="manualModeManual" class="active">手动录入</button>
-              <button id="manualModeChat">聊天模式</button>
+              <button id="manualModeChat" class="active">聊天模式</button>
+              <button id="manualModeManual">手动录入</button>
             </div>
             <div class="manual-toggle">
               <button id="manualModeTable" class="active">表格</button>
@@ -3304,8 +3620,14 @@
           </div>
           <div class="row" style="margin-top: 8px; justify-content:flex-end;">
           </div>
-          <div id="manualChatWrap" class="hidden" style="margin-top: 12px;">
-            <div class="label">聊天输入</div>
+          <div id="manualChatWrap" style="margin-top: 12px;">
+            <div class="row" style="margin-bottom: 8px; align-items: center; gap: 12px;">
+              <div class="label" style="margin: 0;">聊天输入</div>
+              <select id="manualChatProvider" style="flex: 0 0 auto; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;">
+                <option value="zhipu">智谱 (GLM-4.6V-Flash)</option>
+                <option value="doubao">豆包 (Vision)</option>
+              </select>
+            </div>
             <div id="manualChatHistory" class="card" style="padding: 12px; margin-bottom: 10px; max-height: 160px; overflow:auto;">
               <div class="hint">可多轮追加描述，生成时会合并上下文。支持上传或直接粘贴截图识别接口信息（Ctrl+V）。</div>
             </div>
@@ -3321,7 +3643,7 @@
             <div id="manualChatImages" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
             <div class="row" style="margin-top: 8px; justify-content:flex-end;">
               <button id="manualChatClearBtn" class="secondary">清空对话</button>
-              <button id="manualChatGenerateBtn" class="btn-primary">生成预览</button>
+              <button id="manualChatGenerateBtn" class="secondary">生成预览</button>
             </div>
           </div>
           <div class="grid" style="margin-top: 8px;">
@@ -3446,7 +3768,7 @@
           <div class="label" style="margin-top: 8px;">必填字段（JSON数组）</div>
           <textarea id="manualRequired"></textarea>
           <div class="row" style="margin-top: 12px; justify-content:flex-end;">
-            <button id="manualSaveBtn" class="btn-primary">保存接口</button>
+            <button id="manualSaveBtn" class="secondary">保存接口</button>
           </div>
         </div>
       </div>
@@ -3548,12 +3870,15 @@
       const saveEditBtn = document.getElementById("saveEditBtn");
       const sceneSelect = document.getElementById("sceneSelect");
       const sceneList = document.getElementById("sceneList");
+      const sceneCreateBtn = document.getElementById("sceneCreateBtn");
       const sceneNameInput = document.getElementById("sceneNameInput");
       const sceneDescInput = document.getElementById("sceneDescInput");
       const sceneKeywordsInput = document.getElementById("sceneKeywordsInput");
       const sceneSaveBtn = document.getElementById("sceneSaveBtn");
       const sceneCancelBtn = document.getElementById("sceneCancelBtn");
       const sceneFormTitle = document.getElementById("sceneFormTitle");
+      const sceneFormModal = document.getElementById("sceneFormModal");
+      const closeSceneFormModal = document.getElementById("closeSceneFormModal");
       const sceneDetailModal = document.getElementById("sceneDetailModal");
       const closeSceneDetailModal = document.getElementById("closeSceneDetailModal");
       const sceneDetailList = document.getElementById("sceneDetailList");
@@ -3586,6 +3911,7 @@
       const manualChatInput = document.getElementById("manualChatInput");
       const manualChatGenerateBtn = document.getElementById("manualChatGenerateBtn");
       const manualChatClearBtn = document.getElementById("manualChatClearBtn");
+      const manualChatProvider = document.getElementById("manualChatProvider");
       const manualRequired = document.getElementById("manualRequired");
       const manualSaveBtn = document.getElementById("manualSaveBtn");
       const manualAddReqHeader = document.getElementById("manualAddReqHeader");
@@ -3630,6 +3956,9 @@
           editingSceneId = null;
           sceneFormTitle.textContent = "新增场景";
           sceneSaveBtn.textContent = "保存场景";
+          // 新增态：与“取消编辑”一致的按钮样式
+          sceneSaveBtn.classList.add("secondary");
+          sceneSaveBtn.classList.remove("btn-primary");
           sceneNameInput.value = "";
           sceneDescInput.value = "";
           sceneKeywordsInput.value = "";
@@ -3639,10 +3968,47 @@
         editingSceneId = scene.id;
         sceneFormTitle.textContent = "编辑场景";
         sceneSaveBtn.textContent = "保存修改";
+        // 编辑态：保存修改按钮样式与“取消编辑”一致
+        sceneSaveBtn.classList.add("secondary");
+        sceneSaveBtn.classList.remove("btn-primary");
         sceneNameInput.value = scene.name || "";
         sceneDescInput.value = scene.description || "";
         sceneKeywordsInput.value = scene.keywords || "";
         sceneCancelBtn.classList.remove("hidden");
+      }
+
+      function openSceneForm(scene) {
+        if (!sceneFormModal) return;
+        setSceneForm(scene || null);
+        sceneFormModal.classList.add("open");
+        setTimeout(() => {
+          if (sceneNameInput && typeof sceneNameInput.focus === "function") {
+            try {
+              sceneNameInput.focus({ preventScroll: true });
+            } catch (e) {
+              sceneNameInput.focus();
+            }
+          }
+        }, 0);
+      }
+
+      function closeSceneForm() {
+        if (sceneFormModal) sceneFormModal.classList.remove("open");
+        setSceneForm(null);
+      }
+
+      async function loadChatConfig() {
+        if (!manualChatProvider) return;
+        try {
+          const res = await fetch("/parse/endpoint/chat-config");
+          if (!res.ok) return;
+          const config = await res.json();
+          if (config && config.defaultProvider) {
+            manualChatProvider.value = config.defaultProvider;
+          }
+        } catch (err) {
+          // ignore, use default value
+        }
       }
 
       async function loadScenes(keepSelection = true) {
@@ -3654,23 +4020,42 @@
           const res = await fetch("/parse/scenes");
           if (!res.ok) return;
           const list = await res.json();
-          renderSceneList(Array.isArray(list) ? list : []);
-          updateSceneSelect(sceneSelect, Array.isArray(list) ? list : [], currentSelection, "请选择场景");
+          const scenes = sortScenes(Array.isArray(list) ? list : []);
+          renderSceneList(scenes);
+          // 接口文档管理：不显示"请选择场景"占位项，直接默认选中
+          updateSceneSelect(sceneSelect, scenes, currentSelection, "", false, false);
           if (apiSceneFilter) {
             // 接口管理中的场景选择默认保持"全部场景"（空值），不自动选择
-            updateSceneSelect(apiSceneFilter, Array.isArray(list) ? list : [], apiSelection, "全部场景", true);
+            updateSceneSelect(apiSceneFilter, scenes, apiSelection, "全部场景", true);
           }
           if (manualSceneSelect) {
-            updateSceneSelect(manualSceneSelect, Array.isArray(list) ? list : [], manualSelection, "请选择场景");
+            updateSceneSelect(manualSceneSelect, scenes, manualSelection, "请选择场景");
           }
         } catch (err) {
           // ignore
         }
       }
 
-      function updateSceneSelect(selectEl, list, selectedId = "", placeholder = "请选择场景", keepEmpty = false) {
+      function sortScenes(list) {
+        const arr = Array.isArray(list) ? list.slice() : [];
+        const isDefault = (s) => String((s && s.name) || "").includes("默认");
+        const nameKey = (s) => String((s && s.name) || "").toLowerCase();
+        arr.sort((a, b) => {
+          const da = isDefault(a);
+          const db = isDefault(b);
+          if (da !== db) return da ? -1 : 1; // 默认场景放第一个
+          const an = nameKey(a);
+          const bn = nameKey(b);
+          if (an < bn) return -1;
+          if (an > bn) return 1;
+          return 0;
+        });
+        return arr;
+      }
+
+      function updateSceneSelect(selectEl, list, selectedId = "", placeholder = "请选择场景", keepEmpty = false, includePlaceholder = true) {
         if (!selectEl) return;
-        selectEl.innerHTML = `<option value="">${placeholder}</option>`;
+        selectEl.innerHTML = includePlaceholder ? `<option value="">${placeholder}</option>` : "";
         list.forEach((scene) => {
           const option = document.createElement("option");
           option.value = scene.id;
@@ -3685,7 +4070,8 @@
           const defaultScene = list.find((scene) => String(scene.name || "").includes("默认"));
           if (defaultScene) {
             selectEl.value = defaultScene.id;
-          } else if (list.length === 1) {
+          } else {
+            // 没有“默认”命名时，默认选第一个，避免必须手动选择
             selectEl.value = list[0].id;
           }
         }
@@ -3699,20 +4085,29 @@
         }
         sceneList.innerHTML = "";
         list.forEach((scene) => {
+          const keywords = String(scene.keywords || "")
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .slice(0, 8);
           const div = document.createElement("div");
           div.className = "scene-item";
           div.innerHTML = `
-            <div>
-              <div class="name">${escapeHtml(scene.name || "未命名场景")}</div>
-              <div class="meta">${escapeHtml(scene.description || "暂无描述")}</div>
-              <div class="meta">关键词: ${escapeHtml(scene.keywords || "-")}</div>
-              <div class="meta">场景ID: ${escapeHtml(scene.id || "-")}</div>
+            <div class="scene-head">
+              <div>
+                <div class="name">${escapeHtml(scene.name || "未命名场景")}</div>
+                <div class="scene-desc">${escapeHtml(scene.description || "暂无描述")}</div>
+              </div>
+              <div class="scene-actions">
+                <button class="action-btn" data-scene-detail="${escapeHtml(scene.id || "")}">详情</button>
+                <button class="action-btn" data-scene-edit="${escapeHtml(scene.id || "")}">编辑</button>
+                <button class="action-btn danger" data-scene-delete="${escapeHtml(scene.id || "")}">删除</button>
+              </div>
             </div>
-            <div class="scene-actions">
-              <button class="action-btn" data-scene-detail="${escapeHtml(scene.id || "")}">详情</button>
-              <button class="action-btn" data-scene-edit="${escapeHtml(scene.id || "")}">编辑</button>
-              <button class="action-btn danger" data-scene-delete="${escapeHtml(scene.id || "")}">删除</button>
+            <div class="scene-kws">
+              ${keywords.length ? keywords.map((k) => `<span class="pill">${escapeHtml(k)}</span>`).join("") : `<span class="pill">无关键词</span>`}
             </div>
+            <div class="meta">场景ID: ${escapeHtml(scene.id || "-")}</div>
           `;
           sceneList.appendChild(div);
         });
@@ -3730,7 +4125,7 @@
             const id = btn.getAttribute("data-scene-edit");
             const scene = list.find((s) => s.id === id);
             if (scene) {
-              setSceneForm(scene);
+              openSceneForm(scene);
             }
           });
         });
@@ -3752,7 +4147,7 @@
               if (res.ok) {
                 setStatus("已删除场景");
                 showToast("删除成功", "success");
-                setSceneForm(null);
+                closeSceneForm();
                 await loadScenes(false);
                 await loadHistory();
               } else {
@@ -3910,6 +4305,30 @@
           });
           const text = await res.text();
           const parsed = parseJsonLoose(text);
+          
+          if (!res.ok) {
+            setStatus("请求失败：" + res.status);
+            output.textContent = text;
+            return;
+          }
+          
+          // 异步模式：立即返回，显示上传成功
+          if (parsed && parsed.fileId) {
+            setStatus("文件上传成功，正在排队处理...");
+            showToast("文件上传成功，正在处理中", "success");
+            sendBtn.disabled = false;
+            copyBtn.disabled = false;
+            if (uploadProgress) {
+              uploadProgress.style.display = "none";
+            }
+            // 刷新文件列表
+            await loadUploadedFiles();
+            // 切换到文档管理标签页
+            switchTab("doc");
+            return;
+          }
+          
+          // 兼容旧模式（同步处理）
           if (parsed) {
             output.textContent = JSON.stringify(parsed, null, 2);
             if (parsed && Array.isArray(parsed.items)) {
@@ -3918,16 +4337,27 @@
           } else {
             output.textContent = prettyPrintFallback(text);
           }
-          if (!res.ok) {
-            setStatus("请求失败：" + res.status);
-          } else {
-            setStatus("完成");
-            copyBtn.disabled = false;
-            await loadHistory();
-            switchTab("api");
-          }
+          setStatus("完成");
+          copyBtn.disabled = false;
+          await loadHistory();
+          switchTab("api");
         } catch (err) {
-          setStatus("请求异常：" + err.message);
+          const msg = String((err && err.message) || err || "").toLowerCase();
+          // Upload parsing may take long; when network/proxy aborts you'll often see "Failed to fetch"
+          if (
+            msg.includes("failed to fetch") ||
+            msg.includes("networkerror") ||
+            msg.includes("network error") ||
+            msg.includes("timeout") ||
+            msg.includes("timed out") ||
+            msg.includes("aborterror") ||
+            msg.includes("aborted")
+          ) {
+            setStatus("AI模型正在处理请求，请稍后再试");
+            output.textContent = "";
+          } else {
+            setStatus("请求异常：" + ((err && err.message) || err));
+          }
           output.textContent = "";
         } finally {
           sendBtn.disabled = false;
@@ -3951,6 +4381,13 @@
         });
       }
       refreshBtn.addEventListener("click", loadHistory);
+      
+      // 页面加载时初始化配置
+      (async function init() {
+        await loadChatConfig();
+        await loadScenes();
+        await loadHistory();
+      })();
       sendMockBtn.addEventListener("click", sendMockRequest);
       if (refreshLogsBtn) {
         refreshLogsBtn.addEventListener("click", () => loadLogs(true));
@@ -4082,43 +4519,76 @@
         });
       }
 
-      function renderDocs(itemsList) {
+      // 加载上传文件列表（带状态）
+      async function loadUploadedFiles() {
+        if (!docs) return;
+        try {
+          const res = await fetch("/parse/uploaded-files");
+          if (!res.ok) {
+            console.error("Failed to load uploaded files:", res.status);
+            return;
+          }
+          const files = await res.json();
+          renderDocs(files);
+        } catch (err) {
+          console.error("Error loading uploaded files:", err);
+        }
+      }
+      
+      function renderDocs(filesList) {
         if (!docs) {
           return;
         }
-        const map = new Map();
-        itemsList.forEach((item) => {
-          if (item.sourceFileId) {
-            map.set(item.sourceFileId, item);
-          }
-        });
-        if (!map.size) {
+        if (!filesList || !filesList.length) {
           docs.innerHTML = "<div class='hint'>暂无上传记录</div>";
           return;
         }
         docs.innerHTML = "";
         const list = document.createElement("div");
         list.className = "doc-list";
-        map.forEach((item) => {
+        filesList.forEach((file) => {
           const div = document.createElement("div");
           div.className = "doc-item";
-          const downloadUrl = toAbsoluteUrl(item.sourceFileUrl || "");
+          const downloadUrl = toAbsoluteUrl(file.fileUrl || "");
+          const status = file.status || "PENDING";
+          const statusText = {
+            "PENDING": "未处理",
+            "PROCESSING": "处理中",
+            "COMPLETED": "处理完成",
+            "FAILED": "处理失败"
+          }[status] || status;
+          const statusClass = {
+            "PENDING": "status-pending",
+            "PROCESSING": "status-processing",
+            "COMPLETED": "status-completed",
+            "FAILED": "status-failed"
+          }[status] || "";
+          const generatedCount = file.generatedCount || 0;
+          const errorMessage = file.errorMessage || "";
           div.innerHTML = `
             <div>
-              <div class="name">${escapeHtml(item.sourceFileName || "文件")}</div>
-              <div class="meta">文件ID: ${escapeHtml(item.sourceFileId || "-")}</div>
+              <div class="name">${escapeHtml(file.fileName || "文件")}</div>
+              <div class="meta">
+                文件ID: ${escapeHtml(file.fileId || "-")}
+                ${file.sceneName ? ` | 场景: ${escapeHtml(file.sceneName)}` : ""}
+              </div>
+              <div class="status-info">
+                <span class="status-badge ${statusClass}">${statusText}</span>
+                ${status === "COMPLETED" && generatedCount > 0 ? `<span class="generated-count">已生成 ${generatedCount} 个接口</span>` : ""}
+                ${status === "FAILED" && errorMessage ? `<span class="error-msg">错误: ${escapeHtml(errorMessage)}</span>` : ""}
+              </div>
             </div>
             <div>
               ${downloadUrl ? `<a class="action-btn" href="${downloadUrl}" target="_blank">下载原始文件</a>` : ""}
-              <button class="action-btn danger" data-delete-doc="${escapeHtml(item.sourceFileId || "")}">删除</button>
+              <button class="action-btn danger" data-delete-file="${escapeHtml(file.fileId || "")}">删除</button>
             </div>
           `;
           list.appendChild(div);
         });
         docs.appendChild(list);
-        docs.querySelectorAll("[data-delete-doc]").forEach((btn) => {
+        docs.querySelectorAll("[data-delete-file]").forEach((btn) => {
           btn.addEventListener("click", async () => {
-            const fileId = btn.getAttribute("data-delete-doc");
+            const fileId = btn.getAttribute("data-delete-file");
             if (!fileId) return;
             const ok = await openConfirmModal({
               title: "确认删除",
@@ -4133,6 +4603,7 @@
               if (res.ok) {
                 setStatus("已删除文档");
                 showToast("删除成功", "success");
+                await loadUploadedFiles();
                 await loadHistory();
               } else {
                 setStatus("删除失败");
@@ -4334,7 +4805,7 @@
             if (res.ok) {
               setStatus(editingSceneId ? "场景已更新" : "场景已创建");
               showToast(editingSceneId ? "更新成功" : "创建成功", "success");
-              setSceneForm(null);
+              closeSceneForm();
               await loadScenes(true);
               await loadHistory();
             } else {
@@ -4351,13 +4822,28 @@
       }
 
       if (sceneCancelBtn) {
-        sceneCancelBtn.addEventListener("click", () => setSceneForm(null));
+        sceneCancelBtn.addEventListener("click", () => closeSceneForm());
+      }
+
+      if (sceneCreateBtn) {
+        sceneCreateBtn.addEventListener("click", () => openSceneForm(null));
+      }
+
+      if (closeSceneFormModal) {
+        closeSceneFormModal.addEventListener("click", () => closeSceneForm());
+      }
+      if (sceneFormModal) {
+        sceneFormModal.addEventListener("click", (e) => {
+          if (e.target === sceneFormModal) {
+            closeSceneForm();
+          }
+        });
       }
 
       if (manualCreateBtn) {
         manualCreateBtn.addEventListener("click", () => {
           if (!manualModal) return;
-          setManualInputMode("manual");
+          setManualInputMode("chat"); // 默认打开聊天模式
           if (manualTitleInput) manualTitleInput.value = "";
           if (manualMethodSelect) manualMethodSelect.value = "POST";
           if (manualSceneSelect) manualSceneSelect.value = "";
@@ -4376,13 +4862,21 @@
           manualChatMessages = [];
           renderChatHistory();
           manualModal.classList.add("open");
-          // 确保保存按钮可见：滚动到底部
+          // 避免打开弹窗时强制滚到底导致“往上跑/跳动”的观感；默认从顶部开始
           setTimeout(() => {
             const modalContent = document.querySelector("#manualModal .content");
             if (modalContent) {
-              modalContent.scrollTop = modalContent.scrollHeight;
+              modalContent.scrollTop = 0;
             }
-          }, 100);
+            if (manualTitleInput && typeof manualTitleInput.focus === "function") {
+              try {
+                // avoid scrolling the page when focusing inside modal
+                manualTitleInput.focus({ preventScroll: true });
+              } catch (e) {
+                manualTitleInput.focus();
+              }
+            }
+          }, 0);
         });
       }
 
@@ -4494,13 +4988,16 @@
         if (manualChatWrap) manualChatWrap.classList.toggle("hidden", !isChat);
         if (manualModeManual) manualModeManual.classList.toggle("active", !isChat);
         if (manualModeChat) manualModeChat.classList.toggle("active", isChat);
-        // 切换模式后，确保保存按钮可见
-        setTimeout(() => {
-          const modalContent = document.querySelector("#manualModal .content");
-          if (modalContent) {
-            modalContent.scrollTop = modalContent.scrollHeight;
-          }
-        }, 100);
+        // 不要在切换模式时强制滚动弹窗内容（会造成"页面上下跳动"的观感）
+        // 如果是聊天模式，确保滚动到底部
+        if (isChat) {
+          setTimeout(() => {
+            const modalContent = document.querySelector("#manualModal .content");
+            if (modalContent) {
+              modalContent.scrollTop = modalContent.scrollHeight;
+            }
+          }, 100);
+        }
       }
 
       function syncTableToJson() {
@@ -4680,6 +5177,10 @@
             // 清空当前图片（已添加到消息历史）
             currentChatImages = [];
             renderChatImages();
+            // 获取模型选择
+            const providerSelect = document.getElementById("manualChatProvider");
+            const provider = providerSelect ? providerSelect.value : "zhipu";
+            
             // 构建消息数组发送给后端
             const messages = manualChatMessages.map(msg => ({
               role: msg.role,
@@ -4688,7 +5189,7 @@
             const res = await fetch("/parse/endpoint/llm-preview", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ messages: messages })
+              body: JSON.stringify({ messages: messages, provider: provider })
             });
             if (!res.ok) {
               const errorText = await res.text();
@@ -5695,6 +6196,12 @@
 
       switchTab("home");
       loadHistory();
+      loadUploadedFiles();
+      
+      // 定时刷新上传文件列表（每5秒）
+      setInterval(() => {
+        loadUploadedFiles();
+      }, 5000);
       loadScenes();
     </script>
   </body>

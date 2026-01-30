@@ -1,11 +1,31 @@
+# LLM 模型提供者配置（zhipu、openai 或 doubao）
+llm:
+  provider: "doubao"  # 可选值: zhipu, openai, doubao
+  chat-provider: "doubao"  # 聊天录入默认使用的模型（可选值: zhipu, doubao, openai）
+
 zhipu:
-  api-key: "3ebdcf0f03cc4490a19369209528c90d.7GTUcD90dAnC6mBO"
+  api-key: "a68d7fef354c4461a9e3b00906aa3cfa.IBoZS6HVmgis83t4"
+  api-keys: "a68d7fef354c4461a9e3b00906aa3cfa.IBoZS6HVmgis83t4"  # 多个 key 用逗号分隔，用于轮询
   model: "glm-4.7"
-  file-model: "glm-4.6v-flash"
+  file-model: "GLM-4.6V-FlashX"
   temperature: 0
   max-tokens: 2048
+
+openai:
+  api-key: ""  # OpenAI API Key
+  model: "gpt-4.1"  # OpenAI 模型名称
+  temperature: 0
+
+doubao:
+  api-key: "b8e1cc86-d666-4dbd-8270-ee8b6dd483d9"  # 豆包（火山引擎）API Key
+  phase-a-model: "doubao-seed-1-6-251015"  # 阶段一使用的模型（Responses API）
+  phase-b-model: "doubao-1-5-pro-32k-250115"  # 阶段二使用的模型（Chat Completions API）
+  vision-model: "doubao-seed-1-6-vision-250815"  # 图片识别模型（Responses API with images）
+  temperature: 0
 mock:
   upload-dir: "uploads"
+  processing:
+    concurrent-limit: 2  # 并发处理文件数量
 qiniu:
   enabled: true
   access-key: "k9Nj7Yw3ahm5S6zT2sKBatfSaMMElhQys4sEBKdX"
