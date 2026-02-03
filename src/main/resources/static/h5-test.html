@@ -5198,6 +5198,24 @@
               return;
             }
             const preview = await res.json();
+            console.log("manual preview response:", preview);
+            const needMoreInfo = preview && (
+              preview.needMoreInfo === true ||
+              String(preview.needMoreInfo).toLowerCase() === "true" ||
+              (Array.isArray(preview.missingFields) && preview.missingFields.length > 0) ||
+              (preview.message && String(preview.message).includes("请补充")) ||
+              (!preview.title && !preview.method && preview.message)
+            );
+            if (needMoreInfo) {
+              const msg = preview.message || "信息不完整，请补充后再生成。";
+              manualChatMessages.push({ role: "assistant", content: msg });
+              renderChatHistory();
+              setStatus("需要补充信息");
+              showToast(msg, "warning");
+              if (preview.title && manualTitleInput) manualTitleInput.value = preview.title;
+              if (preview.method && manualMethodSelect) manualMethodSelect.value = preview.method;
+              return;
+            }
             // 添加 AI 响应到对话历史
             manualChatMessages.push({ 
               role: "assistant", 

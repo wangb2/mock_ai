@@ -5,6 +5,7 @@ import com.example.mock.parser.entity.MockOperationLogEntity;
 import com.example.mock.parser.entity.MockResponseCacheEntity;
 import com.example.mock.parser.model.MockEndpointItem;
 import com.example.mock.parser.model.MockEndpointResult;
+import com.example.mock.parser.model.ManualPreviewResult;
 import com.example.mock.parser.model.ParsedDocument;
 import com.example.mock.parser.model.Section;
 import com.example.mock.parser.model.TableData;
@@ -694,7 +695,7 @@ public class MockEndpointService {
         return parseEndpoint(raw, "");
     }
 
-    public MockEndpointItem generateManualPreview(java.util.List<Object> messages, String providerName) throws IOException {
+    public ManualPreviewResult generateManualPreviewResult(java.util.List<Object> messages, String providerName) throws IOException {
         if (messages == null || messages.isEmpty()) {
             return null;
         }
@@ -756,6 +757,7 @@ public class MockEndpointService {
                 
                 // 为每个图片创建单独的消息列表
                 java.util.List<Object> singleImageMessage = new java.util.ArrayList<>();
+                singleImageMessage.add(buildImageRecognitionPrompt());
                 singleImageMessage.add(imageMsg);
                 
                 // 调用模型识别单个图片
@@ -781,7 +783,8 @@ public class MockEndpointService {
         
         // 第二步：将合并后的识别结果转换为标准 JSON
         logger.info("Step 2: Converting merged recognition text to standard JSON");
-        String jsonResponse = provider.callPhaseB(recognitionText, null);
+        String manualPrompt = buildManualPreviewPrompt(recognitionText);
+        String jsonResponse = provider.callPhaseB(recognitionText, manualPrompt);
         if (jsonResponse == null || jsonResponse.trim().isEmpty()) {
             logger.warn("LLM returned empty response in step 2");
             return null;
@@ -791,37 +794,150 @@ public class MockEndpointService {
         // 记录原始响应（前500字符用于调试）
         String preview = jsonResponse.length() > 500 ? jsonResponse.substring(0, 500) + "..." : jsonResponse;
         logger.info("LLM raw response preview: {}", preview);
-        MockEndpointItem item = parseEndpoint(jsonResponse, "");
+        JsonNode node = readJsonLoosely(jsonResponse);
+        if (node == null) {
+            logger.warn("readJsonLoosely returned null. Raw preview: {}", preview);
+            return null;
+        }
+
+        // 兼容模型误输出数组：取第一个对象
+        if (node.isArray() && node.size() > 0) {
+            JsonNode first = node.get(0);
+            if (first != null && first.isObject()) {
+                node = first;
+            }
+        }
+
+        ManualPreviewResult result = new ManualPreviewResult();
+        boolean needMoreInfo = node.path("needMoreInfo").asBoolean(false);
+        if (needMoreInfo) {
+            result.setNeedMoreInfo(true);
+            result.setMissingFields(readStringArray(node.path("missingFields")));
+            result.setMessage(textOr(node.get("message"), "信息不完整，请补充关键信息后再生成。"));
+            JsonNode draftNode = node.path("draft");
+            MockEndpointItem draftItem = null;
+            if (draftNode != null && draftNode.isObject()) {
+                draftItem = parseEndpointNode(draftNode, "");
+            } else if (node.isObject()) {
+                draftItem = parseEndpointNode(node, "");
+            }
+            result.setItem(draftItem);
+            logger.info("Manual preview needs more info. missingFields={}", String.join(", ", result.getMissingFields()));
+            return result;
+        }
+
+        MockEndpointItem item = parseEndpointNode(node, "");
         if (item == null) {
             logger.warn("Failed to parse endpoint from LLM response. Raw length: {}", jsonResponse.length());
             // 尝试记录更多信息
-            JsonNode node = readJsonLoosely(jsonResponse);
-            if (node == null) {
-                logger.warn("readJsonLoosely returned null. Raw preview: {}", preview);
-            } else {
-                if (node.isObject()) {
-                    java.util.Iterator<String> fieldNames = node.fieldNames();
-                    java.util.List<String> keys = new java.util.ArrayList<>();
-                    while (fieldNames.hasNext()) {
-                        keys.add(fieldNames.next());
-                    }
-                    logger.warn("readJsonLoosely succeeded but parseEndpointNode returned null. Node keys: {}", 
-                        String.join(", ", keys));
-                } else {
-                    logger.warn("readJsonLoosely succeeded but parseEndpointNode returned null. Node is not an object");
+            if (node.isObject()) {
+                java.util.Iterator<String> fieldNames = node.fieldNames();
+                java.util.List<String> keys = new java.util.ArrayList<>();
+                while (fieldNames.hasNext()) {
+                    keys.add(fieldNames.next());
                 }
+                logger.warn("readJsonLoosely succeeded but parseEndpointNode returned null. Node keys: {}", 
+                    String.join(", ", keys));
+            } else {
+                logger.warn("readJsonLoosely succeeded but parseEndpointNode returned null. Node is not an object");
             }
         } else {
             logger.info("Successfully parsed endpoint. title={}, method={}, hasRequest={}, hasResponse={}", 
                 item.getTitle(), item.getMethod(), 
                 item.getRequestExample() != null, item.getResponseExample() != null);
         }
-        return item;
+        result.setItem(item);
+        return result;
     }
     
     // 向后兼容：如果没有提供 providerName，使用默认的智谱
     public MockEndpointItem generateManualPreview(java.util.List<Object> messages) throws IOException {
-        return generateManualPreview(messages, "zhipu");
+        ManualPreviewResult result = generateManualPreviewResult(messages, "zhipu");
+        return result == null ? null : result.getItem();
+    }
+    
+    public MockEndpointItem generateManualPreview(java.util.List<Object> messages, String providerName) throws IOException {
+        ManualPreviewResult result = generateManualPreviewResult(messages, providerName);
+        return result == null ? null : result.getItem();
+    }
+
+    private String buildManualPreviewPrompt(String recognitionText) {
+        return "你是一个接口结构化助手。请根据【接口识别结果】生成一个JSON对象。\n"
+            + "如果识别结果缺少关键信息，请返回 needMoreInfo=true，并列出缺失项。\n"
+            + "禁止生成示例接口或虚构内容，信息不足必须提示缺失。\n"
+            + "\n"
+            + "【文本聊天规则】\n"
+            + "- 若识别结果只是泛泛描述（如“帮我生成一个接口/做个接口”）或缺少接口关键信息，必须返回 needMoreInfo=true。\n"
+            + "- 文本中未明确出现 method 或路径或请求/响应字段时，禁止补全为示例值。\n"
+            + "- 允许从文本中提取已出现的字段填入 draft，其余缺失项必须提示用户补充。\n"
+            + "\n"
+            + "【关键信息要求】\n"
+            + "1. title（接口标题）\n"
+            + "2. method（请求方式 GET/POST）\n"
+            + "3. 至少提供 requestExample 或 responseExample 任意一侧\n"
+            + "\n"
+            + "【标题规则】\n"
+            + "- 优先使用 Api Name / API Name / 接口标题 / API 标题\n"
+            + "- 若文档有 Resource URL 或路径，允许使用最后一段作为标题（如 /PRNEsim/GetSimType -> GetSimType）\n"
+            + "- 若仍无法确定标题，必须返回 needMoreInfo=true\n"
+            + "\n"
+            + "【缺失提示规范】\n"
+            + "- missingFields 仅允许以下枚举值：title、method、request/response\n"
+            + "- message 必须包含“可直接填写的模板”，方便用户补充\n"
+            + "\n"
+            + "【输出规则】\n"
+            + "A. 若关键信息不完整，输出格式如下（只输出JSON对象，不要其他文字）：\n"
+            + "{\n"
+            + "  \"needMoreInfo\": true,\n"
+            + "  \"missingFields\": [\"title\", \"method\", \"request/response\"],\n"
+            + "  \"message\": \"请补充以下关键信息后再生成：title、method、request/response\\n\\n可直接按此模板补充：\\n1) 请求方式：GET/POST\\n2) 请求参数（headers/query/body）：\\n3) 响应字段：\\n4) 示例（可选）：\",\n"
+            + "  \"draft\": {\n"
+            + "    \"title\": \"已识别的标题（如有）\",\n"
+            + "    \"method\": \"已识别的请求方式（如有）\",\n"
+            + "    \"requestExample\": {\"headers\":{},\"query\":{},\"body\":{}},\n"
+            + "    \"responseExample\": {\"headers\":{},\"body\":{}},\n"
+            + "    \"errorResponseExample\": {},\n"
+            + "    \"requiredFields\": []\n"
+            + "  }\n"
+            + "}\n"
+            + "\n"
+            + "B. 若关键信息完整，输出标准接口JSON对象（只输出JSON对象）：\n"
+            + "{\n"
+            + "  \"title\": \"...\",\n"
+            + "  \"method\": \"POST\",\n"
+            + "  \"requestExample\": {\"headers\":{},\"query\":{},\"body\":{}},\n"
+            + "  \"responseExample\": {\"headers\":{},\"body\":{}},\n"
+            + "  \"errorResponseExample\": {},\n"
+            + "  \"requiredFields\": []\n"
+            + "}\n"
+            + "\n"
+            + "【重要】如果识别结果只有泛泛描述（如“帮我生成一个接口”），必须返回 needMoreInfo=true。\n"
+            + "【接口识别结果】\n"
+            + recognitionText;
+    }
+
+    private String buildImageRecognitionPrompt() {
+        return "请从截图中识别接口信息，并输出结构化文本：\n"
+            + "1) 接口标题/Api Name\n"
+            + "2) 请求方式（GET/POST）\n"
+            + "3) Resource URL 或路径\n"
+            + "4) Request Headers 表/字段\n"
+            + "5) Request Body 表/字段\n"
+            + "6) Response Body 表/字段\n"
+            + "7) 示例请求/响应（如有）\n"
+            + "如果截图中未出现某项，请明确写“未提供”。";
+    }
+
+    private java.util.List<String> readStringArray(JsonNode node) {
+        java.util.List<String> list = new java.util.ArrayList<>();
+        if (node != null && node.isArray()) {
+            for (JsonNode item : node) {
+                if (item.isTextual() && !item.asText().trim().isEmpty()) {
+                    list.add(item.asText().trim());
+                }
+            }
+        }
+        return list;
     }
 
     private MockEndpointItem parseEndpoint(String raw, String fallbackTitle) {

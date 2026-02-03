@@ -905,9 +905,32 @@ public class ParseController {
             }
         }
         
-        MockEndpointItem item = mockEndpointService.generateManualPreview(messages, providerName);
-        if (item == null) {
+        com.example.mock.parser.model.ManualPreviewResult previewResult =
+                mockEndpointService.generateManualPreviewResult(messages, providerName);
+        if (previewResult == null) {
             logger.warn("Manual preview returned null result");
+            return ResponseEntity.badRequest().body("Empty result");
+        }
+        if (previewResult.isNeedMoreInfo()) {
+            java.util.List<String> missingFields = previewResult.getMissingFields();
+            logger.warn("Manual preview missing required fields. missing={}", 
+                missingFields == null ? "" : String.join(", ", missingFields));
+            ObjectNode result = objectMapper.createObjectNode();
+            result.put("needMoreInfo", true);
+            result.putPOJO("missingFields", missingFields);
+            result.put("message", previewResult.getMessage() != null && !previewResult.getMessage().trim().isEmpty()
+                    ? previewResult.getMessage()
+                    : "请补充以下关键信息后再生成");
+            MockEndpointItem draft = previewResult.getItem();
+            if (draft != null) {
+                if (draft.getTitle() != null) result.put("title", draft.getTitle());
+                if (draft.getMethod() != null) result.put("method", draft.getMethod());
+            }
+            return ResponseEntity.ok(result);
+        }
+        MockEndpointItem item = previewResult.getItem();
+        if (item == null) {
+            logger.warn("Manual preview returned null item");
             return ResponseEntity.badRequest().body("Empty result");
         }
         logger.info("Manual preview success. title={}, method={}", item.getTitle(), item.getMethod());

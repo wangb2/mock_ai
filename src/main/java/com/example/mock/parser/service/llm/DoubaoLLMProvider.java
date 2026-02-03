@@ -251,7 +251,7 @@ public class DoubaoLLMProvider implements LLMProvider {
         
         String requestBody = objectMapper.writeValueAsString(body);
         logger.info("    [Doubao Chat] 请求准备完成. URL={}, Model={}, RequestBodyLength={}", 
-                ARK_RESPONSES_URL, phaseAModel, requestBody.length());
+                ARK_RESPONSES_URL, visionModel, requestBody.length());
         
         long startTime = System.currentTimeMillis();
         HttpEntity<String> request = new HttpEntity<>(requestBody, headers);
@@ -287,6 +287,35 @@ public class DoubaoLLMProvider implements LLMProvider {
             JsonNode outputText = node.path("output_text");
             if (!outputText.isMissingNode() && outputText.isTextual()) {
                 return outputText.asText();
+            }
+
+            // 尝试输出数组 output[].content[].text
+            java.util.List<String> texts = new java.util.ArrayList<>();
+            JsonNode output = node.path("output");
+            if (output.isArray()) {
+                for (JsonNode out : output) {
+                    JsonNode content = out.path("content");
+                    if (content.isArray()) {
+                        for (JsonNode item : content) {
+                            JsonNode textNode = item.path("text");
+                            if (textNode.isTextual()) {
+                                texts.add(textNode.asText());
+                            }
+                            JsonNode outputTextNode = item.path("output_text");
+                            if (outputTextNode.isTextual()) {
+                                texts.add(outputTextNode.asText());
+                            }
+                        }
+                    }
+                    JsonNode outText = out.path("text");
+                    if (outText.isTextual()) {
+                        texts.add(outText.asText());
+                    }
+                }
+            }
+            if (!texts.isEmpty()) {
+                texts.sort((a, b) -> Integer.compare(b.length(), a.length()));
+                return texts.get(0);
             }
             
             // 尝试 choices[0].message.content

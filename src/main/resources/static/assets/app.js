@@ -1,3 +1,9 @@
+window.__appVersion = "appjs-v20260203-2";
+console.log("app.js loaded:", window.__appVersion);
+try {
+  const badge = document.getElementById("appVersionBadge");
+  if (badge) badge.textContent = (window.__indexVersion || "index") + " + " + window.__appVersion;
+} catch (e) {}
 const endpointInput = document.getElementById("endpoint");
       const fileInput = document.getElementById("fileInput");
       const sendBtn = document.getElementById("sendBtn");
@@ -1726,7 +1732,40 @@ const endpointInput = document.getElementById("endpoint");
               showToast("生成失败: " + errorText, "error");
               return;
             }
-            const preview = await res.json();
+            const resText = await res.clone().text();
+            const preview = resText ? parseJsonLoose(resText) : null;
+            console.log("manual preview response:", preview || resText);
+            if (!preview) {
+              const debugText = resText && resText.length > 800 ? resText.slice(0, 800) + "..." : resText;
+              manualChatMessages.push({ role: "assistant", content: "调试：后端返回非JSON或解析失败。\n" + (debugText || "") });
+              renderChatHistory();
+              setStatus("解析失败");
+              showToast("解析失败：后端响应不是标准JSON", "error");
+              return;
+            }
+            const needMoreInfo = preview && (
+              preview.needMoreInfo === true ||
+              String(preview.needMoreInfo).toLowerCase() === "true" ||
+              (Array.isArray(preview.missingFields) && preview.missingFields.length > 0) ||
+              (preview.message && String(preview.message).includes("请补充")) ||
+              (preview.draft && typeof preview.draft === "object") ||
+              (!preview.title && !preview.method) ||
+              (!preview.title && !preview.method && preview.message)
+            );
+            if (needMoreInfo) {
+              const msg = (preview && preview.message) ? preview.message : "信息不完整，请补充后再生成。";
+              manualChatMessages.push({ role: "assistant", content: msg });
+              renderChatHistory();
+              setStatus("需要补充信息");
+              showToast(msg, "warning");
+              if (preview && preview.title && manualTitleInput) manualTitleInput.value = preview.title;
+              if (preview && preview.method && manualMethodSelect) manualMethodSelect.value = preview.method;
+              if (!preview) {
+                manualChatMessages.push({ role: "assistant", content: "调试：无法解析返回结果，请检查后端响应格式。" });
+                renderChatHistory();
+              }
+              return;
+            }
             // 添加 AI 响应到对话历史
             manualChatMessages.push({ 
               role: "assistant", 

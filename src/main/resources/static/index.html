@@ -10,6 +10,9 @@
     <link rel="stylesheet" href="/assets/app.css" />
   </head>
   <body>
+    <div id="appVersionBadge" style="position:fixed;bottom:10px;right:10px;padding:4px 8px;background:#0f172a;color:#e2e8f0;font-size:12px;border-radius:6px;z-index:9999;opacity:0.85;">
+      index-v20260203-2 (pending app.js)
+    </div>
 <header class="topbar">
       <div class="brand">
         <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
@@ -643,8 +646,11 @@
     <script>
       window.__multiPageMode = true;
       window.__initialTab = "home";
+      window.__indexVersion = "index-v20260203-2";
+      const badge = document.getElementById("appVersionBadge");
+      if (badge) badge.textContent = window.__indexVersion + " (pending app.js)";
     </script>
-    <script src="/assets/app.js"></script>
+    <script src="/assets/app.js?v=20260203-1"></script>
   </body>
 </html>
 
