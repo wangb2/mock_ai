@@ -72,20 +72,20 @@
         filter: none;
       }
       html[data-theme="light"] .nav {
-        background: rgba(255, 255, 255, 0.6);
-        border: 1px solid rgba(37, 99, 235, 0.14);
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(47, 109, 246, 0.22);
         color: #334155;
       }
       html[data-theme="light"] .nav span {
         color: #334155;
       }
       html[data-theme="light"] .nav span::before {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.08) 0%, rgba(124, 58, 237, 0.08) 100%);
+        background: linear-gradient(135deg, rgba(47, 109, 246, 0.10) 0%, rgba(47, 109, 246, 0.08) 100%);
       }
       html[data-theme="light"] .nav .active {
-        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+        background: #2f6df6;
         color: #fff;
-        box-shadow: 0 10px 24px rgba(37, 99, 235, 0.22);
+        box-shadow: 0 10px 24px rgba(47, 109, 246, 0.22);
       }
 
       html[data-theme="light"] .hero {
@@ -114,6 +114,16 @@
         max-width: 880px;
         margin-left: auto;
         margin-right: auto;
+      }
+      /* Home entry buttons (match provided screenshot; NOT theme-specific) */
+      .home-entry {
+        margin-top: 26px;
+        display: flex;
+        gap: 22px;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 3;
       }
       html[data-theme="light"] .ai-badge {
         color: rgba(37, 99, 235, 0.95);
@@ -230,6 +240,65 @@
       html[data-theme="light"] button:hover:not(:disabled) {
         border-color: rgba(37, 99, 235, 0.28);
         box-shadow: 0 14px 34px rgba(15, 23, 42, 0.10);
+      }
+
+      /* Home entry buttons: force screenshot style (override generic button styles) */
+      button.home-entry-btn {
+        height: 88px;
+        min-width: 320px;
+        padding: 0 32px;
+        border-radius: 28px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 18px;
+        font-weight: 800;
+        font-size: 30px;
+        letter-spacing: 0.4px;
+        cursor: pointer;
+        box-shadow: 0 20px 48px rgba(15, 23, 42, 0.14) !important;
+      }
+      button.home-entry-btn:hover:not(:disabled) {
+        box-shadow: 0 26px 60px rgba(15, 23, 42, 0.16) !important;
+      }
+      button.home-entry-btn:active:not(:disabled) {
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15) !important;
+      }
+      button.home-entry-btn.home-entry-primary {
+        background: #2f6df6 !important;
+        color: #fff !important;
+        border: 1px solid rgba(47, 109, 246, 0.28) !important;
+      }
+      button.home-entry-btn.home-entry-outline {
+        background: rgba(255, 255, 255, 0.96) !important;
+        color: #2f6df6 !important;
+        border: 3px solid rgba(186, 210, 255, 0.95) !important;
+      }
+      button.home-entry-btn .home-entry-icon {
+        width: 32px;
+        height: 32px;
+        font-size: 34px;
+      }
+      button.home-entry-btn .home-entry-arrow {
+        font-size: 34px;
+      }
+      button.home-entry-btn.home-entry-outline svg {
+        color: #2f6df6;
+      }
+      @media (max-width: 980px) {
+        button.home-entry-btn {
+          min-width: min(420px, 92vw);
+          font-size: 28px;
+          height: 82px;
+        }
+      }
+      @media (max-width: 520px) {
+        button.home-entry-btn {
+          font-size: 24px;
+          height: 74px;
+          padding: 0 28px;
+          border-radius: 22px;
+        }
       }
       html[data-theme="light"] button.secondary,
       html[data-theme="light"] .secondary {
@@ -354,6 +423,95 @@
         border-color: rgba(37, 99, 235, 0.20);
       }
 
+      /* Debug (light): topbar/cards/tabs should not be dark */
+      html[data-theme="light"] .debug-topbar {
+        background: rgba(255, 255, 255, 0.78);
+        border-color: rgba(37, 99, 235, 0.16);
+        box-shadow: 0 18px 52px rgba(15, 23, 42, 0.08);
+      }
+      html[data-theme="light"] .debug-topbar::before {
+        background: none !important;
+        opacity: 0 !important;
+      }
+      html[data-theme="light"] .debug-url-wrap {
+        background: rgba(255, 255, 255, 0.92) !important;
+        border-color: rgba(37, 99, 235, 0.16) !important;
+        box-shadow: none !important;
+      }
+      html[data-theme="light"] .debug-url-wrap:focus-within {
+        background: rgba(255, 255, 255, 0.96) !important;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10) !important;
+      }
+
+      html[data-theme="light"] .debug-card-header {
+        background: rgba(255, 255, 255, 0.60);
+        border-bottom-color: rgba(37, 99, 235, 0.12);
+      }
+      html[data-theme="light"] .debug-card-title {
+        color: #0f172a;
+      }
+      html[data-theme="light"] .debug-card-title .badge {
+        background: rgba(37, 99, 235, 0.10);
+        border-color: rgba(37, 99, 235, 0.16);
+        color: #1d4ed8;
+        box-shadow: none;
+      }
+
+      html[data-theme="light"] .debug-tabs {
+        background: rgba(241, 245, 249, 0.86);
+        color: #475569;
+        border-bottom: 1px solid rgba(37, 99, 235, 0.10);
+      }
+      html[data-theme="light"] .debug-tabs span:hover {
+        color: #0f172a;
+        background: rgba(239, 246, 255, 0.9);
+      }
+      html[data-theme="light"] .debug-tabs .active {
+        color: #0f172a;
+        background: rgba(37, 99, 235, 0.10);
+        border-color: rgba(37, 99, 235, 0.18);
+      }
+
+      html[data-theme="light"] .debug-meta > span {
+        background: rgba(255, 255, 255, 0.82);
+        border-color: rgba(37, 99, 235, 0.16);
+        color: #334155;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+      }
+      html[data-theme="light"] .debug-meta .ok {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.20);
+        color: #166534;
+        box-shadow: 0 10px 22px rgba(15, 23, 42, 0.06);
+      }
+
+      html[data-theme="light"] .required-list {
+        background: rgba(241, 245, 249, 0.86);
+        border-bottom: 1px solid rgba(37, 99, 235, 0.10);
+      }
+      html[data-theme="light"] .required-list .chip {
+        background: rgba(37, 99, 235, 0.08);
+        border-color: rgba(37, 99, 235, 0.16);
+        color: #1d4ed8;
+      }
+
+      /* Debug (light): response/curl code blocks should be light (avoid "whole page looks dark") */
+      html[data-theme="light"] #reqBodyPanel .debug-editor,
+      html[data-theme="light"] #respBodyPanel .debug-editor {
+        background: rgba(241, 245, 249, 0.70);
+      }
+      html[data-theme="light"] #mockResponse,
+      html[data-theme="light"] #debugCurl {
+        background: rgba(255, 255, 255, 0.92) !important;
+        color: #0f172a !important;
+        border-color: rgba(37, 99, 235, 0.16) !important;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.55), 0 12px 28px rgba(15, 23, 42, 0.06) !important;
+      }
+      html[data-theme="light"] #mockResponse::selection,
+      html[data-theme="light"] #debugCurl::selection {
+        background: rgba(37, 99, 235, 0.18);
+      }
+
       /* Modals */
       html[data-theme="light"] .modal {
         background: rgba(15, 23, 42, 0.35);
@@ -415,7 +573,7 @@
         display: flex;
         align-items: center;
         gap: 24px;
-        justify-content: space-between;
+        justify-content: flex-end;
         box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 0 1px rgba(99, 102, 241, 0.3);
         position: sticky;
         top: 0;
@@ -425,6 +583,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
+        margin-right: auto;
       }
       .brand-logo {
         height: 44px;
@@ -465,6 +624,7 @@
         padding: 6px;
         border-radius: 999px;
         border: 1px solid rgba(99, 102, 241, 0.15);
+        margin-left: auto;
       }
       .nav span {
         padding: 8px 18px;
@@ -509,6 +669,26 @@
         margin: 0 auto;
         padding: 24px 28px 60px;
       }
+      /* Home layout: cap width on large screens (ChartinAI-like) */
+      .main.main-home {
+        max-width: min(1760px, 94vw);
+        padding-left: 28px;
+        padding-right: 28px;
+      }
+      .main.main-home .hero {
+        margin-bottom: 56px;
+      }
+      .main.main-home .section-title {
+        margin: 36px 0 26px;
+      }
+      .main.main-home .home-entry {
+        margin-top: 32px;
+        margin-bottom: 18px;
+      }
+      .main.main-home .quick-grid.home-features {
+        margin-top: 18px;
+        margin-bottom: 10px;
+      }
       .hero {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.8) 100%);
         border: 1px solid rgba(99, 102, 241, 0.3);
@@ -529,6 +709,7 @@
         background: radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%);
         border-radius: 50%;
         animation: float 8s ease-in-out infinite;
+        pointer-events: none;
       }
       .hero::after {
         content: "";
@@ -540,6 +721,7 @@
         background: radial-gradient(circle, rgba(147, 51, 234, 0.12) 0%, transparent 70%);
         border-radius: 50%;
         animation: float 10s ease-in-out infinite reverse;
+        pointer-events: none;
       }
       @keyframes float {
         0%, 100% { transform: translate(0, 0) scale(1); }
@@ -559,6 +741,48 @@
         -webkit-text-fill-color: transparent;
         background-clip: text;
         letter-spacing: -0.5px;
+      }
+      /* Home title styling (ChartinAI-like) */
+      .main.main-home .hero h1 {
+        font-size: clamp(44px, 5.2vw, 86px);
+        font-weight: 800;
+        letter-spacing: -0.02em;
+        margin-bottom: 14px;
+        background: none;
+        -webkit-text-fill-color: initial;
+        color: #111827;
+        text-shadow: 0 10px 30px rgba(15, 23, 42, 0.10);
+      }
+      .main.main-home .hero-title {
+        display: inline-flex;
+        gap: 14px;
+        align-items: baseline;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      /* Keep title on a single line */
+      .main.main-home .hero-title {
+        flex-wrap: nowrap;
+        white-space: nowrap;
+      }
+      .main.main-home .hero-title-sub {
+        color: #3b82f6;
+        font-weight: 800;
+        text-shadow: 0 10px 30px rgba(59, 130, 246, 0.18);
+      }
+      .main.main-home .hero-title-main {
+        color: #dc2626 !important;
+        text-shadow: 0 10px 30px rgba(220, 38, 38, 0.18);
+      }
+
+      /* Make "快速开始" (section title) larger and more prominent */
+      .main.main-home .section-title {
+        font-size: clamp(22px, 2.2vw, 32px);
+        font-weight: 800;
+        letter-spacing: 0.2px;
+      }
+      .main.main-home .section-title {
+        margin: 48px 0 34px;
       }
       .hero .tagline {
         font-size: 20px;
@@ -715,6 +939,157 @@
         position: relative;
         z-index: 1;
         line-height: 1.5;
+      }
+
+      /* Home quick cards (new design like provided screenshot; not theme-specific) */
+      .quick-grid.home-features {
+        /* prevent cards from stretching too wide on big screens */
+        max-width: min(1680px, 92vw);
+        margin: 0 auto;
+        justify-content: center;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        gap: clamp(24px, 2vw, 36px);
+      }
+      @media (max-width: 1200px) {
+        .quick-grid.home-features {
+          max-width: none;
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+      }
+      @media (max-width: 720px) {
+        .quick-grid.home-features { grid-template-columns: 1fr; gap: 16px; }
+      }
+
+      .quick-grid.home-features .quick {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        border-radius: 22px;
+        padding: clamp(110px, 10vw, 150px) clamp(28px, 2.4vw, 46px) clamp(28px, 2vw, 42px); /* scale on large screens */
+        text-align: left;
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
+        backdrop-filter: blur(10px);
+        overflow: hidden;
+        position: relative;
+        transform: none;
+      }
+      .quick-grid.home-features .quick::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        border-radius: 22px;
+        border: 1px solid rgba(47, 109, 246, 0.0);
+        opacity: 0;
+        transition: opacity 0.22s ease;
+        pointer-events: none;
+      }
+      .quick-grid.home-features .quick::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 0;
+        background: linear-gradient(180deg, rgba(47, 109, 246, 0.0) 0%, rgba(47, 109, 246, 0.9) 55%, rgba(47, 109, 246, 0.0) 100%);
+        opacity: 0;
+        transition: opacity 0.22s ease, width 0.22s ease;
+        pointer-events: none;
+      }
+
+      .quick-grid.home-features .quick .icon {
+        position: absolute;
+        top: clamp(26px, 2.2vw, 40px);
+        left: clamp(26px, 2.2vw, 40px);
+        width: clamp(64px, 6vw, 96px);
+        height: clamp(64px, 6vw, 96px);
+        border-radius: 20px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0;
+        background: linear-gradient(180deg, rgba(245, 249, 255, 0.98) 0%, rgba(234, 244, 255, 0.96) 100%) !important;
+        border: 1px solid rgba(47, 109, 246, 0.16);
+        color: #2f6df6 !important; /* SVG stroke uses currentColor */
+        box-shadow:
+          0 12px 28px rgba(15, 23, 42, 0.10),
+          inset 0 1px 0 rgba(255, 255, 255, 0.70);
+        transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+        transform-origin: center;
+      }
+      .quick-grid.home-features .quick .icon svg {
+        display: block;
+      }
+      .quick-grid.home-features .quick .title {
+        font-size: clamp(22px, 2.1vw, 34px);
+        font-weight: 900;
+        color: #0f172a;
+        margin-bottom: 10px;
+        transition: color 0.22s ease;
+      }
+      .quick-grid.home-features .quick .desc {
+        font-size: clamp(14px, 1.2vw, 18px);
+        color: rgba(71, 85, 105, 0.92);
+        line-height: 1.8;
+      }
+      .quick-grid.home-features .desc-list {
+        list-style: none;
+        padding: 0;
+        margin: 14px 0 0;
+        display: grid;
+        gap: 10px;
+      }
+      .quick-grid.home-features .desc-list li {
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        font-size: clamp(13px, 1.05vw, 16px);
+        color: rgba(71, 85, 105, 0.86);
+        line-height: 1.7;
+      }
+      .quick-grid.home-features .desc-list li::before {
+        content: "✓";
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 800;
+        color: #2f6df6;
+        flex: 0 0 18px;
+        margin-top: 2px;
+        font-size: 16px;
+      }
+
+      /* Hover / active: icon grows, title turns blue, border gets blue highlight */
+      .quick-grid.home-features .quick:hover,
+      .quick-grid.home-features .quick:active,
+      .quick-grid.home-features .quick.active {
+        box-shadow: 0 28px 68px rgba(15, 23, 42, 0.14);
+        border-color: rgba(47, 109, 246, 0.22);
+      }
+      .quick-grid.home-features .quick:hover::before,
+      .quick-grid.home-features .quick:active::before,
+      .quick-grid.home-features .quick.active::before {
+        opacity: 1;
+      }
+      .quick-grid.home-features .quick:hover::after,
+      .quick-grid.home-features .quick:active::after,
+      .quick-grid.home-features .quick.active::after {
+        opacity: 1;
+        width: 5px;
+      }
+      .quick-grid.home-features .quick:hover .icon,
+      .quick-grid.home-features .quick:active .icon,
+      .quick-grid.home-features .quick.active .icon {
+        transform: scale(1.12);
+        border-color: rgba(47, 109, 246, 0.22);
+        box-shadow:
+          0 18px 44px rgba(47, 109, 246, 0.18),
+          0 12px 30px rgba(15, 23, 42, 0.10),
+          inset 0 1px 0 rgba(255, 255, 255, 0.75);
+        background: linear-gradient(180deg, rgba(244, 249, 255, 0.98) 0%, rgba(226, 240, 255, 0.98) 100%) !important;
+      }
+      .quick-grid.home-features .quick:hover .title,
+      .quick-grid.home-features .quick:active .title,
+      .quick-grid.home-features .quick.active .title {
+        color: #2f6df6;
       }
       .card {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);

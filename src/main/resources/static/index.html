@@ -7,11 +7,11 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>RSMS 智能Mock系统</title>
-    <link rel="stylesheet" href="/assets/app.css" />
+    <link rel="stylesheet" href="/assets/app.css?v=20260203-3" />
   </head>
   <body>
     <div id="appVersionBadge" style="position:fixed;bottom:10px;right:10px;padding:4px 8px;background:#0f172a;color:#e2e8f0;font-size:12px;border-radius:6px;z-index:9999;opacity:0.85;">
-      index-v20260203-2 (pending app.js)
+      index-v20260203-3 (pending app.js)
     </div>
 <header class="topbar">
       <div class="brand">
@@ -27,42 +27,94 @@
       <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">浅色</button>
     </header>
 
-    <main class="main">
+    <main class="main main-home">
 
       <section class="hero" id="home">
         <div class="hero-content">
-          <div class="ai-badge">AI-Powered Mock System</div>
-          <h1>Redtea Smart Mock System</h1>
+          <h1 class="hero-title">
+            <span class="hero-title-main">Redtea</span>
+            <span class="hero-title-sub">Smart Mock System</span>
+          </h1>
           <p class="tagline">AI驱动的接口模拟平台，让接口模拟像聊天一样简单</p>
           <p class="subtitle">上传接口文档，智能解析并自动生成 Mock 服务，支持参数校验与动态响应，让接口联调效率提升 10 倍</p>
+          <div class="section-title">🚀 快速开始</div>
+          <div class="home-entry">
+            <button class="home-entry-btn home-entry-primary" type="button" data-action="manual-entry">
+              <span class="home-entry-icon" aria-hidden="true">＋</span>
+              <span class="home-entry-text">快速开始</span>
+              <span class="home-entry-arrow" aria-hidden="true">→</span>
+            </button>
+            <button class="home-entry-btn home-entry-outline" type="button" data-action="inspiration">
+              <span class="home-entry-icon" aria-hidden="true">
+                <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M21 19a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v14Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M8.5 10.5a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3Z" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="m21 15-5-5L5 21" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </span>
+              <span class="home-entry-text">探索灵感</span>
+              <span class="home-entry-arrow" aria-hidden="true">→</span>
+            </button>
+          </div>
         </div>
       </section>
-      <div class="section-title">🚀 快速开始</div>
-      <div class="quick-grid">
+      <div class="quick-grid home-features">
         <div class="quick" data-jump="doc">
-          <div class="icon" style="background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);">📄</div>
+          <div class="icon" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 2v6h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M9 13h6M9 17h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <div class="title">接口文档管理</div>
           <div class="desc">上传并解析接口文档</div>
+          <ul class="desc-list">
+            <li>支持 PDF / Markdown / Word / 图片，多格式自动解析，无需手动转换。</li>
+          </ul>
         </div>
         <div class="quick" data-jump="api">
-          <div class="icon" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">🗂️</div>
+          <div class="icon" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 4h16v6H4V4Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M4 14h7v6H4v-6Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M13 14h7v6h-7v-6Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <div class="title">接口管理</div>
           <div class="desc">查看与配置接口定义</div>
-        </div>
-        <div class="quick" data-jump="api">
-          <div class="icon" style="background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);">⚡</div>
-          <div class="title">场景管理</div>
-          <div class="desc">配置请求与场景</div>
+          <ul class="desc-list">
+            <li>AI 自动识别接口路径、请求参数与响应结构，整理成统一配置。</li>
+          </ul>
         </div>
         <div class="quick" data-jump="debug">
-          <div class="icon" style="background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%);">🧪</div>
+          <div class="icon" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M21 15a4 4 0 0 1-4 4H8l-5 3V7a4 4 0 0 1 4-4h10a4 4 0 0 1 4 4v8Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 9h8M8 13h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <div class="title">在线调试</div>
           <div class="desc">实时调试 Mock 接口</div>
+          <ul class="desc-list">
+            <li>基于解析结果生成 Mock 配置，支持多场景、动态数据与脚本。</li>
+          </ul>
         </div>
         <div class="quick" data-jump="statistics">
-          <div class="icon" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);">📜</div>
+          <div class="icon" aria-hidden="true">
+            <svg width="34" height="34" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M4 19V5" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M8 19V11" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M12 19V7" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 19V13" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M20 19V9" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <div class="title">请求日志</div>
           <div class="desc">查看 Mock 请求记录</div>
+          <ul class="desc-list">
+            <li>生成可直接调用的 Mock 地址，无缝接入开发与联调流程。</li>
+          </ul>
         </div>
       </div>
 
@@ -249,25 +301,6 @@
             <button id="copyCurlBtn" class="btn-outline">复制命令</button>
           </div>
           <pre id="debugCurl">{}</pre>
-        </div>
-      </section>
-
-      <section id="scene" class="hidden">
-        <div class="section-title">场景管理</div>
-        <div class="card">
-          <div class="scene-toolbar">
-            <div>
-              <div class="scene-title-row">
-                <strong>场景列表</strong>
-                <span class="muted">点击“详情”查看该场景接口</span>
-              </div>
-              <div class="scene-sub">新增/编辑将以弹窗方式打开，不再占用列表布局</div>
-            </div>
-            <div class="scene-toolbar-actions">
-              <button id="sceneCreateBtn" class="secondary">+ 新增场景</button>
-            </div>
-          </div>
-          <div id="sceneList" class="scene-list"></div>
         </div>
       </section>
 
@@ -646,11 +679,11 @@
     <script>
       window.__multiPageMode = true;
       window.__initialTab = "home";
-      window.__indexVersion = "index-v20260203-2";
+      window.__indexVersion = "index-v20260203-3";
       const badge = document.getElementById("appVersionBadge");
       if (badge) badge.textContent = window.__indexVersion + " (pending app.js)";
     </script>
-    <script src="/assets/app.js?v=20260203-1"></script>
+    <script src="/assets/app.js?v=20260203-3"></script>
   </body>
 </html>
 

@@ -226,6 +226,8 @@ const endpointInput = document.getElementById("endpoint");
 
       // Carry debug preset across pages (multi-page navigation)
       const __DEBUG_PRESET_KEY__ = "debugPresetV1";
+      // Home -> API: open manual entry modal after navigation
+      const __MANUAL_OPEN_KEY__ = "manualOpenV1";
 
       function saveDebugPreset(item, errorMode) {
         try {
@@ -250,6 +252,26 @@ const endpointInput = document.getElementById("endpoint");
         } catch (e) {
           try { sessionStorage.removeItem(__DEBUG_PRESET_KEY__); } catch (_) {}
           return null;
+        }
+      }
+
+      function saveManualOpenIntent() {
+        try {
+          sessionStorage.setItem(__MANUAL_OPEN_KEY__, JSON.stringify({ ts: Date.now() }));
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      function consumeManualOpenIntent() {
+        try {
+          const raw = sessionStorage.getItem(__MANUAL_OPEN_KEY__);
+          if (!raw) return false;
+          sessionStorage.removeItem(__MANUAL_OPEN_KEY__);
+          return true;
+        } catch (e) {
+          try { sessionStorage.removeItem(__MANUAL_OPEN_KEY__); } catch (_) {}
+          return false;
         }
       }
 
@@ -2620,6 +2642,32 @@ const endpointInput = document.getElementById("endpoint");
         el.addEventListener("click", () => switchTab(el.getAttribute("data-jump")));
       });
 
+      // Home entry buttons (event delegation; works regardless of DOM structure/overlays)
+      document.addEventListener("click", (e) => {
+        const target = e && e.target && e.target.closest ? e.target.closest("[data-action]") : null;
+        if (!target) return;
+        const action = target.getAttribute("data-action");
+        if (action === "manual-entry") {
+          // Prefer immediate open on current page (index.html contains the modal markup)
+          if (manualCreateBtn && manualModal) {
+            try {
+              manualCreateBtn.click();
+              return;
+            } catch (err) {
+              // fall through
+            }
+          }
+          // Multi-page: navigate to api.html and open there
+          saveManualOpenIntent();
+          switchTab("api");
+          return;
+        }
+        if (action === "inspiration") {
+          showToast("敬请期待", "copy");
+          setStatus("敬请期待");
+        }
+      });
+
       if (apiSearch) {
         apiSearch.addEventListener("input", () => loadHistory());
       }
@@ -2834,6 +2882,15 @@ const endpointInput = document.getElementById("endpoint");
           if (preset && preset.item) {
             // apply without re-navigating
             useMockItem(preset.item, preset.errorMode, false);
+          }
+        }
+        // If we navigated from home quick-start to api.html, auto open manual entry modal.
+        if (initTab === "api") {
+          const openManual = consumeManualOpenIntent();
+          if (openManual) {
+            setTimeout(() => {
+              if (manualCreateBtn) manualCreateBtn.click();
+            }, 0);
           }
         }
         // Keep the previous behavior: history is useful across pages.
