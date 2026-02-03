@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>场景管理 - RSMS 智能Mock系统</title>
+    <link rel="stylesheet" href="/assets/app.css" />
+  </head>
+  <body>
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
+      </div>
+      <nav class="nav">
+        <span data-tab="home">首页</span>
+        <span data-tab="doc">接口文档</span>
+        <span data-tab="api">接口管理</span>
+        <span data-tab="debug">在线调试</span>
+        <span data-tab="statistics">请求日志</span>
+      </nav>
+      <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">浅色</button>
+    </header>
+
+    <main class="main">
+
+      <section class="hero hidden" id="home">
+        <div class="hero-content">
+          <div class="ai-badge">AI-Powered Mock System</div>
+          <h1>Redtea Smart Mock System</h1>
+          <p class="tagline">AI驱动的接口模拟平台，让接口模拟像聊天一样简单</p>
+          <p class="subtitle">上传接口文档，智能解析并自动生成 Mock 服务，支持参数校验与动态响应，让接口联调效率提升 10 倍</p>
+        </div>
+      </section>
+
+      <section id="doc" class="hidden">
+        <div class="section-title">接口文档管理</div>
+        <div class="doc-grid">
+          <div class="doc-card">
+            <div class="doc-title">
+              <div class="icon">⚙️</div>
+              配置与生成
+            </div>
+            <input id="endpoint" class="grow" type="hidden" value="http://localhost:8080/parse/endpoint" />
+            <div class="label" style="margin-top: 0;">选择场景（必选）</div>
+            <select id="sceneSelect">
+              <option value="">请选择场景</option>
+            </select>
+            <div class="hint">必须先选择场景后才能导入接口文件</div>
+            <div class="label" style="margin-top: 0;">上传文档（Document）</div>
+            <div class="upload-area" id="uploadArea">
+              <div class="icon">📁</div>
+              <div class="upload-text">点击选择或拖拽文件到此处</div>
+              <div class="upload-hint">支持 Word (.doc/.docx) 和 PDF 格式文档</div>
+              <input id="fileInput" type="file" accept=".doc,.docx,.pdf" />
+              <label for="fileInput" class="custom-file-upload doc-btn-green">
+                <span>选择文件</span>
+              </label>
+              <div id="fileNameDisplay" class="file-name-display"></div>
+            </div>
+            <button id="sendBtn" class="btn-primary doc-btn-blue" style="width:100%; margin-top: 12px;">✨ 生成 Mock</button>
+            <div class="progress-wrap" id="uploadProgress">
+              <div class="progress-bar"></div>
+            </div>
+            <div class="doc-actions">
+              <button id="copyBtn" class="btn-outline doc-action-btn" disabled>📋 复制返回</button>
+              <button id="refreshBtn" class="btn-outline-gray doc-action-btn">🔄 刷新历史</button>
+              <span class="hint doc-action-btn" id="status">等待上传</span>
+            </div>
+          </div>
+          <div class="doc-card">
+            <div class="doc-title">
+              <div class="icon">📡</div>
+              接口返回（原始）
+            </div>
+            <pre id="output" class="pre-small">{}</pre>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <strong>已上传文档</strong>
+            <span class="muted">支持下载原始文件</span>
+          </div>
+          <div id="docs"></div>
+        </div>
+      </section>
+
+      <section id="api" class="hidden">
+        <div class="section-title">接口管理</div>
+        <div class="api-toolbar">
+          <div class="search">
+            🔍
+            <input id="apiSearch" type="text" placeholder="搜索 API 路径 / 描述 / MockID..." />
+          </div>
+          <div class="summary">共找到 <span id="apiCount">0</span> 个 Mock 接口</div>
+          <div class="scene-filter">
+            <span class="scene-filter-icon">🧩</span>
+            <select id="apiSceneFilter">
+              <option value="">全部场景</option>
+            </select>
+          </div>
+          <button id="manualCreateBtn" class="secondary">+ 手动录入</button>
+        </div>
+        <div id="history"></div>
+      </section>
+
+      <section id="debug" class="hidden">
+        <div class="section-title">在线调试</div>
+        <div class="debug-topbar">
+          <div class="debug-url-wrap">
+            <select id="debugMethodSelect" class="debug-method" style="display: none;">
+              <option value="POST" selected>POST</option>
+              <option value="GET">GET</option>
+            </select>
+            <div class="method-toggle" id="methodToggle">
+              <button type="button" class="method-pill active" data-method="POST">POST</button>
+              <button type="button" class="method-pill" data-method="GET">GET</button>
+            </div>
+            <div class="debug-divider" aria-hidden="true"></div>
+            <input id="mockUrl" class="debug-url" placeholder="http://localhost:8080/parse/mock/{id}" />
+          </div>
+          <button id="sendMockBtn" class="btn-primary">
+            <span style="font-size: 16px;">▶</span>
+            发送请求
+          </button>
+        </div>
+
+        <div class="debug-layout">
+          <div class="debug-card">
+            <div class="debug-card-header">
+              <div class="debug-card-title">
+                Request / 请求区
+              </div>
+            </div>
+            <div class="debug-tabs">
+              <span class="active" data-req-tab="body">Body (JSON)</span>
+              <span data-req-tab="headers">Headers</span>
+              <span data-req-tab="query">Query Params</span>
+            </div>
+            <div class="required-list" id="ruleHint"></div>
+            <div id="reqBodyPanel" class="debug-tab-panel active">
+              <div class="debug-editor">
+                <textarea id="mockBody"></textarea>
+              </div>
+            </div>
+            <div id="reqHeadersPanel" class="debug-tab-panel">
+              <div class="debug-editor">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                  </thead>
+                  <tbody id="headersTable"></tbody>
+                </table>
+              </div>
+              <div class="kv-actions">
+                <button id="addHeaderRow" class="btn-outline">+ 添加参数</button>
+              </div>
+            </div>
+            <div id="reqQueryPanel" class="debug-tab-panel">
+              <div class="debug-editor">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                  </thead>
+                  <tbody id="queryTable"></tbody>
+                </table>
+              </div>
+              <div class="kv-actions">
+                <button id="addQueryRow" class="btn-outline">+ 添加参数</button>
+              </div>
+            </div>
+          </div>
+
+          <div class="debug-card">
+            <div class="debug-card-header">
+              <div class="debug-card-title">
+                Response / 响应结果
+              </div>
+              <div class="debug-meta">
+                <span id="debugStatus">Status: -</span>
+                <span class="ok" id="debugTime">Time: -</span>
+              </div>
+            </div>
+            <div class="debug-tabs">
+              <span class="active" data-resp-tab="body">Response Body</span>
+              <span data-resp-tab="headers">Response Headers</span>
+            </div>
+            <div id="respBodyPanel" class="debug-tab-panel active">
+              <div class="debug-editor" style="position: relative;">
+                <pre id="mockResponse">{}</pre>
+                <div id="aiLoadingOverlay" class="ai-loading-overlay">
+                  <div class="ai-loading-title">🤖 调用AI生成动态响应中...</div>
+                  <div class="ai-progress-track">
+                    <div class="ai-progress-bar"></div>
+                    <div class="ai-horse">🐎</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div id="respHeadersPanel" class="debug-tab-panel">
+              <div class="debug-editor">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th></tr>
+                  </thead>
+                  <tbody id="responseHeadersTable"></tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="debug-curl">
+          <div class="header">
+            <div>Generated cURL</div>
+            <button id="copyCurlBtn" class="btn-outline">复制命令</button>
+          </div>
+          <pre id="debugCurl">{}</pre>
+        </div>
+      </section>
+
+      <section id="scene">
+        <div class="section-title">场景管理</div>
+        <div class="card">
+          <div class="scene-toolbar">
+            <div>
+              <div class="scene-title-row">
+                <strong>场景列表</strong>
+                <span class="muted">点击“详情”查看该场景接口</span>
+              </div>
+              <div class="scene-sub">新增/编辑将以弹窗方式打开，不再占用列表布局</div>
+            </div>
+            <div class="scene-toolbar-actions">
+              <button id="sceneCreateBtn" class="secondary">+ 新增场景</button>
+            </div>
+          </div>
+          <div id="sceneList" class="scene-list"></div>
+        </div>
+      </section>
+
+      <!-- Scene form modal -->
+      <div id="sceneFormModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label" id="sceneFormTitle" style="font-size: 14px; font-weight: 700; color: #e2e8f0;">新增场景</div>
+            <button id="closeSceneFormModal" class="secondary">关闭</button>
+          </div>
+          <div class="muted" style="margin-top: 6px;">简单描述业务场景（名称建议包含“默认”以便自动选中）</div>
+          <div style="margin-top: 12px;">
+            <div class="label">场景名称</div>
+            <input id="sceneNameInput" type="text" placeholder="例如：开户办理、状态查询" />
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="label">场景描述</div>
+            <textarea id="sceneDescInput" placeholder="简单描述该场景用途"></textarea>
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="label">场景规则关键词</div>
+            <textarea id="sceneKeywordsInput" placeholder="多个关键词用英文逗号分隔，例如：order,profile,download"></textarea>
+            <div class="hint">用于接口识别；会与系统默认关键词合并</div>
+          </div>
+          <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+            <button id="sceneCancelBtn" class="secondary hidden">取消编辑</button>
+            <button id="sceneSaveBtn" class="secondary">保存场景</button>
+          </div>
+        </div>
+      </div>
+
+      <section id="statistics" class="hidden">
+        <div class="section-title">请求日志</div>
+        <div class="card">
+          <div class="row">
+            <span class="muted">统计（累计 / 24小时）</span>
+            <button id="refreshLogsBtn" class="secondary">刷新日志</button>
+          </div>
+          <div class="log-cards" style="margin-top: 10px;">
+            <div class="log-card">
+              <div>
+                <div class="title">今日累计请求</div>
+                <div class="value" id="statTotal">0</div>
+                <div style="margin-top: 6px;">
+                  <span class="chip green">上传 <span id="statUpload">0</span></span>
+                  <span class="chip blue">缓存 <span id="statHit">0</span></span>
+                </div>
+              </div>
+              <div class="chart" style="width:96px;height:96px;border-radius:999px;border:10px solid #fee2e2;border-top-color:#dc2626;border-right-color:#ef4444;display:flex;align-items:center;justify-content:center;">
+                <span style="color:#dc2626;font-weight:700;font-size:12px;">Running</span>
+              </div>
+            </div>
+            <div class="log-card" style="flex-direction:column;align-items:stretch;">
+              <div class="row" style="justify-content:space-between;">
+                <div>
+                  <div class="title">24小时趋势</div>
+                  <div class="muted">系统负载情况概览</div>
+                </div>
+                <div class="muted" id="statDelta">+0%</div>
+              </div>
+              <div id="logTrend" class="log-trend"></div>
+            </div>
+          </div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <div class="label">接口维度统计（今日）</div>
+          </div>
+          <div id="endpointTodayStats" class="chart"></div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <div class="label">接口维度统计（近7天）</div>
+          </div>
+          <div id="endpointWeekStats" class="chart"></div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <div class="label">场景维度统计（今日）</div>
+          </div>
+          <div id="sceneTodayStats" class="chart"></div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row">
+            <div class="label">场景维度统计（近7天）</div>
+          </div>
+          <div id="sceneWeekStats" class="chart"></div>
+        </div>
+        <div class="card" style="margin-top: 16px;">
+          <div class="row" style="justify-content:space-between;">
+            <div class="label">最近50条操作日志</div>
+            <div class="muted" id="logUpdatedAt">最后更新 -</div>
+          </div>
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>状态</th>
+                <th>类型 (Type)</th>
+                <th>源文件 (Source)</th>
+                <th>消息 (Message)</th>
+                <th>时间</th>
+                <th style="text-align:right;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="logTableBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <div id="logModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">日志详情</div>
+            <button id="closeLogModal" class="secondary">关闭</button>
+          </div>
+          <pre id="logModalContent">{}</pre>
+        </div>
+      </div>
+
+      <div id="jsonModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">接口 JSON 详情</div>
+            <button id="closeJsonModal" class="secondary">关闭</button>
+          </div>
+          <div class="grid" style="margin-top: 8px;">
+            <div>
+              <div class="label">请求示例</div>
+              <pre id="jsonReq">{}</pre>
+            </div>
+            <div>
+              <div class="label">响应示例</div>
+              <pre id="jsonResp">{}</pre>
+            </div>
+          </div>
+          <div class="label" style="margin-top: 8px;">错误响应示例</div>
+          <pre id="jsonErr">{}</pre>
+        </div>
+      </div>
+
+      <div id="sceneDetailModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">场景接口列表</div>
+            <button id="closeSceneDetailModal" class="secondary">关闭</button>
+          </div>
+          <div id="sceneDetailMeta" class="muted" style="margin-top: 6px;"></div>
+          <div id="sceneDetailList" class="doc-list" style="margin-top: 12px;"></div>
+        </div>
+      </div>
+
+      <div id="editModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">编辑请求/响应示例</div>
+            <button id="closeEditModal" class="secondary">关闭</button>
+          </div>
+          <div class="grid" style="margin-top: 8px;">
+            <div>
+              <div class="label">请求示例（JSON）</div>
+              <textarea id="editReq"></textarea>
+            </div>
+            <div>
+              <div class="label">响应示例（JSON）</div>
+              <textarea id="editResp"></textarea>
+            </div>
+          </div>
+          <div class="label" style="margin-top: 8px;">错误响应示例（JSON）</div>
+          <textarea id="editErr"></textarea>
+          <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+            <button id="saveEditBtn" class="btn-primary">保存修改</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="manualModal" class="modal">
+        <div class="content">
+          <div class="row" style="justify-content:space-between;align-items:center;">
+            <div class="label">手动录入接口</div>
+            <button id="closeManualModal" class="secondary">关闭</button>
+          </div>
+          <div class="row" style="margin-top: 8px; justify-content:space-between; align-items:center;">
+            <div class="manual-mode-tabs">
+              <button id="manualModeChat" class="active">聊天模式</button>
+              <button id="manualModeManual">手动录入</button>
+            </div>
+            <div class="manual-toggle">
+              <button id="manualModeTable" class="active">表格</button>
+              <button id="manualModeJson">JSON</button>
+            </div>
+          </div>
+          <div class="row" style="margin-top: 8px; justify-content:flex-end;">
+          </div>
+          <div id="manualChatWrap" style="margin-top: 12px;">
+            <div class="row" style="margin-bottom: 8px; align-items: center; gap: 12px;">
+              <div class="label" style="margin: 0;">聊天输入</div>
+              <select id="manualChatProvider" style="flex: 0 0 auto; padding: 4px 8px; border-radius: 4px; border: 1px solid #ccc;">
+                <option value="zhipu">智谱 (GLM-4.6V-Flash)</option>
+                <option value="doubao">豆包 (Vision)</option>
+              </select>
+            </div>
+            <div id="manualChatHistory" class="card" style="padding: 12px; margin-bottom: 10px; max-height: 160px; overflow:auto;">
+              <div class="hint">可多轮追加描述，生成时会合并上下文。支持上传或直接粘贴截图识别接口信息（Ctrl+V）。</div>
+            </div>
+            <div style="position: relative;">
+              <textarea id="manualChatInput" placeholder="描述接口：名称、请求方式、请求/响应字段、示例等。也可以直接粘贴截图（Ctrl+V）或上传图片识别接口信息。"></textarea>
+              <div style="position: absolute; top: 8px; right: 8px;">
+                <label for="manualChatImageInput" style="cursor: pointer; padding: 4px 8px; background: #f5f5f5; border-radius: 4px; font-size: 12px; display: inline-block;">
+                  📷 上传图片
+                </label>
+                <input type="file" id="manualChatImageInput" accept="image/*" style="display: none;" />
+              </div>
+            </div>
+            <div id="manualChatImages" style="margin-top: 8px; display: flex; flex-wrap: wrap; gap: 8px;"></div>
+            <div class="row" style="margin-top: 8px; justify-content:flex-end;">
+              <button id="manualChatClearBtn" class="secondary">清空对话</button>
+              <button id="manualChatGenerateBtn" class="secondary">生成预览</button>
+            </div>
+          </div>
+          <div class="grid" style="margin-top: 8px;">
+            <div>
+              <div class="label">接口标题</div>
+              <input id="manualTitleInput" type="text" placeholder="例如：Delete Profile API" />
+            </div>
+            <div>
+              <div class="label">请求方式</div>
+              <select id="manualMethodSelect">
+                <option value="POST">POST</option>
+                <option value="GET">GET</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-top: 12px;">
+            <div class="label">所属场景（必选）</div>
+            <select id="manualSceneSelect">
+              <option value="">请选择场景</option>
+            </select>
+          </div>
+          <div id="manualTableWrap">
+            <div class="grid" style="margin-top: 12px;">
+              <div>
+                <div class="label">请求 Headers</div>
+                <div class="manual-table">
+                  <table class="kv-table">
+                    <thead>
+                      <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="manualReqHeadersTable"></tbody>
+                  </table>
+                  <div class="kv-actions">
+                    <button id="manualAddReqHeader" class="btn-outline">+ 添加参数</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="label">请求 Query</div>
+                <div class="manual-table">
+                  <table class="kv-table">
+                    <thead>
+                      <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="manualReqQueryTable"></tbody>
+                  </table>
+                  <div class="kv-actions">
+                    <button id="manualAddReqQuery" class="btn-outline">+ 添加参数</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div style="margin-top: 12px;">
+              <div class="label">请求 Body</div>
+              <div class="manual-table">
+                <table class="kv-table">
+                  <thead>
+                    <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                  </thead>
+                  <tbody id="manualReqBodyTable"></tbody>
+                </table>
+                <div class="kv-actions">
+                  <button id="manualAddReqBody" class="btn-outline">+ 添加参数</button>
+                </div>
+              </div>
+            </div>
+            <div class="grid" style="margin-top: 12px;">
+              <div>
+                <div class="label">响应 Headers</div>
+                <div class="manual-table">
+                  <table class="kv-table">
+                    <thead>
+                      <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="manualRespHeadersTable"></tbody>
+                  </table>
+                  <div class="kv-actions">
+                    <button id="manualAddRespHeader" class="btn-outline">+ 添加参数</button>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <div class="label">响应 Body</div>
+                <div class="manual-table">
+                  <table class="kv-table">
+                    <thead>
+                      <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                    </thead>
+                    <tbody id="manualRespBodyTable"></tbody>
+                  </table>
+                  <div class="kv-actions">
+                    <button id="manualAddRespBody" class="btn-outline">+ 添加参数</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="label" style="margin-top: 8px;">错误响应示例</div>
+            <div class="manual-table">
+              <table class="kv-table">
+                <thead>
+                  <tr><th>参数名</th><th>参数值</th><th>操作</th></tr>
+                </thead>
+                <tbody id="manualErrBodyTable"></tbody>
+              </table>
+              <div class="kv-actions">
+                <button id="manualAddErrBody" class="btn-outline">+ 添加参数</button>
+              </div>
+            </div>
+          </div>
+          <div id="manualJsonWrap" class="hidden">
+            <div class="label" style="margin-top: 12px;">请求示例（JSON）</div>
+            <textarea id="manualReqJson"></textarea>
+            <div class="label" style="margin-top: 8px;">响应示例（JSON）</div>
+            <textarea id="manualRespJson"></textarea>
+            <div class="label" style="margin-top: 8px;">错误响应示例（JSON）</div>
+            <textarea id="manualErrJson"></textarea>
+          </div>
+          <div style="margin-top: 8px;">
+            <div class="label">错误响应 HTTP 状态码</div>
+            <input id="manualErrStatusInput" type="text" placeholder="例如：400 或 500" />
+          </div>
+          <div class="label" style="margin-top: 8px;">必填字段（JSON数组）</div>
+          <textarea id="manualRequired"></textarea>
+          <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+            <button id="manualSaveBtn" class="secondary">保存接口</button>
+          </div>
+        </div>
+      </div>
+
+      <div id="confirmModal" class="modal">
+        <div class="confirm-dialog">
+          <div class="confirm-header">
+            <div class="confirm-icon-wrap">
+              <div class="confirm-icon">⚠</div>
+            </div>
+            <div class="confirm-title" id="confirmTitle">确认删除操作</div>
+            <button id="closeConfirmModal" class="confirm-close">✕</button>
+          </div>
+          <div class="confirm-body">
+            <div class="confirm-message" id="confirmMessage"></div>
+          </div>
+          <div class="confirm-footer">
+            <button id="confirmCancelBtn" class="confirm-btn confirm-btn-cancel">
+              <span>✕</span>
+              取消
+            </button>
+            <button id="confirmOkBtn" class="confirm-btn confirm-btn-danger">
+              <span>✓</span>
+              确认删除
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    
+</main>
+
+    <script>
+      window.__multiPageMode = true;
+      window.__initialTab = "scene";
+    </script>
+    <script src="/assets/app.js"></script>
+  </body>
+</html>
+
+
+
+
+
