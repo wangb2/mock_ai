@@ -52,6 +52,8 @@ public class ParseController {
     private final com.example.mock.parser.service.QiniuService qiniuService;
     private final com.example.mock.parser.service.AsyncMockProcessingService asyncMockProcessingService;
     private final com.example.mock.parser.repository.UploadedFileRepository uploadedFileRepository;
+    private final com.example.mock.parser.repository.MockEndpointRepository mockEndpointRepository;
+    private final com.example.mock.parser.repository.MockOperationLogRepository mockOperationLogRepository;
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(ParseController.class);
 
     @Value("${mock.upload-dir:uploads}")
@@ -64,7 +66,9 @@ public class ParseController {
                            ObjectMapper objectMapper,
                            com.example.mock.parser.service.QiniuService qiniuService,
                            com.example.mock.parser.service.AsyncMockProcessingService asyncMockProcessingService,
-                           com.example.mock.parser.repository.UploadedFileRepository uploadedFileRepository) {
+                           com.example.mock.parser.repository.UploadedFileRepository uploadedFileRepository,
+                           com.example.mock.parser.repository.MockEndpointRepository mockEndpointRepository,
+                           com.example.mock.parser.repository.MockOperationLogRepository mockOperationLogRepository) {
         this.documentParserService = documentParserService;
         this.mockGenerationService = mockGenerationService;
         this.mockEndpointService = mockEndpointService;
@@ -73,6 +77,8 @@ public class ParseController {
         this.qiniuService = qiniuService;
         this.asyncMockProcessingService = asyncMockProcessingService;
         this.uploadedFileRepository = uploadedFileRepository;
+        this.mockEndpointRepository = mockEndpointRepository;
+        this.mockOperationLogRepository = mockOperationLogRepository;
     }
 
     @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
@@ -174,6 +180,47 @@ public class ParseController {
             if (file.getProcessedAt() != null) {
                 node.put("processedAt", file.getProcessedAt().toString());
             }
+            result.add(node);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(path = "/stats/summary")
+    public ResponseEntity<?> getStatsSummary() {
+        ObjectNode result = objectMapper.createObjectNode();
+        long total = mockEndpointRepository.count();
+        java.time.LocalDateTime startOfDay = java.time.LocalDate.now().atStartOfDay();
+        long todayNew = mockEndpointRepository.countByCreatedAtAfter(startOfDay);
+        result.put("totalEndpoints", total);
+        result.put("todayNewEndpoints", todayNew);
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(path = "/stats/scene-endpoints")
+    public ResponseEntity<?> getSceneEndpointStats() {
+        List<Object[]> rows = mockEndpointRepository.countBySceneIdAll();
+        ArrayNode result = objectMapper.createArrayNode();
+        for (Object[] row : rows) {
+            ObjectNode node = objectMapper.createObjectNode();
+            node.put("sceneId", row[0] == null ? "" : String.valueOf(row[0]));
+            node.put("sceneName", row[1] == null ? "" : String.valueOf(row[1]));
+            node.put("count", row[2] == null ? 0 : ((Number) row[2]).longValue());
+            result.add(node);
+        }
+        return ResponseEntity.ok(result);
+    }
+
+    @GetMapping(path = "/stats/endpoint-top")
+    public ResponseEntity<?> getTopEndpointCalls() {
+        List<Object[]> rows = mockOperationLogRepository.topEndpointCalls();
+        ArrayNode result = objectMapper.createArrayNode();
+        for (Object[] row : rows) {
+            ObjectNode node = objectMapper.createObjectNode();
+            node.put("mockId", row[0] == null ? "" : String.valueOf(row[0]));
+            node.put("title", row[1] == null ? "" : String.valueOf(row[1]));
+            node.put("method", row[2] == null ? "" : String.valueOf(row[2]));
+            node.put("apiPath", row[3] == null ? "" : String.valueOf(row[3]));
+            node.put("count", row[4] == null ? 0 : ((Number) row[4]).longValue());
             result.add(node);
         }
         return ResponseEntity.ok(result);
@@ -296,6 +343,7 @@ public class ParseController {
             mockEndpointService.logOperation("MOCK_ERROR", item.getId(), item.getSourceFileName(), "错误Mock");
             JsonNode errorResponse = buildErrorResponse(item, validationNode);
             Integer status = normalizeHttpStatus(item.getErrorHttpStatus());
+            applyResponseDelay(item);
             return buildMockResponse(errorResponse, status);
         }
         List<String> missing = validateRequired(validationNode, filterRequiredFields(item));
@@ -304,13 +352,21 @@ public class ParseController {
             ObjectNode error = objectMapper.createObjectNode();
             error.put("error", "validation_failed");
             error.putPOJO("missing", missing);
+            applyResponseDelay(item);
             return ResponseEntity.badRequest().body(error);
         }
         JsonNode payload = requestPayload != null ? requestPayload : validationNode;
         try {
-            JsonNode response = mockEndpointService.getDynamicResponse(item, payload);
+            JsonNode response;
+            if (shouldUseDynamicResponse(validationNode)) {
+                response = mockEndpointService.getDynamicResponse(item, payload);
+            } else {
+                response = item.getResponseExample();
+            }
+            applyResponseDelay(item);
             return buildMockResponse(response, null);
         } catch (IOException ex) {
+            applyResponseDelay(item);
             return buildMockResponse(item.getResponseExample(), null);
         }
     }
@@ -387,6 +443,42 @@ public class ParseController {
             code = body.get("headers").get("__mock_error_code");
         }
         return code != null && (code.isTextual() || code.isInt());
+    }
+
+    private boolean shouldUseDynamicResponse(JsonNode body) {
+        if (body == null || !body.isObject()) {
+            return true;
+        }
+        JsonNode flag = body.get("__mock_no_ai");
+        if (flag == null && body.has("query") && body.get("query").isObject()) {
+            flag = body.get("query").get("__mock_no_ai");
+        }
+        if (flag == null && body.has("headers") && body.get("headers").isObject()) {
+            flag = body.get("headers").get("__mock_no_ai");
+        }
+        if (flag == null) {
+            return true;
+        }
+        if (flag.isBoolean()) {
+            return !flag.asBoolean();
+        }
+        String value = flag.asText().trim();
+        return value.isEmpty() || "0".equals(value) || "false".equalsIgnoreCase(value);
+    }
+
+    private void applyResponseDelay(MockEndpointItem item) {
+        if (item == null || item.getResponseDelayMs() == null) {
+            return;
+        }
+        int delayMs = item.getResponseDelayMs();
+        if (delayMs <= 0) {
+            return;
+        }
+        try {
+            Thread.sleep(Math.min(delayMs, 30000));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
     }
 
     private JsonNode buildErrorResponse(MockEndpointItem item, JsonNode body) {
@@ -717,6 +809,7 @@ public class ParseController {
         String title = textOr(body == null ? null : body.get("title"), "");
         String method = textOr(body == null ? null : body.get("method"), "POST");
         Integer errorHttpStatus = null;
+        Integer responseDelayMs = null;
         JsonNode statusNode = body == null ? null : body.get("errorHttpStatus");
         if (statusNode != null && statusNode.isInt()) {
             errorHttpStatus = statusNode.asInt();
@@ -725,6 +818,16 @@ public class ParseController {
                 errorHttpStatus = Integer.parseInt(statusNode.asText().trim());
             } catch (NumberFormatException ex) {
                 errorHttpStatus = null;
+            }
+        }
+        JsonNode delayNode = body == null ? null : body.get("responseDelayMs");
+        if (delayNode != null && delayNode.isNumber()) {
+            responseDelayMs = delayNode.asInt();
+        } else if (delayNode != null && delayNode.isTextual()) {
+            try {
+                responseDelayMs = Integer.parseInt(delayNode.asText().trim());
+            } catch (NumberFormatException ex) {
+                responseDelayMs = null;
             }
         }
         JsonNode requestExample = body == null ? null : body.get("requestExample");
@@ -748,7 +851,7 @@ public class ParseController {
                 requiredFields.size());
         
         MockEndpointItem item = mockEndpointService.createManualEndpoint(title, method, requestExample,
-                responseExample, errorResponseExample, requiredFields, scene.getId(), scene.getName(), errorHttpStatus);
+                responseExample, errorResponseExample, requiredFields, scene.getId(), scene.getName(), errorHttpStatus, responseDelayMs);
         if (item == null) {
             logger.warn("Manual endpoint creation failed: createManualEndpoint returned null. title={}, method={}", title, method);
             return ResponseEntity.badRequest().body("Empty request/response or invalid data");
@@ -771,6 +874,7 @@ public class ParseController {
     public ResponseEntity<?> manualPreview(@RequestBody JsonNode body) throws IOException {
         // 获取模型选择（优先使用请求参数，否则使用配置的默认值）
         String providerName = textOr(body == null ? null : body.get("provider"), defaultChatProvider);
+        String userId = textOr(body == null ? null : body.get("userId"), "");
         
         // 优先使用 messages 数组（多轮对话，支持多模态）
         JsonNode messagesNode = body == null ? null : body.get("messages");
@@ -893,7 +997,7 @@ public class ParseController {
         }
         
         // 记录日志用于调试
-        logger.info("Manual preview request. provider={}, messages count: {}", providerName, messages.size());
+        logger.info("Manual preview request. userId={}, provider={}, messages count: {}", userId, providerName, messages.size());
         for (int i = 0; i < messages.size(); i++) {
             Object msg = messages.get(i);
             if (msg instanceof com.fasterxml.jackson.databind.JsonNode) {

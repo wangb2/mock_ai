@@ -8,6 +8,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import javax.annotation.PostConstruct;
 import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Map;
 
 /**
@@ -29,35 +32,66 @@ public class PromptService {
     
     @PostConstruct
     public void init() {
+        reload();
+    }
+
+    public synchronized void reload() {
         try {
             // 加载 Zhipu 提示词
-            Resource zhipuResource = resourceLoader.getResource("classpath:zhipu-prompts.yml");
-            if (zhipuResource.exists()) {
-                try (InputStream is = zhipuResource.getInputStream()) {
+            try (InputStream is = resolvePromptStream("zhipu-prompts.yml")) {
+                if (is != null) {
                     Yaml yaml = new Yaml();
                     Map<String, Object> data = yaml.load(is);
                     zhipuPrompts = (Map<String, Object>) ((Map<String, Object>) data.get("zhipu")).get("prompts");
                     logger.info("Loaded Zhipu prompts successfully");
+                } else {
+                    logger.warn("Zhipu prompts file not found: zhipu-prompts.yml");
                 }
-            } else {
-                logger.warn("Zhipu prompts file not found: zhipu-prompts.yml");
             }
-            
+
             // 加载 OpenAI 提示词
-            Resource openaiResource = resourceLoader.getResource("classpath:openai-prompts.yml");
-            if (openaiResource.exists()) {
-                try (InputStream is = openaiResource.getInputStream()) {
+            try (InputStream is = resolvePromptStream("openai-prompts.yml")) {
+                if (is != null) {
                     Yaml yaml = new Yaml();
                     Map<String, Object> data = yaml.load(is);
                     openaiPrompts = (Map<String, Object>) ((Map<String, Object>) data.get("openai")).get("prompts");
                     logger.info("Loaded OpenAI prompts successfully");
+                } else {
+                    logger.warn("OpenAI prompts file not found: openai-prompts.yml");
                 }
-            } else {
-                logger.warn("OpenAI prompts file not found: openai-prompts.yml");
             }
         } catch (Exception e) {
             logger.error("Failed to load prompts from configuration files", e);
         }
+    }
+
+    private InputStream resolvePromptStream(String filename) {
+        try {
+            Path cwd = Paths.get(System.getProperty("user.dir"));
+            Path config = cwd.resolve("config").resolve(filename);
+            if (Files.exists(config)) {
+                return Files.newInputStream(config);
+            }
+            Path direct = cwd.resolve(filename);
+            if (Files.exists(direct)) {
+                return Files.newInputStream(direct);
+            }
+            Path src = cwd.resolve("src").resolve("main").resolve("resources").resolve(filename);
+            if (Files.exists(src)) {
+                return Files.newInputStream(src);
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to resolve prompt file path: {}", filename, e);
+        }
+        try {
+            Resource resource = resourceLoader.getResource("classpath:" + filename);
+            if (resource.exists()) {
+                return resource.getInputStream();
+            }
+        } catch (Exception e) {
+            logger.warn("Failed to read classpath prompt file: {}", filename, e);
+        }
+        return null;
     }
     
     /**

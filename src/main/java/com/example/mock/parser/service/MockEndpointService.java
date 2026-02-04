@@ -526,6 +526,7 @@ public class MockEndpointService {
             JsonNode response = body.get("responseExample");
             JsonNode error = body.get("errorResponseExample");
             JsonNode required = body.get("requiredFields");
+            JsonNode delayNode = body.get("responseDelayMs");
             // 修复字符串化的 JSON（与 createManualEndpoint 保持一致）
             if (request != null && !request.isMissingNode()) {
                 entity.setRequestExample(stringify(fixStringifiedJson(request)));
@@ -538,6 +539,17 @@ public class MockEndpointService {
             }
             if (required != null && required.isArray()) {
                 entity.setRequiredFields(stringify(required));
+            }
+            if (delayNode == null || delayNode.isNull()) {
+                entity.setResponseDelayMs(null);
+            } else if (delayNode.isNumber()) {
+                entity.setResponseDelayMs(delayNode.asInt());
+            } else if (delayNode != null && delayNode.isTextual()) {
+                try {
+                    entity.setResponseDelayMs(Integer.parseInt(delayNode.asText().trim()));
+                } catch (NumberFormatException ex) {
+                    // ignore invalid
+                }
             }
             repository.save(entity);
             responseCacheRepository.deleteByMockId(id);
@@ -645,7 +657,8 @@ public class MockEndpointService {
                                                  List<String> requiredFields,
                                                  String sceneId,
                                                  String sceneName,
-                                                 Integer errorHttpStatus) {
+                                                 Integer errorHttpStatus,
+                                                 Integer responseDelayMs) {
         MockEndpointItem item = new MockEndpointItem();
         item.setTitle(title == null ? "" : title.trim());
         item.setMethod(method == null ? "" : method.trim().toUpperCase(Locale.ROOT));
@@ -661,6 +674,9 @@ public class MockEndpointService {
         }
         item.setSceneId(sceneId);
         item.setSceneName(sceneName);
+        if (responseDelayMs != null) {
+            item.setResponseDelayMs(responseDelayMs);
+        }
         item.setErrorHttpStatus(errorHttpStatus);
         
         // 对于手动录入，使用更宽松的检查：只要有标题和方法，或者有请求/响应示例之一即可
@@ -1126,6 +1142,17 @@ public class MockEndpointService {
             }
         }
 
+        JsonNode delayMs = node.path("responseDelayMs");
+        if (delayMs != null && delayMs.isNumber()) {
+            item.setResponseDelayMs(delayMs.intValue());
+        } else if (delayMs != null && delayMs.isTextual()) {
+            try {
+                item.setResponseDelayMs(Integer.parseInt(delayMs.asText().trim()));
+            } catch (NumberFormatException ex) {
+                // ignore
+            }
+        }
+
         JsonNode required = node.path("requiredFields");
         if (required.isArray()) {
             List<String> requiredFields = new ArrayList<>();
@@ -1476,6 +1503,7 @@ public class MockEndpointService {
         entity.setSceneId(item.getSceneId());
         entity.setSceneName(item.getSceneName());
         entity.setErrorHttpStatus(item.getErrorHttpStatus());
+        entity.setResponseDelayMs(item.getResponseDelayMs());
         entity.setApiPath(item.getApiPath());
         entity.setRequestExample(stringify(item.getRequestExample()));
         entity.setResponseExample(stringify(item.getResponseExample()));
@@ -1497,6 +1525,7 @@ public class MockEndpointService {
         item.setSceneId(entity.getSceneId());
         item.setSceneName(entity.getSceneName());
         item.setErrorHttpStatus(entity.getErrorHttpStatus());
+        item.setResponseDelayMs(entity.getResponseDelayMs());
         item.setApiPath(entity.getApiPath());
         item.setRequestExample(parseJson(entity.getRequestExample()));
         item.setResponseExample(parseJson(entity.getResponseExample()));

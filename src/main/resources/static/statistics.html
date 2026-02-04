@@ -20,6 +20,9 @@
         <span data-tab="api">接口管理</span>
         <span data-tab="debug">在线调试</span>
         <span class="active" data-tab="statistics">请求日志</span>
+        <span id="navAdminLink" class="hidden">管理</span>
+        <span id="navUserBadge" class="hidden" style="cursor:default;"></span>
+        <span id="navLoginLink">登录</span>
       </nav>
       <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">浅色</button>
     </header>
@@ -272,58 +275,40 @@
         <div class="section-title">请求日志</div>
         <div class="card">
           <div class="row">
-            <span class="muted">统计（累计 / 24小时）</span>
+            <span class="muted">接口统计概览</span>
             <button id="refreshLogsBtn" class="secondary">刷新日志</button>
           </div>
           <div class="log-cards" style="margin-top: 10px;">
             <div class="log-card">
               <div>
-                <div class="title">今日累计请求</div>
-                <div class="value" id="statTotal">0</div>
-                <div style="margin-top: 6px;">
-                  <span class="chip green">上传 <span id="statUpload">0</span></span>
-                  <span class="chip blue">缓存 <span id="statHit">0</span></span>
-                </div>
+                <div class="title">接口总数</div>
+                <div class="value" id="totalEndpointCount">0</div>
+                <div class="muted" style="margin-top: 6px;">当前系统累计接口数</div>
               </div>
               <div class="chart" style="width:96px;height:96px;border-radius:999px;border:10px solid #fee2e2;border-top-color:#dc2626;border-right-color:#ef4444;display:flex;align-items:center;justify-content:center;">
-                <span style="color:#dc2626;font-weight:700;font-size:12px;">Running</span>
+                <span style="color:#dc2626;font-weight:700;font-size:12px;">Total</span>
               </div>
             </div>
             <div class="log-card" style="flex-direction:column;align-items:stretch;">
-              <div class="row" style="justify-content:space-between;">
-                <div>
-                  <div class="title">24小时趋势</div>
-                  <div class="muted">系统负载情况概览</div>
-                </div>
-                <div class="muted" id="statDelta">+0%</div>
+              <div>
+                <div class="title">今日新增接口</div>
+                <div class="value" id="todayNewEndpointCount">0</div>
+                <div class="muted" style="margin-top: 6px;">今日录入新增</div>
               </div>
-              <div id="logTrend" class="log-trend"></div>
             </div>
           </div>
         </div>
         <div class="card" style="margin-top: 16px;">
           <div class="row">
-            <div class="label">接口维度统计（今日）</div>
+            <div class="label">各场景接口数量</div>
           </div>
-          <div id="endpointTodayStats" class="chart"></div>
+          <div id="sceneEndpointStats" class="chart"></div>
         </div>
         <div class="card" style="margin-top: 16px;">
           <div class="row">
-            <div class="label">接口维度统计（近7天）</div>
+            <div class="label">接口调用量排行（Top 10）</div>
           </div>
-          <div id="endpointWeekStats" class="chart"></div>
-        </div>
-        <div class="card" style="margin-top: 16px;">
-          <div class="row">
-            <div class="label">场景维度统计（今日）</div>
-          </div>
-          <div id="sceneTodayStats" class="chart"></div>
-        </div>
-        <div class="card" style="margin-top: 16px;">
-          <div class="row">
-            <div class="label">场景维度统计（近7天）</div>
-          </div>
-          <div id="sceneWeekStats" class="chart"></div>
+          <div id="endpointCallTop10" class="chart"></div>
         </div>
         <div class="card" style="margin-top: 16px;">
           <div class="row" style="justify-content:space-between;">
@@ -406,6 +391,8 @@
           </div>
           <div class="label" style="margin-top: 8px;">错误响应示例（JSON）</div>
           <textarea id="editErr"></textarea>
+          <div class="label" style="margin-top: 8px;">响应时长（毫秒）</div>
+          <input id="editDelayMs" type="number" min="0" placeholder="例如：2000" />
           <div class="row" style="margin-top: 12px; justify-content:flex-end;">
             <button id="saveEditBtn" class="btn-primary">保存修改</button>
           </div>
@@ -574,6 +561,10 @@
           <div style="margin-top: 8px;">
             <div class="label">错误响应 HTTP 状态码</div>
             <input id="manualErrStatusInput" type="text" placeholder="例如：400 或 500" />
+          </div>
+          <div style="margin-top: 8px;">
+            <div class="label">响应时长（毫秒）</div>
+            <input id="manualDelayMsInput" type="number" min="0" placeholder="例如：2000" />
           </div>
           <div class="label" style="margin-top: 8px;">必填字段（JSON数组）</div>
           <textarea id="manualRequired"></textarea>

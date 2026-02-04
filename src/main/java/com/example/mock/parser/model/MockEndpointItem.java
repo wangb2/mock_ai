@@ -21,6 +21,7 @@ public class MockEndpointItem {
     private String sceneId;
     private String sceneName;
     private Integer errorHttpStatus;
+    private Integer responseDelayMs;
     private String apiPath;
 
     public String getId() {
@@ -141,6 +142,14 @@ public class MockEndpointItem {
 
     public void setErrorHttpStatus(Integer errorHttpStatus) {
         this.errorHttpStatus = errorHttpStatus;
+    }
+
+    public Integer getResponseDelayMs() {
+        return responseDelayMs;
+    }
+
+    public void setResponseDelayMs(Integer responseDelayMs) {
+        this.responseDelayMs = responseDelayMs;
     }
 
     public String getApiPath() {

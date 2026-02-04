@@ -41,6 +41,8 @@ public class MockEndpointEntity {
     private String sceneName;
     @Column(name = "error_http_status")
     private Integer errorHttpStatus;
+    @Column(name = "response_delay_ms")
+    private Integer responseDelayMs;
     @Column(length = 512)
     private String apiPath;
 
@@ -171,6 +173,14 @@ public class MockEndpointEntity {
 
     public void setErrorHttpStatus(Integer errorHttpStatus) {
         this.errorHttpStatus = errorHttpStatus;
+    }
+
+    public Integer getResponseDelayMs() {
+        return responseDelayMs;
+    }
+
+    public void setResponseDelayMs(Integer responseDelayMs) {
+        this.responseDelayMs = responseDelayMs;
     }
 
     public String getApiPath() {

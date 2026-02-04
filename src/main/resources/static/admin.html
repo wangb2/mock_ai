@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+    <meta http-equiv="Pragma" content="no-cache" />
+    <meta http-equiv="Expires" content="0" />
+    <title>管理后台 - RSMS 智能Mock系统</title>
+    <link rel="stylesheet" href="/assets/app.css?v=20260203-3" />
+  </head>
+  <body data-page="admin">
+    <header class="topbar">
+      <div class="brand">
+        <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
+      </div>
+      <nav class="nav">
+        <span data-tab="home" onclick="location.href='/index.html'">首页</span>
+        <span class="active">管理</span>
+      </nav>
+      <button id="adminLogoutBtn" class="theme-toggle" type="button">退出</button>
+    </header>
+
+    <main class="main">
+      <section class="card">
+        <div class="row" style="justify-content:space-between;">
+          <div class="label">用户审批</div>
+          <div class="muted">注册用户需要审批后才能登录</div>
+        </div>
+        <div id="adminUserTableWrap" style="margin-top: 12px;"></div>
+      </section>
+
+      <section class="card" style="margin-top: 16px;">
+        <div class="row" style="justify-content:space-between;">
+          <div class="label">系统配置</div>
+          <div class="muted">application.yml 配置项</div>
+        </div>
+        <div id="configForm" style="margin-top: 12px;"></div>
+        <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+          <button id="saveConfigBtn" class="btn-primary">保存配置</button>
+        </div>
+      </section>
+
+      <section class="card" style="margin-top: 16px;">
+        <div class="row" style="justify-content:space-between;">
+          <div class="label">提示词配置</div>
+          <div class="muted">编辑 prompts 配置文件</div>
+        </div>
+        <div class="label" style="margin-top: 12px;">openai-prompts.yml</div>
+        <textarea id="openaiPrompts" style="min-height: 220px;"></textarea>
+        <div class="label" style="margin-top: 12px;">zhipu-prompts.yml</div>
+        <textarea id="zhipuPrompts" style="min-height: 220px;"></textarea>
+        <div class="row" style="margin-top: 12px; justify-content:flex-end;">
+          <button id="savePromptsBtn" class="secondary">保存提示词</button>
+        </div>
+      </section>
+
+      <div id="adminMessage" class="hint" style="margin-top: 12px;"></div>
+    </main>
+
+    <script src="/assets/admin.js?v=20260203-3"></script>
+  </body>
+</html>

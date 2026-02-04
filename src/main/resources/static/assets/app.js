@@ -45,11 +45,8 @@ const endpointInput = document.getElementById("endpoint");
       const refreshLogsBtn = document.getElementById("refreshLogsBtn");
       const logTableBody = document.getElementById("logTableBody");
       const logUpdatedAt = document.getElementById("logUpdatedAt");
-      const statTotal = document.getElementById("statTotal");
-      const statUpload = document.getElementById("statUpload");
-      const statHit = document.getElementById("statHit");
-      const statDelta = document.getElementById("statDelta");
-      const logTrend = document.getElementById("logTrend");
+      const totalEndpointCount = document.getElementById("totalEndpointCount");
+      const todayNewEndpointCount = document.getElementById("todayNewEndpointCount");
       const logModal = document.getElementById("logModal");
       const closeLogModal = document.getElementById("closeLogModal");
       const logModalContent = document.getElementById("logModalContent");
@@ -69,6 +66,7 @@ const endpointInput = document.getElementById("endpoint");
       const editReq = document.getElementById("editReq");
       const editResp = document.getElementById("editResp");
       const editErr = document.getElementById("editErr");
+      const editDelayMs = document.getElementById("editDelayMs");
       const saveEditBtn = document.getElementById("saveEditBtn");
       const sceneSelect = document.getElementById("sceneSelect");
       const sceneList = document.getElementById("sceneList");
@@ -85,8 +83,7 @@ const endpointInput = document.getElementById("endpoint");
       const closeSceneDetailModal = document.getElementById("closeSceneDetailModal");
       const sceneDetailList = document.getElementById("sceneDetailList");
       const sceneDetailMeta = document.getElementById("sceneDetailMeta");
-      const sceneTodayStats = document.getElementById("sceneTodayStats");
-      const sceneWeekStats = document.getElementById("sceneWeekStats");
+      const sceneEndpointStats = document.getElementById("sceneEndpointStats");
       const manualModal = document.getElementById("manualModal");
       const closeManualModal = document.getElementById("closeManualModal");
       const manualTitleInput = document.getElementById("manualTitleInput");
@@ -99,6 +96,7 @@ const endpointInput = document.getElementById("endpoint");
       const manualRespBodyTable = document.getElementById("manualRespBodyTable");
       const manualErrBodyTable = document.getElementById("manualErrBodyTable");
       const manualErrStatusInput = document.getElementById("manualErrStatusInput");
+      const manualDelayMsInput = document.getElementById("manualDelayMsInput");
       const manualReqJson = document.getElementById("manualReqJson");
       const manualRespJson = document.getElementById("manualRespJson");
       const manualErrJson = document.getElementById("manualErrJson");
@@ -128,8 +126,7 @@ const endpointInput = document.getElementById("endpoint");
       let __historyCache = null;
       let __apiExpandedSceneId = ""; // for merged scene->endpoints accordion on api page (default: all collapsed)
       const uploadArea = document.getElementById("uploadArea");
-      const endpointTodayStats = document.getElementById("endpointTodayStats");
-      const endpointWeekStats = document.getElementById("endpointWeekStats");
+      const endpointCallTop10 = document.getElementById("endpointCallTop10");
       let currentMethod = "POST";
       let selectedFile = null;
 
@@ -339,7 +336,7 @@ const endpointInput = document.getElementById("endpoint");
       }
 
       async function loadScenes(keepSelection = true) {
-        if (!sceneList || !sceneSelect) return;
+        if (!sceneList && !sceneSelect && !apiSceneFilter && !manualSceneSelect) return;
         const currentSelection = keepSelection ? sceneSelect.value : "";
         const apiSelection = keepSelection && apiSceneFilter ? apiSceneFilter.value : "";
         const manualSelection = keepSelection && manualSceneSelect ? manualSceneSelect.value : "";
@@ -349,7 +346,9 @@ const endpointInput = document.getElementById("endpoint");
           const list = await res.json();
           const scenes = sortScenes(Array.isArray(list) ? list : []);
           // 接口文档管理：不显示"请选择场景"占位项，直接默认选中
-          updateSceneSelect(sceneSelect, scenes, currentSelection, "", false, false);
+          if (sceneSelect) {
+            updateSceneSelect(sceneSelect, scenes, currentSelection, "", false, false);
+          }
           if (apiSceneFilter) {
             // 接口管理中的场景选择默认保持"全部场景"（空值），不自动选择
             updateSceneSelect(apiSceneFilter, scenes, apiSelection, "全部场景", true);
@@ -363,7 +362,9 @@ const endpointInput = document.getElementById("endpoint");
             refreshMergedApiView();
             return;
           }
-          renderSceneList(scenes);
+          if (sceneList) {
+            renderSceneList(scenes);
+          }
         } catch (err) {
           // ignore
         }
@@ -1246,6 +1247,9 @@ const endpointInput = document.getElementById("endpoint");
             editReq.value = JSON.stringify(item.requestExample || {}, null, 2);
             editResp.value = JSON.stringify(item.responseExample || {}, null, 2);
             editErr.value = JSON.stringify(item.errorResponseExample || {}, null, 2);
+            if (editDelayMs) {
+              editDelayMs.value = item.responseDelayMs != null ? String(item.responseDelayMs) : "";
+            }
             editModal.classList.add("open");
           });
         }
@@ -1304,10 +1308,14 @@ const endpointInput = document.getElementById("endpoint");
           let reqJson;
           let respJson;
           let errJson;
+          let delayMsValue = null;
           try {
             reqJson = editReq.value.trim() ? JSON.parse(editReq.value) : {};
             respJson = editResp.value.trim() ? JSON.parse(editResp.value) : {};
             errJson = editErr.value.trim() ? JSON.parse(editErr.value) : {};
+            if (editDelayMs && editDelayMs.value.trim()) {
+              delayMsValue = Number(editDelayMs.value.trim());
+            }
           } catch (err) {
             setStatus("JSON 格式错误");
             return;
@@ -1319,7 +1327,8 @@ const endpointInput = document.getElementById("endpoint");
               body: JSON.stringify({
                 requestExample: reqJson,
                 responseExample: respJson,
-                errorResponseExample: errJson
+                errorResponseExample: errJson,
+                responseDelayMs: delayMsValue
               })
             });
             if (res.ok) {
@@ -1411,12 +1420,17 @@ const endpointInput = document.getElementById("endpoint");
           renderKeyValueTable(manualRespBodyTable, {});
           renderKeyValueTable(manualErrBodyTable, {});
           if (manualErrStatusInput) manualErrStatusInput.value = "";
+          if (manualDelayMsInput) manualDelayMsInput.value = "";
           if (manualReqJson) manualReqJson.value = JSON.stringify({ headers: {}, query: {}, body: {} }, null, 2);
           if (manualRespJson) manualRespJson.value = JSON.stringify({ headers: {}, body: {} }, null, 2);
           if (manualErrJson) manualErrJson.value = "{}";
           if (manualRequired) manualRequired.value = "[]";
-          manualChatMessages = [];
-          renderChatHistory();
+          if (typeof loadChatHistoryForUser === "function") {
+            loadChatHistoryForUser(window.__currentUserId || "anonymous");
+          } else {
+            manualChatMessages = [];
+            renderChatHistory();
+          }
           manualModal.classList.add("open");
           // 避免打开弹窗时强制滚到底导致“往上跑/跳动”的观感；默认从顶部开始
           setTimeout(() => {
@@ -1481,6 +1495,9 @@ const endpointInput = document.getElementById("endpoint");
           const errorHttpStatus = manualErrStatusInput && manualErrStatusInput.value.trim()
             ? Number(manualErrStatusInput.value.trim())
             : null;
+          const responseDelayMs = manualDelayMsInput && manualDelayMsInput.value.trim()
+            ? Number(manualDelayMsInput.value.trim())
+            : null;
           try {
             manualSaveBtn.disabled = true;
             const res = await fetch("/parse/endpoint/manual", {
@@ -1494,7 +1511,8 @@ const endpointInput = document.getElementById("endpoint");
                 responseExample: respObj,
                 errorResponseExample: errObj,
                 requiredFields: requiredArr,
-                errorHttpStatus: errorHttpStatus
+                errorHttpStatus: errorHttpStatus,
+                responseDelayMs: responseDelayMs
               })
             });
             if (res.ok) {
@@ -1746,7 +1764,7 @@ const endpointInput = document.getElementById("endpoint");
             const res = await fetch("/parse/endpoint/llm-preview", {
               method: "POST",
               headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ messages: messages, provider: provider })
+              body: JSON.stringify({ messages: messages, provider: provider, userId: window.__currentUserId || "" })
             });
             if (!res.ok) {
               const errorText = await res.text();
@@ -1839,10 +1857,31 @@ const endpointInput = document.getElementById("endpoint");
       }
 
       let manualChatMessages = [];
+      let manualChatUserId = null;
+      function getChatStorageKey(userId) {
+        return "manualChatHistory:" + (userId || "anonymous");
+      }
+      function loadChatHistoryForUser(userId) {
+        manualChatUserId = userId || "anonymous";
+        try {
+          const raw = sessionStorage.getItem(getChatStorageKey(manualChatUserId));
+          manualChatMessages = raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          manualChatMessages = [];
+        }
+        renderChatHistory();
+      }
+      function saveChatHistory() {
+        if (!manualChatUserId) return;
+        try {
+          sessionStorage.setItem(getChatStorageKey(manualChatUserId), JSON.stringify(manualChatMessages || []));
+        } catch (e) {}
+      }
       function renderChatHistory() {
         if (!manualChatHistory) return;
         if (!manualChatMessages.length) {
           manualChatHistory.innerHTML = "<div class='hint'>可多轮追加描述，生成时会合并上下文。支持上传截图识别接口信息。</div>";
+          saveChatHistory();
           return;
         }
         manualChatHistory.innerHTML = manualChatMessages
@@ -1872,6 +1911,7 @@ const endpointInput = document.getElementById("endpoint");
           .join("");
         // 滚动到底部
         manualChatHistory.scrollTop = manualChatHistory.scrollHeight;
+        saveChatHistory();
       }
 
       if (manualAddReqHeader) {
@@ -2050,6 +2090,9 @@ const endpointInput = document.getElementById("endpoint");
         if (!hasHeader(headers, "Accept")) {
           headers["Accept"] = "application/json";
         }
+        // 在线调试固定使用示例响应，不走 AI 动态生成
+        headers["__mock_no_ai"] = "1";
+        const noAi = true;
         if (currentMethod === "GET") {
           body = {};
         }
@@ -2060,8 +2103,8 @@ const endpointInput = document.getElementById("endpoint");
           const req = mockBody.value.trim() ? JSON.parse(mockBody.value) : {};
           body = extractBodyFromRequest(req);
         }
-        setStatus("🚀 调用AI生成动态响应中...");
-        if (aiLoadingOverlay) {
+        setStatus("🚀 请求处理中...");
+        if (!noAi && aiLoadingOverlay) {
           aiLoadingOverlay.classList.add("show");
           // Animate horse running with better frames
           const horseEl = aiLoadingOverlay.querySelector(".ai-horse");
@@ -2107,7 +2150,7 @@ const endpointInput = document.getElementById("endpoint");
             setStatus("❌ 请求失败：" + res.status);
             setSendBtnUi("error");
           } else {
-            const cacheHint = elapsed < 500 ? " (缓存命中)" : " (AI生成)";
+            const cacheHint = noAi ? " (示例响应)" : (elapsed < 500 ? " (缓存命中)" : " (AI生成)");
             setStatus("✅ 完成" + cacheHint);
             setSendBtnUi("success");
           }
@@ -2697,34 +2740,21 @@ const endpointInput = document.getElementById("endpoint");
           setStatus("加载日志中...");
         }
         try {
-          const [statsRes, listRes, todayRes, weekRes, sceneTodayRes, sceneWeekRes] = await Promise.all([
-            fetch("/parse/logs/stats"),
+          const [summaryRes, listRes, sceneRes, topRes] = await Promise.all([
+            fetch("/parse/stats/summary"),
             fetch("/parse/logs"),
-            fetch("/parse/logs/stats/endpoint-today"),
-            fetch("/parse/logs/stats/endpoint-week"),
-            fetch("/parse/logs/stats/scene-today"),
-            fetch("/parse/logs/stats/scene-week")
+            fetch("/parse/stats/scene-endpoints"),
+            fetch("/parse/stats/endpoint-top")
           ]);
-          if (!statsRes.ok && !listRes.ok && !todayRes.ok && !weekRes.ok) {
+          if (!summaryRes.ok && !listRes.ok && !sceneRes.ok && !topRes.ok) {
             if (fromUserAction) {
-              setStatus(`加载失败：${listRes.status || statsRes.status}`);
+              setStatus(`加载失败：${listRes.status || summaryRes.status}`);
             }
           }
-          if (statsRes.ok) {
-            const stats = await statsRes.json();
-            const total = (stats.mockHit || 0) + (stats.mockGen || 0) + (stats.mockError || 0) + (stats.mockValidationFail || 0);
-            statTotal.textContent = total;
-            statUpload.textContent = stats.uploadMock || 0;
-            statHit.textContent = stats.mockHit || 0;
-            const delta = stats.mockGen24h ? Math.round((stats.mockGen24h / Math.max(1, total)) * 100) : 0;
-            statDelta.textContent = `+${delta}% 环比`;
-            renderTrend(logTrend, [
-              stats.mockHit24h || 0,
-              stats.mockGen24h || 0,
-              stats.mockError24h || 0,
-              stats.mockValidationFail24h || 0,
-              stats.uploadMock || 0
-            ]);
+          if (summaryRes.ok) {
+            const stats = await summaryRes.json();
+            if (totalEndpointCount) totalEndpointCount.textContent = stats.totalEndpoints || 0;
+            if (todayNewEndpointCount) todayNewEndpointCount.textContent = stats.todayNewEndpoints || 0;
           }
           if (listRes.ok) {
             const list = await listRes.json();
@@ -2732,21 +2762,13 @@ const endpointInput = document.getElementById("endpoint");
           } else if (fromUserAction) {
             logTableBody.innerHTML = `<tr><td colspan='6' class='hint'>日志加载失败（${listRes.status}）</td></tr>`;
           }
-          if (todayRes.ok && endpointTodayStats) {
-            const list = await todayRes.json();
-            renderEndpointBars(endpointTodayStats, list);
+          if (sceneRes.ok && sceneEndpointStats) {
+            const list = await sceneRes.json();
+            renderSceneBars(sceneEndpointStats, list);
           }
-          if (weekRes.ok && endpointWeekStats) {
-            const list = await weekRes.json();
-            renderEndpointBars(endpointWeekStats, list);
-          }
-          if (sceneTodayRes.ok && sceneTodayStats) {
-            const list = await sceneTodayRes.json();
-            renderSceneBars(sceneTodayStats, list);
-          }
-          if (sceneWeekRes.ok && sceneWeekStats) {
-            const list = await sceneWeekRes.json();
-            renderSceneBars(sceneWeekStats, list);
+          if (topRes.ok && endpointCallTop10) {
+            const list = await topRes.json();
+            renderEndpointBars(endpointCallTop10, list);
           }
           if (fromUserAction) {
             setStatus("日志已刷新");
@@ -2773,9 +2795,12 @@ const endpointInput = document.getElementById("endpoint");
         const max = Math.max(1, ...sorted.map((x) => x.count || 0));
         container.innerHTML = sorted.map((row) => {
           const width = Math.round(((row.count || 0) / max) * 100);
+          const label = row.apiPath
+            ? `${row.method || ""} ${row.apiPath}`.trim()
+            : (row.title || row.mockId || "-");
           return `
             <div class="bar">
-              <div>${escapeHtml(row.title || row.mockId || "-")}</div>
+              <div>${escapeHtml(label)}</div>
               <div class="track"><div class="fill" style="width:${width}%"></div></div>
               <div>${row.count || 0}</div>
             </div>
@@ -2864,9 +2889,59 @@ const endpointInput = document.getElementById("endpoint");
         return "dot-gray";
       }
 
+      async function initAuthNav() {
+        const adminLink = document.getElementById("navAdminLink");
+        const loginLink = document.getElementById("navLoginLink");
+        const userBadge = document.getElementById("navUserBadge");
+        try {
+          const res = await fetch("/auth/me");
+          if (!res.ok) {
+            if (location.pathname.endsWith(".html") && !location.pathname.endsWith("login.html")) {
+              location.href = "/login.html";
+              return;
+            }
+            if (adminLink) adminLink.classList.add("hidden");
+            if (userBadge) userBadge.classList.add("hidden");
+            if (loginLink) {
+              loginLink.textContent = "登录";
+              loginLink.onclick = () => (location.href = "/login.html");
+            }
+            return;
+          }
+          const me = await res.json();
+          if (userBadge) {
+            userBadge.textContent = me.username + " (" + me.role + ")";
+            userBadge.classList.remove("hidden");
+          }
+          window.__currentUserId = me.id || "";
+          if (manualChatHistory) {
+            loadChatHistoryForUser(window.__currentUserId || "anonymous");
+          }
+          if (adminLink) {
+            if (me.role === "ADMIN") {
+              adminLink.classList.remove("hidden");
+              adminLink.onclick = () => (location.href = "/admin.html");
+            } else {
+              adminLink.classList.add("hidden");
+            }
+          }
+          if (loginLink) {
+            loginLink.textContent = "退出";
+            loginLink.onclick = async () => {
+              await fetch("/auth/logout", { method: "POST" });
+              location.href = "/login.html";
+            };
+          }
+        } catch (e) {
+          if (adminLink) adminLink.classList.add("hidden");
+          if (userBadge) userBadge.classList.add("hidden");
+        }
+      }
+
       // Initial render (avoid navigation loop in multi-page mode)
       (function init() {
         initThemeToggle();
+        initAuthNav();
         const initTab = window.__initialTab || "home";
         __renderTab__(initTab);
         // Instant docs list: render cached uploaded-files immediately if available.

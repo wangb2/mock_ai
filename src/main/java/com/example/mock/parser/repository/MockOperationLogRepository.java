@@ -48,4 +48,13 @@ public interface MockOperationLogRepository extends JpaRepository<MockOperationL
             "GROUP BY e.scene_id, e.scene_name " +
             "ORDER BY cnt DESC", nativeQuery = true)
     List<Object[]> countBySceneIdLast7Days();
+
+    @Query(value = "SELECT e.id, e.title, e.method, e.api_path, COUNT(1) AS cnt " +
+            "FROM mock_operation_log l " +
+            "JOIN mock_endpoint e ON l.mock_id = e.id " +
+            "WHERE l.type IN ('MOCK_HIT','MOCK_GEN','MOCK_ERROR','MOCK_VALIDATION_FAIL') " +
+            "GROUP BY e.id, e.title, e.method, e.api_path " +
+            "ORDER BY cnt DESC " +
+            "LIMIT 10", nativeQuery = true)
+    List<Object[]> topEndpointCalls();
 }

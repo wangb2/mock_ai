@@ -20,6 +20,9 @@
         <span data-tab="api">接口管理</span>
         <span data-tab="debug">在线调试</span>
         <span data-tab="statistics">请求日志</span>
+        <span id="navAdminLink" class="hidden">管理</span>
+        <span id="navUserBadge" class="hidden" style="cursor:default;"></span>
+        <span id="navLoginLink">登录</span>
       </nav>
       <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">浅色</button>
     </header>
@@ -406,6 +409,8 @@
           </div>
           <div class="label" style="margin-top: 8px;">错误响应示例（JSON）</div>
           <textarea id="editErr"></textarea>
+          <div class="label" style="margin-top: 8px;">响应时长（毫秒）</div>
+          <input id="editDelayMs" type="number" min="0" placeholder="例如：2000" />
           <div class="row" style="margin-top: 12px; justify-content:flex-end;">
             <button id="saveEditBtn" class="btn-primary">保存修改</button>
           </div>
