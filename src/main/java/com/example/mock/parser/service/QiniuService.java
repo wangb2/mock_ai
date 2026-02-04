@@ -105,6 +105,49 @@ public class QiniuService {
     }
 
     /**
+     * 上传字节数组到七牛云（用于飞书图片等）。
+     *
+     * @param data        文件二进制
+     * @param key         存储 key，建议带路径如 feishu/xxx.jpg
+     * @param contentType 可选，用于日志；七牛根据 key 后缀推断类型
+     * @return 公网访问 URL，失败返回 null
+     */
+    public String uploadBytes(byte[] data, String key, String contentType) {
+        if (!enabled || accessKey == null || accessKey.isEmpty()
+                || secretKey == null || secretKey.isEmpty()
+                || bucket == null || bucket.isEmpty()) {
+            logger.warn("Qiniu upload is disabled or not configured properly");
+            return null;
+        }
+        if (data == null || data.length == 0 || key == null || key.trim().isEmpty()) {
+            return null;
+        }
+        try {
+            Configuration cfg = new Configuration(Region.autoRegion());
+            UploadManager uploadManager = new UploadManager(cfg);
+            Auth auth = Auth.create(accessKey, secretKey);
+            String upToken = auth.uploadToken(bucket);
+            Response response = uploadManager.put(data, key.trim(), upToken);
+            DefaultPutRet putRet = response.jsonToObject(DefaultPutRet.class);
+            logger.info("Qiniu upload bytes success. key={}, size={}", putRet.key, data.length);
+            if (domain != null && !domain.isEmpty()) {
+                String url = domain.endsWith("/") ? domain + putRet.key : domain + "/" + putRet.key;
+                if (!url.startsWith("http://") && !url.startsWith("https://")) {
+                    url = "https://" + url;
+                }
+                return url;
+            }
+            String qiniuUrl = "http://t9ig9nbye.hn-bkt.clouddn.com/" + putRet.key;
+            logger.info("Qiniu URL generated without domain. bucket={}, key={}", bucket, putRet.key);
+            return qiniuUrl;
+        } catch (QiniuException ex) {
+            Response r = ex.response;
+            logger.error("Qiniu upload bytes failed. key={}, error={}", key, r != null ? r.toString() : ex.getMessage());
+            return null;
+        }
+    }
+
+    /**
      * 删除七牛云文件
      * @param key 文件key
      * @return 是否删除成功

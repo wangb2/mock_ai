@@ -35,6 +35,17 @@ qiniu:
 filter:
   keywords: "api,接口,request,response,header,body,parameter,params,sample,example,url,method,请求,响应,参数,示例,地址,接口地址"
   url-regex: "(https?://|/)[\\w\\-./:?&=%#]+"
+
+# 飞书入口（可选，不配置 app-id 则飞书相关接口不生效）
+feishu:
+  enabled: true
+  app-id: "cli_a90b66453f39dcd1"
+  app-secret: "YXsqsp5tSXfGzw0t5qcbThP8Xg7M561d"
+  verification-token: "nznrPlGqGLBCiGiguTc8Vc4vn67vI7kw"
+  encrypt-key: "2bv6UnjRPN82yKtjzohz2dTNEUUAlgob"
+  default-scene-id: "a067102fcbfa4701b93e96512b7f6587"
+  preview-cache-ttl-minutes: 30
+
 spring:
   datasource:
     url: "jdbc:mysql://10.18.40.27:3306/db_mock?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai&useSSL=false"
