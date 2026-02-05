@@ -25,6 +25,6 @@ public class WebConfig implements WebMvcConfigurer {
     public void addInterceptors(InterceptorRegistry registry) {
         registry.addInterceptor(authInterceptor)
                 .addPathPatterns("/**")
-                .excludePathPatterns("/error", "/favicon.ico");
+                .excludePathPatterns("/error", "/favicon.ico", "/feishu/**");
     }
 }
