@@ -12,6 +12,7 @@ import com.example.mock.parser.model.feishu.FeishuImageDownloadResult;
 import com.example.mock.parser.model.feishu.FeishuMessage;
 import com.example.mock.parser.model.feishu.FeishuPostContent;
 import com.example.mock.parser.model.feishu.FeishuSender;
+import com.example.mock.parser.model.feishu.FeishuSenderId;
 import com.example.mock.parser.model.feishu.FeishuTextContent;
 import com.example.mock.parser.repository.FeishuProcessedMessageRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -181,7 +182,7 @@ public class FeishuEventService {
     /**
      * 清除用户会话
      */
-    private void clearSession(String sessionKey) {
+    public void clearSession(String sessionKey) {
         if (sessionKey != null && !sessionKey.isEmpty()) {
             UserSession removed = userSessions.remove(sessionKey);
             if (removed != null) {
@@ -374,9 +375,12 @@ public class FeishuEventService {
 
         feishuApiService.sendInteractiveToChat(chatId, buildCreateButtonCard(previewResultId, item, chatType, senderUserId));
         log.info("Feishu preview sent. chat_id={}, title={}, method={}, preview_result_id={}", chatId, item.getTitle(), item.getMethod(), previewResultId);
-        
-        // 创建接口卡片后，清除该用户的会话缓存，表示会话完成（使用unionId作为key）
-        clearSession(sessionKey);
+
+        try {
+            updateSession(sessionKey, Collections.singletonList(objectMapper.writeValueAsString(cached)));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
     /**

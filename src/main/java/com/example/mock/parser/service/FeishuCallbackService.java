@@ -6,6 +6,7 @@ import com.example.mock.parser.model.MockEndpointItem;
 import com.example.mock.parser.model.MockSceneItem;
 import com.example.mock.parser.model.feishu.FeishuCachedPreview;
 import com.example.mock.parser.model.feishu.FeishuCallbackPayload;
+import com.example.mock.parser.model.feishu.FeishuOperator;
 import com.example.mock.parser.service.feishu.CallbackActionValueParser;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -35,6 +36,7 @@ public class FeishuCallbackService {
     private final MockSceneService mockSceneService;
     private final CallbackActionValueParser callbackActionValueParser;
     private final ObjectMapper objectMapper;
+    private final FeishuEventService feishuEventService;
 
     /**
      * 处理 Callback：根据 preview_result_id 取缓存，创建接口，回复接口详情。
@@ -108,6 +110,13 @@ public class FeishuCallbackService {
         String successCard = buildCreateSuccessCard(created, cached.getChatType(), cached.getSenderUserId());
         feishuApiService.sendInteractiveToChat(cached.getChatId(), successCard);
         feishuPreviewCache.remove(previewResultId);
+        // 创建接口卡片后，清除该用户的会话缓存，表示会话完成（使用unionId作为key）
+        if (payload.getUser() != null) {
+            FeishuOperator user = payload.getUser();
+            feishuEventService.clearSession(user.getUnionId());
+            feishuEventService.clearSession(user.getOpenId());
+            feishuEventService.clearSession(user.getUserId());
+        }
         log.info("Feishu callback created. preview_result_id={}, endpoint_id={}, title={}", previewResultId, created.getId(), created.getTitle());
         return buildCallbackToast(toastResponse, "success", "创建成功，接口详情已发送。", "Created successfully, details sent.");
     }
