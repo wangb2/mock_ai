@@ -351,7 +351,6 @@ public class MockEndpointService {
                             item.getId(), item.getTitle(), ex.getMessage(), ex);
                     continue;
                 }
-                result.getItems().add(item);
             }
 
             logOperation("UPLOAD_MOCK", null, sourceFileName, "生成mock接口: " + result.getItems().size());

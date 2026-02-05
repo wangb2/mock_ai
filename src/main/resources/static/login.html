@@ -7,6 +7,9 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>登录 - RSMS 智能Mock系统</title>
+    <script>
+      (function(){ try { var t = localStorage.getItem("uiThemeV1"); if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t); else document.documentElement.setAttribute("data-theme", "dark"); } catch (e) {} })();
+    </script>
     <link rel="stylesheet" href="/assets/app.css?v=20260204-9" />
   </head>
   <body data-page="login">
@@ -56,6 +59,11 @@
 
         <div id="authMessage" class="hint" role="status" aria-live="polite"></div>
       </section>
+
+      <footer class="site-footer">
+        <div class="site-footer-line1">隐私政策 | <a href="#">服务条款</a></div>
+        <div class="site-footer-line2">© 2026 RSMS. 保留所有权利. | REDTEA</div>
+      </footer>
     </main>
 
     <script src="/assets/auth.js?v=20260204-9"></script>

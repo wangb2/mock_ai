@@ -59,6 +59,8 @@ const endpointInput = document.getElementById("endpoint");
       const closeEditModal = document.getElementById("closeEditModal");
       const confirmModal = document.getElementById("confirmModal");
       const closeConfirmModal = document.getElementById("closeConfirmModal");
+      const inspirationModal = document.getElementById("inspirationModal");
+      const closeInspirationModal = document.getElementById("closeInspirationModal");
       const confirmTitle = document.getElementById("confirmTitle");
       const confirmMessage = document.getElementById("confirmMessage");
       const confirmCancelBtn = document.getElementById("confirmCancelBtn");
@@ -105,6 +107,8 @@ const endpointInput = document.getElementById("endpoint");
       const manualErrJson = document.getElementById("manualErrJson");
       const manualTableWrap = document.getElementById("manualTableWrap");
       const manualJsonWrap = document.getElementById("manualJsonWrap");
+      const manualInputModeSelect = document.getElementById("manualInputModeSelect");
+      const manualFormatSelect = document.getElementById("manualFormatSelect");
       const manualModeTable = document.getElementById("manualModeTable");
       const manualModeJson = document.getElementById("manualModeJson");
       const manualModeManual = document.getElementById("manualModeManual");
@@ -507,7 +511,7 @@ const endpointInput = document.getElementById("endpoint");
           div.innerHTML = `
             <div class="scene-head">
               <div>
-                <div class="name">${escapeHtml(scene.name || "未命名场景")}</div>
+                <div class="name"><span class="scene-icon" aria-hidden="true"></span>${escapeHtml(scene.name || "未命名场景")}</div>
                 <div class="scene-desc">${escapeHtml(scene.description || "暂无描述")}</div>
               </div>
               <div class="scene-actions">
@@ -652,8 +656,9 @@ const endpointInput = document.getElementById("endpoint");
             <div class="scene-head scene-acc-head">
               <div style="min-width:0;">
                 <div class="name">
-                  ${escapeHtml(scene.name || "未命名场景")}
+                  <span class="scene-icon" aria-hidden="true"></span>${escapeHtml(scene.name || "未命名场景")}
                   <span class="scene-acc-count">${count} 个接口</span>
+                  <span class="scene-acc-detail-btn">接口详情</span>
                 </div>
                 <div class="scene-desc">${escapeHtml(scene.description || "暂无描述")}</div>
               </div>
@@ -881,7 +886,7 @@ const endpointInput = document.getElementById("endpoint");
         }
 
         sendBtn.disabled = true;
-        copyBtn.disabled = true;
+        if (copyBtn) copyBtn.disabled = true;
         setStatus("解析中...");
         if (uploadProgress) {
           uploadProgress.style.display = "block";
@@ -917,7 +922,7 @@ const endpointInput = document.getElementById("endpoint");
             setStatus("文件上传成功，正在排队处理...");
             showToast("文件上传成功，正在处理中", "success");
             sendBtn.disabled = false;
-            copyBtn.disabled = false;
+            if (copyBtn) copyBtn.disabled = false;
             if (uploadProgress) {
               uploadProgress.style.display = "none";
             }
@@ -938,7 +943,7 @@ const endpointInput = document.getElementById("endpoint");
             output.textContent = prettyPrintFallback(text);
           }
           setStatus("完成");
-          copyBtn.disabled = false;
+          if (copyBtn) copyBtn.disabled = false;
           await loadHistory();
           switchTab("api");
         } catch (err) {
@@ -980,7 +985,12 @@ const endpointInput = document.getElementById("endpoint");
           }
         });
       }
-      refreshBtn.addEventListener("click", loadHistory);
+      if (refreshBtn) {
+        refreshBtn.addEventListener("click", async () => {
+          await loadUploadedFiles();
+          await loadHistory();
+        });
+      }
       
       // 页面加载时初始化配置
       (async function init() {
@@ -1014,10 +1024,24 @@ const endpointInput = document.getElementById("endpoint");
           }
         });
       }
+      if (inspirationModal && closeInspirationModal) {
+        closeInspirationModal.addEventListener("click", () => {
+          inspirationModal.classList.remove("open");
+          inspirationModal.setAttribute("aria-hidden", "true");
+        });
+      }
+      if (inspirationModal) {
+        inspirationModal.addEventListener("click", (e) => {
+          if (e.target === inspirationModal) {
+            inspirationModal.classList.remove("open");
+            inspirationModal.setAttribute("aria-hidden", "true");
+          }
+        });
+      }
 
-      if (uploadArea) {
+      if (uploadArea && fileInput) {
         uploadArea.addEventListener("click", (e) => {
-          if (e.target === uploadArea || e.target.closest('.upload-area') && !e.target.closest('.custom-file-upload')) {
+          if (e.target === uploadArea || e.target.closest(".upload-area")) {
             fileInput.click();
           }
         });
@@ -1048,16 +1072,18 @@ const endpointInput = document.getElementById("endpoint");
           }
         });
       }
-      copyBtn.addEventListener("click", async () => {
-        try {
-          await navigator.clipboard.writeText(output.textContent);
-          setStatus("已复制结果");
-          showToast("复制成功", "copy");
-        } catch (err) {
-          setStatus("复制失败");
-          showToast("复制失败", "error");
-        }
-      });
+      if (copyBtn) {
+        copyBtn.addEventListener("click", async () => {
+          try {
+            await navigator.clipboard.writeText(output ? output.textContent : "");
+            setStatus("已复制结果");
+            showToast("复制成功", "copy");
+          } catch (err) {
+            setStatus("复制失败");
+            showToast("复制失败", "error");
+          }
+        });
+      }
 
       function renderItems(list) {
         if (!items) {
@@ -1225,6 +1251,8 @@ const endpointInput = document.getElementById("endpoint");
               if (res.ok) {
                 setStatus("已删除文档");
                 showToast("删除成功", "success");
+                const row = btn.closest(".doc-item");
+                if (row) row.remove();
                 await loadUploadedFiles();
                 await loadHistory();
               } else {
@@ -1243,7 +1271,7 @@ const endpointInput = document.getElementById("endpoint");
 
       function buildApiCard(item) {
         const div = document.createElement("div");
-        div.className = "api-card";
+        div.className = "api-card api-card-detail";
         const mockUrl = toAbsoluteUrl(item.mockUrl || "");
         const apiPath = item.apiPath || "";
         const required = Array.isArray(item.requiredFields) ? item.requiredFields : [];
@@ -1251,14 +1279,13 @@ const endpointInput = document.getElementById("endpoint");
         const title = item.title || "API";
         const method = (item.method || "").toUpperCase() || (/post/i.test(title) ? "POST" : "GET");
         const isPost = method === "POST";
-        const scriptBadge = (item.responseMode === "script") ? '<span class="pill" style="margin-left:6px;font-size:11px;">脚本</span>' : "";
         div.innerHTML = `
           <div>
             <div class="row">
               <span class="method ${String(method || "").toLowerCase()}">${method}</span>
-              <h3>${escapeHtml(title)}${scriptBadge}</h3>
+              <h3>${escapeHtml(title)}</h3>
             </div>
-            <div class="api-meta api-meta-source">Source: <span class="api-meta-strong">${escapeHtml(item.sourceFileName || "-")}</span>
+            <div class="api-meta api-meta-source">Source: <span class="api-meta-strong">${escapeHtml(item.sourceFileName || "无")}</span>
               ${downloadUrl ? `<a href="${downloadUrl}" target="_blank">下载</a>` : ""}
             </div>
             <div class="api-meta">Scene: <span class="api-meta-strong">${escapeHtml(item.sceneName || "-")}</span></div>
@@ -1347,7 +1374,10 @@ const endpointInput = document.getElementById("endpoint");
               if (res.ok) {
                 setStatus("已删除接口");
                 showToast("删除成功", "success");
+                const card = delBtn.closest(".api-card");
+                if (card) card.remove();
                 await loadHistory();
+                refreshMergedApiView();
               } else {
                 setStatus("删除失败");
                 showToast("删除失败", "error");
@@ -1705,27 +1735,24 @@ const endpointInput = document.getElementById("endpoint");
         }
       }
 
-      if (manualModeTable) {
-        manualModeTable.addEventListener("click", () => {
-          if (manualJsonWrap && !manualJsonWrap.classList.contains("hidden")) {
-            const ok = syncJsonToTable();
-            if (!ok) return;
+      // 使用事件委托，确保弹窗内下拉切换一定能生效
+      if (manualModal) {
+        manualModal.addEventListener("change", (e) => {
+          if (e.target.id === "manualFormatSelect") {
+            const mode = e.target.value;
+            if (mode === "table") {
+              if (manualJsonWrap && !manualJsonWrap.classList.contains("hidden")) {
+                const ok = syncJsonToTable();
+                if (!ok) return;
+              }
+            } else {
+              syncTableToJson();
+            }
+            setManualMode(mode);
+          } else if (e.target.id === "manualInputModeSelect") {
+            setManualInputMode(e.target.value);
           }
-          setManualMode("table");
         });
-      }
-      if (manualModeJson) {
-        manualModeJson.addEventListener("click", () => {
-          syncTableToJson();
-          setManualMode("json");
-        });
-      }
-
-      if (manualModeManual) {
-        manualModeManual.addEventListener("click", () => setManualInputMode("manual"));
-      }
-      if (manualModeChat) {
-        manualModeChat.addEventListener("click", () => setManualInputMode("chat"));
       }
 
       const manualChatImageInput = document.getElementById("manualChatImageInput");
@@ -2163,6 +2190,32 @@ const endpointInput = document.getElementById("endpoint");
         }
       }
 
+      /** 进入在线调试页且无预设时：清空 URL/Body/响应/方法为 POST，不保留历史数据 */
+      function resetDebugPage() {
+        if (mockUrlInput) mockUrlInput.value = "";
+        if (mockBody) mockBody.value = "{}";
+        if (mockResponse) mockResponse.textContent = "{}";
+        if (debugStatus) debugStatus.textContent = "Status: -";
+        if (debugTime) debugTime.textContent = "Time: -";
+        if (debugSize) debugSize.textContent = "Size: ...";
+        setMethodToggleLock(false);
+        currentMethod = "POST";
+        if (debugMethodSelect) debugMethodSelect.value = "POST";
+        if (methodToggle) {
+          const pills = methodToggle.querySelectorAll(".method-pill");
+          pills.forEach((p) => p.classList.toggle("active", (p.getAttribute("data-method") || "") === "POST"));
+        }
+        if (headersTable) renderKeyValueTable(headersTable, {});
+        if (queryTable) renderKeyValueTable(queryTable, {});
+        if (responseHeadersTable) responseHeadersTable.innerHTML = "";
+        if (ruleHint) renderRequiredChips([]);
+        if (debugCurl) debugCurl.textContent = "";
+        if (sendMockBtn) {
+          sendMockBtn.classList.remove("btn-loading", "is-success", "is-error");
+          sendMockBtn.innerHTML = `<span style="font-size: 16px;">▶</span> 发送请求`;
+        }
+      }
+
       async function sendMockRequest() {
         const url = mockUrlInput.value.trim();
         if (!url) {
@@ -2218,6 +2271,9 @@ const endpointInput = document.getElementById("endpoint");
         if (!hasHeader(headers, "Accept")) {
           headers["Accept"] = "application/json";
         }
+        // 在线调试固定使用示例响应，不走 AI 动态生成
+        headers["__mock_no_ai"] = "1";
+        const noAi = true;
         if (currentMethod === "GET") {
           body = {};
         }
@@ -2229,6 +2285,20 @@ const endpointInput = document.getElementById("endpoint");
           body = extractBodyFromRequest(req);
         }
         setStatus("🚀 请求处理中...");
+        if (!noAi && aiLoadingOverlay) {
+          aiLoadingOverlay.classList.add("show");
+          // Animate horse running with better frames
+          const horseEl = aiLoadingOverlay.querySelector(".ai-horse");
+          const horseFrames = ["🐴", "🐎", "🏇", "🐎"];
+          let frameIndex = 0;
+          const horseAnimInterval = setInterval(() => {
+            if (horseEl) {
+              frameIndex = (frameIndex + 1) % horseFrames.length;
+              horseEl.textContent = horseFrames[frameIndex];
+            }
+          }, 120);
+          aiLoadingOverlay.dataset.animInterval = horseAnimInterval;
+        }
         mockResponse.textContent = "";
         if (debugStatus) debugStatus.textContent = "Status: -";
         if (debugTime) debugTime.textContent = "Time: -";
@@ -2824,16 +2894,20 @@ const endpointInput = document.getElementById("endpoint");
       }
 
       document.querySelectorAll(".nav span").forEach((el) => {
-        el.addEventListener("click", () => switchTab(el.getAttribute("data-tab")));
+        el.addEventListener("click", () => {
+          const tab = el.getAttribute("data-tab");
+          if (tab === "debug") resetDebugPage();
+          switchTab(tab);
+        });
       });
 
       document.querySelectorAll("[data-jump]").forEach((el) => {
-        // If it's a real link, let the browser handle navigation
-        // so users can right-click / open in new tab.
-        if (el.tagName === "A" && el.getAttribute("href")) {
-          return;
-        }
-        el.addEventListener("click", () => switchTab(el.getAttribute("data-jump")));
+        if (el.tagName === "A" && el.getAttribute("href")) return;
+        el.addEventListener("click", () => {
+          const tab = el.getAttribute("data-jump");
+          if (tab === "debug") resetDebugPage();
+          switchTab(tab);
+        });
       });
 
       // Home entry buttons (event delegation; works regardless of DOM structure/overlays)
@@ -2857,8 +2931,13 @@ const endpointInput = document.getElementById("endpoint");
           return;
         }
         if (action === "inspiration") {
-          showToast("敬请期待", "copy");
-          setStatus("敬请期待");
+          if (inspirationModal) {
+            inspirationModal.classList.add("open");
+            inspirationModal.setAttribute("aria-hidden", "false");
+          } else {
+            showToast("敬请期待", "copy");
+            setStatus("敬请期待");
+          }
         }
       });
 
@@ -2884,7 +2963,7 @@ const endpointInput = document.getElementById("endpoint");
             return;
           }
           refreshLogsBtn.classList.remove("btn-loading");
-          refreshLogsBtn.textContent = "刷新日志";
+          refreshLogsBtn.textContent = "刷新";
         };
         if (fromUserAction) {
           setRefreshBtnUi("loading");
@@ -3061,6 +3140,9 @@ const endpointInput = document.getElementById("endpoint");
           }
           const me = await res.json();
           const isAdmin = String(me.role || "").toUpperCase() === "ADMIN";
+          console.log("User info:", me);
+          console.log("Is admin:", isAdmin);
+          console.log("Role check:", me.role, "->", String(me.role || "").toUpperCase());
           if (userBadge) {
             userBadge.textContent = me.username + " (" + (me.role || "USER") + ")";
             userBadge.classList.remove("hidden");
@@ -3070,14 +3152,20 @@ const endpointInput = document.getElementById("endpoint");
             loadChatHistoryForUser(window.__currentUserId || "anonymous");
           }
           if (adminLink) {
+            console.log("Admin link found, isAdmin:", isAdmin);
             if (isAdmin) {
+              console.log("Showing admin link");
               adminLink.classList.remove("hidden");
               adminLink.onclick = () => (location.href = "/admin.html");
             } else {
+              console.log("Hiding admin link");
               adminLink.classList.add("hidden");
               adminLink.onclick = null;
               adminLink.removeAttribute("onclick");
             }
+            console.log("Admin link classes:", adminLink.className);
+          } else {
+            console.log("Admin link element not found");
           }
           if (loginLink) {
             loginLink.textContent = "退出";
@@ -3108,12 +3196,13 @@ const endpointInput = document.getElementById("endpoint");
             renderDocs(cachedFiles);
           }
         }
-        // If we navigated from API list to debug.html, restore the selected mock preset.
+        // 进入在线调试页：仅当从接口管理跳转并带了预设时才恢复；否则清空，不保留历史数据
         if (initTab === "debug") {
           const preset = consumeDebugPreset();
           if (preset && preset.item) {
-            // apply without re-navigating
             useMockItem(preset.item, preset.errorMode, false);
+          } else {
+            resetDebugPage();
           }
         }
         // If we navigated from home quick-start to api.html, auto open manual entry modal.

@@ -163,9 +163,9 @@
       }
 
       html[data-theme="light"] pre {
-        background: #0b1220;
-        color: #e2e8f0;
-        border: 1px solid rgba(2, 6, 23, 0.25);
+        background: #fafafa;
+        color: #1e293b;
+        border: 1px solid #e8e8e8;
       }
       html[data-theme="light"] .api-url,
       html[data-theme="light"] .debug-url-wrap,
@@ -174,6 +174,7 @@
       html[data-theme="light"] .kv-input,
       html[data-theme="light"] textarea,
       html[data-theme="light"] input[type="text"],
+      html[data-theme="light"] input[type="number"],
       html[data-theme="light"] input[type="file"],
       html[data-theme="light"] select {
         background: rgba(255, 255, 255, 0.92) !important;
@@ -190,6 +191,20 @@
         background: rgba(255, 255, 255, 0.96);
         border-color: rgba(37, 99, 235, 0.18);
         box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
+        scrollbar-color: rgba(0, 0, 0, 0.25) rgba(0, 0, 0, 0.06);
+      }
+      /* 浅色主题：弹窗内滚动条适配（WebKit） */
+      html[data-theme="light"] .modal .content::-webkit-scrollbar-track {
+        background: rgba(0, 0, 0, 0.06);
+        border-radius: 999px;
+      }
+      html[data-theme="light"] .modal .content::-webkit-scrollbar-thumb {
+        background: rgba(0, 0, 0, 0.2);
+        border-radius: 999px;
+        border: 2px solid rgba(255, 255, 255, 0.9);
+      }
+      html[data-theme="light"] .modal .content::-webkit-scrollbar-thumb:hover {
+        background: rgba(0, 0, 0, 0.3);
       }
       html[data-theme="light"] .theme-toggle {
         background: #ffffff;
@@ -221,9 +236,15 @@
         border-color: rgba(37, 99, 235, 0.22) !important;
         box-shadow: 0 22px 60px rgba(15, 23, 42, 0.10) !important;
       }
-      html[data-theme="light"] .scene-item .name,
-      html[data-theme="light"] .scene-item .name::before {
+      html[data-theme="light"] .scene-item .name {
         color: #0f172a;
+      }
+      /* 浅色主题：隐藏 🎬，显示蓝色 SVG 图标 */
+      html[data-theme="light"] .scene-item .name::before {
+        content: none !important;
+      }
+      html[data-theme="light"] .scene-item .scene-icon {
+        display: inline-block;
       }
       html[data-theme="light"] .scene-desc {
         color: #475569;
@@ -239,8 +260,10 @@
         border-bottom-color: #d9d9d9;
       }
       html[data-theme="light"] .doc-title .icon {
-        background: #fafafa;
-        border: 1px solid #d9d9d9;
+        background: linear-gradient(180deg, rgba(219, 234, 254, 0.98) 0%, rgba(191, 219, 254, 0.95) 100%) !important;
+        border: 1px solid rgba(37, 99, 235, 0.5) !important;
+        color: #1d4ed8 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
       }
       html[data-theme="light"] .doc-card .label,
       html[data-theme="light"] .label {
@@ -353,9 +376,38 @@
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .card,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-card,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card,
-      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-card,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%) !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
+      }
+      /* 浅色主题下 .api-card 内文字可见（页面内展开的接口卡片 + 接口详情弹窗） */
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card h3,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-meta,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-meta-title,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-meta-strong {
+        color: #262626 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-url {
+        background: #f5f5f5 !important;
+        border-color: #e0e0e0 !important;
+        color: #1e293b !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-url > span {
+        color: #1e293b !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-meta a {
+        color: #2f6df6 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card .api-meta a:hover {
+        color: #1d4ed8 !important;
+      }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-curl,
-      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-panel,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-panel {
+        background: #fafafa !important;
+        border: 1px solid #e8e8e8 !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+      }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .item,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) details {
         background: #ffffff !important;
@@ -367,46 +419,141 @@
         border-bottom-color: #d9d9d9;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-title .icon {
-        background: #fafafa;
-        border-color: #d9d9d9;
+        background: linear-gradient(180deg, rgba(219, 234, 254, 0.98) 0%, rgba(191, 219, 254, 0.95) 100%) !important;
+        border: 1px solid rgba(37, 99, 235, 0.5) !important;
+        color: #1d4ed8 !important;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.6) !important;
       }
-      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button:not(.btn-primary):not(.home-entry-btn):not(.method-pill) {
-        background: #ffffff !important;
-        color: #262626 !important;
-        border-color: #d9d9d9 !important;
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):not(.danger) {
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
         box-shadow: none !important;
       }
-      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):hover:not(:disabled) {
-        background: #fafafa !important;
-        border-color: #1890FF !important;
-        color: #262626 !important;
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):not(.danger):hover:not(:disabled) {
+        background: rgba(47, 109, 246, 0.26) !important;
+        border-color: rgba(47, 109, 246, 0.65) !important;
+        color: #2f6df6 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button.danger {
+        background: rgba(239, 68, 68, 0.18) !important;
+        color: #b91c1c !important;
+        border: 1px solid rgba(239, 68, 68, 0.45) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button.danger:hover:not(:disabled) {
+        background: rgba(239, 68, 68, 0.26) !important;
+        border-color: rgba(239, 68, 68, 0.7) !important;
+        color: #991b1b !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-primary {
-        background: #1890FF !important;
-        border-color: #1890FF !important;
-        color: #fff !important;
-        box-shadow: 0 1px 2px rgba(24, 144, 255, 0.2) !important;
+        background: rgba(47, 109, 246, 0.18) !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
+        color: #2f6df6 !important;
+        box-shadow: none !important;
+        font-weight: 700;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-primary:hover:not(:disabled) {
-        filter: brightness(1.05);
-        box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3) !important;
+        background: rgba(47, 109, 246, 0.26) !important;
+        border-color: rgba(47, 109, 246, 0.65) !important;
+        color: #2f6df6 !important;
+        box-shadow: none !important;
+        filter: none;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline-gray {
-        background: #ffffff !important;
-        color: #262626 !important;
-        border-color: #d9d9d9 !important;
+        background: rgba(47, 109, 246, 0.08) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.25) !important;
+        font-weight: 600;
+        box-shadow: none !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline:hover:not(:disabled),
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline-gray:hover:not(:disabled) {
+        background: rgba(47, 109, 246, 0.15) !important;
+        border-color: rgba(47, 109, 246, 0.45) !important;
+        color: #2f6df6 !important;
+        box-shadow: none !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-actions {
         background: #fafafa !important;
-        border-color: #1890FF !important;
+        border-top: 1px solid #e8e8e8 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-table {
+        background: #ffffff !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-table th {
+        background: #f5f5f5 !important;
         color: #262626 !important;
+        border-bottom: 1px solid #e8e8e8 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-table td {
+        border-bottom: 1px solid #f0f0f0 !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-input {
+        background: #ffffff !important;
+        border: 1px solid #d9d9d9 !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-input:focus {
+        border-color: #2f6df6 !important;
+        box-shadow: 0 0 0 2px rgba(47, 109, 246, 0.1) !important;
+        background: #ffffff !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .secondary {
         background: #1890FF !important;
         color: #fff !important;
         border-color: #1890FF !important;
+      }
+      /* 场景管理按钮优化 */
+      html[data-theme="light"] #sceneCreateBtn {
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
+      }
+      /* 场景弹窗内的按钮 - 小号半透明蓝色 */
+      html[data-theme="light"] #sceneFormModal #closeSceneFormModal,
+      html[data-theme="light"] #sceneFormModal #sceneSaveBtn,
+      html[data-theme="light"] #sceneFormModal #sceneCancelBtn {
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+      }
+      html[data-theme="light"] #sceneFormModal #closeSceneFormModal:hover,
+      html[data-theme="light"] #sceneFormModal #sceneSaveBtn:hover,
+      html[data-theme="light"] #sceneFormModal #sceneCancelBtn:hover {
+        background: rgba(47, 109, 246, 0.26) !important;
+        border-color: rgba(47, 109, 246, 0.65) !important;
+      }
+      /* 场景弹窗内的文字优化 */
+      html[data-theme="light"] #sceneFormModal .label,
+      html[data-theme="light"] #sceneFormModal #sceneFormTitle {
+        color: #262626 !important;
+        font-weight: 600 !important;
+      }
+      html[data-theme="light"] #sceneFormModal .muted,
+      html[data-theme="light"] #sceneFormModal .hint {
+        color: #8c8c8c !important;
+        font-size: 13px !important;
+      }
+      html[data-theme="light"] #sceneFormModal input,
+      html[data-theme="light"] #sceneFormModal textarea,
+      html[data-theme="light"] #sceneFormModal select {
+        background: #ffffff !important;
+        border: 1px solid #d9d9d9 !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] #sceneFormModal input:focus,
+      html[data-theme="light"] #sceneFormModal textarea:focus,
+      html[data-theme="light"] #sceneFormModal select:focus {
+        border-color: #2f6df6 !important;
+        box-shadow: 0 0 0 2px rgba(47, 109, 246, 0.1) !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) a {
         color: #1890FF;
@@ -423,6 +570,7 @@
         color: #595959;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) input[type="text"],
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) input[type="number"],
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) textarea,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) select,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-input {
@@ -440,42 +588,243 @@
         border-color: #d9d9d9;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-toolbar .summary {
-        color: #595959;
+        color: #595959 !important;
+        font-size: 13px !important;
+        font-weight: 400 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-list {
+        gap: 8px !important;
+        margin-top: 10px !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item {
         background: #ffffff !important;
         border-color: #d9d9d9 !important;
         box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+        padding: 10px 14px !important;
+        gap: 6px !important;
+        border-radius: 10px !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item:hover {
         background: #fafafa !important;
         border-color: #1890FF !important;
       }
-      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .name,
-      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .name::before {
-        color: #262626;
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-head {
+        gap: 8px !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .name {
+        color: #262626 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+        gap: 6px !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-desc,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .meta {
-        color: #595959;
+        color: #262626 !important;
+        font-weight: 500 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-desc {
+        line-height: 1.4 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .meta {
+        margin-top: 2px !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-kws {
+        gap: 4px !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-kws .pill {
+        padding: 2px 8px !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-actions {
+        gap: 6px !important;
+      }
+      /* 接口管理页面：浅色主题场景卡片重新布局，充分利用区域、合理间距 */
+      html[data-theme="light"] #api .scene-item {
+        padding: 16px 20px !important;
+        gap: 12px !important;
+        border-radius: 12px !important;
+      }
+      html[data-theme="light"] #api .scene-head {
+        display: flex !important;
+        justify-content: space-between !important;
+        align-items: flex-start !important;
+        gap: 16px !important;
+      }
+      html[data-theme="light"] #api .scene-head > div:first-child {
+        flex: 1 !important;
+        min-width: 0 !important;
+        display: flex !important;
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
+      html[data-theme="light"] #api .scene-head .name {
+        display: flex !important;
+        flex-wrap: wrap !important;
+        align-items: center !important;
+        gap: 8px !important;
+        font-size: 15px !important;
+      }
+      html[data-theme="light"] #api .scene-desc {
+        font-size: 13px !important;
+        line-height: 1.5 !important;
+        color: #595959 !important;
+        margin: 0 !important;
+      }
+      html[data-theme="light"] #api .scene-actions {
+        flex-shrink: 0 !important;
+        display: flex !important;
+        gap: 8px !important;
+        align-items: center !important;
+      }
+      html[data-theme="light"] #api .scene-item .action-btn {
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
+      }
+      html[data-theme="light"] #api .scene-kws {
+        gap: 8px !important;
+      }
+      html[data-theme="light"] #api .scene-kws .pill {
+        padding: 4px 12px !important;
+        font-size: 12px !important;
+      }
+      html[data-theme="light"] #api .scene-acc-count {
+        background: rgba(47, 109, 246, 0.14) !important;
+        color: #2f6df6 !important;
+        padding: 4px 10px !important;
+        border-radius: 10px !important;
+        font-size: 12px !important;
+        font-weight: 600 !important;
+        margin-left: 0 !important;
+      }
+      html[data-theme="light"] #api .scene-acc-caret {
+        display: none !important;
+      }
+      /* 隐藏右下角的详情按钮 */
+      html[data-theme="light"] #api .scene-item .action-btn[data-scene-detail] {
+        display: none !important;
+      }
+      /* 接口详情按钮样式 */
+      html[data-theme="light"] #api .scene-acc-detail-btn {
+        display: inline-flex;
+        align-items: center;
+        background: rgba(47, 109, 246, 0.12) !important;
+        color: #2f6df6 !important;
+        padding: 4px 10px;
+        border-radius: 10px;
+        font-size: 12px;
+        font-weight: 600;
+        margin-left: 0;
+        border: 1px solid rgba(47, 109, 246, 0.3);
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      html[data-theme="light"] #api .scene-acc-detail-btn:hover {
+        background: rgba(47, 109, 246, 0.2) !important;
+        border-color: rgba(47, 109, 246, 0.5);
+      }
+      /* 详情弹窗内的接口列表优化 */
+      html[data-theme="light"] #sceneDetailModal .api-card h3 {
+        color: #262626 !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card .muted,
+      html[data-theme="light"] #sceneDetailModal .api-card .meta,
+      html[data-theme="light"] #sceneDetailModal .api-card .api-meta,
+      html[data-theme="light"] #sceneDetailModal .api-card .api-meta-title,
+      html[data-theme="light"] #sceneDetailModal .api-card .api-meta-strong,
+      html[data-theme="light"] #sceneDetailModal .muted,
+      html[data-theme="light"] #sceneDetailModal .label {
+        color: #262626 !important;
+        font-weight: 600 !important;
+        font-size: 13px !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card .label {
+        color: #262626 !important;
+        font-weight: 700 !important;
+        font-size: 14px !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card pre {
+        color: #262626 !important;
+        font-weight: 500 !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card .api-url,
+      html[data-theme="light"] #sceneDetailModal .api-card .api-url > span {
+        background: #f5f5f5 !important;
+        border-color: #e0e0e0 !important;
+        color: #1e293b !important;
+      }
+      /* 弹窗标题文字 */
+      html[data-theme="light"] #sceneDetailModal .content .label {
+        color: #262626 !important;
+        font-weight: 700 !important;
+        font-size: 16px !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .content .row .muted {
+        color: #262626 !important;
+        font-weight: 600 !important;
+      }
+      /* 强制覆盖所有弹窗内的文字颜色 */
+      html[data-theme="light"] #sceneDetailModal * {
+        color: #262626 !important;
+      }
+      html[data-theme="light"] #sceneDetailModal h3,
+      html[data-theme="light"] #sceneDetailModal .label,
+      html[data-theme="light"] #sceneDetailModal .muted,
+      html[data-theme="light"] #sceneDetailModal .doc-item .name,
+      html[data-theme="light"] #sceneDetailModal .doc-item .meta {
+        color: #262626 !important;
+      }
+      html[data-theme="light"] #sceneDetailModal button {
+        color: #2f6df6 !important;
+      }
+      html[data-theme="light"] #sceneDetailModal #closeSceneDetailModal {
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
+        box-shadow: none !important;
+      }
+      html[data-theme="light"] #sceneDetailModal #closeSceneDetailModal:hover {
+        background: rgba(47, 109, 246, 0.26) !important;
+        border-color: rgba(47, 109, 246, 0.65) !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-actions .action-btn {
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-topbar {
-        background: #ffffff !important;
-        border-color: #d9d9d9 !important;
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04) !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-url-wrap {
+        background: #fafafa !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.04) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-url-wrap:focus-within {
         background: #ffffff !important;
-        border-color: #d9d9d9 !important;
+        border-color: #1890FF !important;
+        box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.08), inset 0 1px 3px rgba(0, 0, 0, 0.02) !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .method-pill {
         background: #ffffff !important;
-        color: #262626 !important;
-        border-color: #d9d9d9 !important;
+        color: #595959 !important;
+        border: 1px solid #d9d9d9 !important;
+        font-weight: 600;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .method-pill.active {
-        background: #E6F7FF !important;
-        color: #1890FF !important;
-        border-color: #1890FF !important;
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
+        box-shadow: none !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-actions .doc-action-btn,
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-actions #status.doc-action-btn {
@@ -551,15 +900,16 @@
         color: #595959;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .generated-count {
-        color: #595959 !important;
+        color: #2f6df6 !important;
+        font-weight: 600 !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .error-msg {
         color: #cf1322 !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-badge.status-completed {
-        background: rgba(82, 196, 26, 0.12);
-        color: #389e0d;
-        border-color: rgba(82, 196, 26, 0.35);
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border-color: rgba(47, 109, 246, 0.45) !important;
       }
       html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-badge.status-failed {
         background: rgba(255, 77, 79, 0.12);
@@ -659,8 +1009,9 @@
         box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70);
       }
       html[data-theme="light"] #doc .doc-item .meta {
-        color: #64748b !important;
+        color: #475569 !important;
         font-size: 12px;
+        font-weight: 500;
       }
       html[data-theme="light"] #doc .doc-item .status-info {
         color: #475569 !important;
@@ -668,7 +1019,7 @@
         gap: 10px;
       }
       html[data-theme="light"] #doc .doc-item .generated-count {
-        color: #15803d !important;
+        color: #2f6df6 !important;
         font-weight: 600;
         font-size: 12px;
       }
@@ -678,71 +1029,40 @@
         font-size: 12px;
       }
       html[data-theme="light"] #doc .doc-item .status-badge {
-        min-width: 120px;
-        height: 36px;
-        padding: 0 16px;
-        border-radius: 10px;
+        border-radius: 6px;
+        padding: 4px 10px;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        font-size: 12px;
+        font-size: 11px;
         font-weight: 600;
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+        margin-right: 8px;
       }
       html[data-theme="light"] #doc .doc-item .status-badge.status-completed {
-        background: rgba(34, 197, 94, 0.18);
-        color: #15803d;
-        border-color: rgba(34, 197, 94, 0.45);
+        background: rgba(47, 109, 246, 0.22) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.5) !important;
       }
       html[data-theme="light"] #doc .doc-item .status-badge.status-failed {
-        background: rgba(239, 68, 68, 0.18);
-        color: #b91c1c;
-        border-color: rgba(239, 68, 68, 0.45);
+        background: rgba(239, 68, 68, 0.18) !important;
+        color: #b91c1c !important;
+        border: 1px solid rgba(239, 68, 68, 0.45) !important;
       }
       html[data-theme="light"] #doc .doc-item .status-badge.status-processing {
-        background: rgba(47, 109, 246, 0.18);
-        color: #2f6df6;
-        border-color: rgba(47, 109, 246, 0.45);
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
       }
       html[data-theme="light"] #doc .doc-item .status-badge.status-pending {
-        background: rgba(148, 163, 184, 0.18);
-        color: #475569;
-        border-color: rgba(148, 163, 184, 0.45);
-      }
-      html[data-theme="light"] #doc .doc-item .status-badge {
-        min-width: 92px;
-        height: 32px;
-        border-radius: 10px;
-        display: inline-flex;
-        align-items: center;
-        justify-content: center;
-        font-size: 12px;
-        font-weight: 700;
-        letter-spacing: 0.2px;
-        padding: 0 12px;
-        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
-      }
-      html[data-theme="light"] #doc .doc-item .status-badge.status-completed {
-        background: rgba(47, 109, 246, 0.85);
-        border-color: rgba(47, 109, 246, 0.85);
-      }
-      html[data-theme="light"] #doc .doc-item .status-badge.status-failed {
-        background: rgba(239, 68, 68, 0.85);
-        border-color: rgba(239, 68, 68, 0.85);
-      }
-      html[data-theme="light"] #doc .doc-item .status-badge.status-pending {
-        background: rgba(148, 163, 184, 0.85);
-        border-color: rgba(148, 163, 184, 0.85);
+        background: rgba(148, 163, 184, 0.18) !important;
+        color: #475569 !important;
+        border: 1px solid rgba(148, 163, 184, 0.45) !important;
       }
       html[data-theme="light"] #doc .doc-item .action-btn {
-        border-radius: 10px;
-        padding: 8px 18px;
+        border-radius: 6px;
+        padding: 4px 10px;
+        font-size: 11px;
         font-weight: 600;
-        min-width: 120px;
-        height: 36px;
-        line-height: 1;
-        justify-content: center;
-        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
       }
       html[data-theme="light"] #doc .doc-item .action-btn:not(.danger) {
         background: rgba(47, 109, 246, 0.18) !important;
@@ -866,11 +1186,20 @@
         box-shadow: 0 20px 50px rgba(15, 23, 42, 0.15) !important;
       }
       button.home-entry-btn.home-entry-primary {
-        background: #2f6df6 !important;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.85) 0%, rgba(139, 92, 246, 0.75) 100%) !important;
         color: #fff !important;
+        border: 1px solid rgba(99, 102, 241, 0.45) !important;
+      }
+      html[data-theme="light"] button.home-entry-btn.home-entry-primary {
+        background: #2f6df6 !important;
         border: 1px solid rgba(47, 109, 246, 0.28) !important;
       }
       button.home-entry-btn.home-entry-outline {
+        background: rgba(30, 41, 59, 0.75) !important;
+        color: #a5b4fc !important;
+        border: 3px solid rgba(99, 102, 241, 0.45) !important;
+      }
+      html[data-theme="light"] button.home-entry-btn.home-entry-outline {
         background: rgba(255, 255, 255, 0.96) !important;
         color: #2f6df6 !important;
         border: 3px solid rgba(186, 210, 255, 0.95) !important;
@@ -884,6 +1213,9 @@
         font-size: 34px;
       }
       button.home-entry-btn.home-entry-outline svg {
+        color: #a5b4fc;
+      }
+      html[data-theme="light"] button.home-entry-btn.home-entry-outline svg {
         color: #2f6df6;
       }
       @media (max-width: 980px) {
@@ -952,6 +1284,7 @@
       html[data-theme="light"] ::placeholder { color: #bfbfbf; }
       html[data-theme="light"] textarea,
       html[data-theme="light"] input[type="text"],
+      html[data-theme="light"] input[type="number"],
       html[data-theme="light"] input[type="file"],
       html[data-theme="light"] select {
         background: rgba(255, 255, 255, 0.94) !important;
@@ -1052,9 +1385,19 @@
 
       html[data-theme="light"] .status-badge { background: rgba(34, 197, 94, 0.12); color: #166534; }
 
-      /* API method badges */
-      html[data-theme="light"] .method { background: rgba(34, 197, 94, 0.14); color: #166534; }
-      html[data-theme="light"] .method.post { background: rgba(239, 68, 68, 0.12); color: #991b1b; }
+      /* API method badges - 实心蓝绿色 */
+      html[data-theme="light"] .method { 
+        background: #10b981 !important; 
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 700 !important;
+      }
+      html[data-theme="light"] .method.post { 
+        background: #3b82f6 !important; 
+        color: #ffffff !important;
+        border: none !important;
+        font-weight: 700 !important;
+      }
 
       /* Debug method pills */
       html[data-theme="light"] .method-toggle {
@@ -1093,23 +1436,34 @@
       }
 
       html[data-theme="light"] .debug-card-header {
-        background: rgba(255, 255, 255, 0.60);
-        border-bottom-color: rgba(37, 99, 235, 0.12);
+        background: linear-gradient(135deg, #fafafa 0%, #f5f5f5 100%);
+        border-bottom: 1px solid #e2e8f0;
       }
       html[data-theme="light"] .debug-card-title {
-        color: #0f172a;
+        color: #262626;
+        font-weight: 700;
       }
       html[data-theme="light"] .debug-card-title .badge {
-        background: rgba(37, 99, 235, 0.10);
-        border-color: rgba(37, 99, 235, 0.16);
-        color: #1d4ed8;
+        background: linear-gradient(135deg, rgba(24, 144, 255, 0.12) 0%, rgba(47, 109, 246, 0.10) 100%);
+        border: 1px solid rgba(24, 144, 255, 0.25);
+        color: #1890FF;
         box-shadow: none;
       }
 
       html[data-theme="light"] .debug-tabs {
-        background: rgba(241, 245, 249, 0.86);
-        color: #475569;
-        border-bottom: 1px solid rgba(37, 99, 235, 0.10);
+        background: #f5f5f5;
+        color: #595959;
+        border-bottom: 1px solid #e2e8f0;
+      }
+      html[data-theme="light"] .debug-tabs button {
+        color: #595959;
+        font-weight: 600;
+      }
+      html[data-theme="light"] .debug-tabs button.active {
+        background: #ffffff;
+        color: #1890FF;
+        border-bottom: 2px solid #1890FF;
+        font-weight: 700;
       }
       html[data-theme="light"] .debug-tabs span:hover {
         color: #0f172a;
@@ -1144,10 +1498,35 @@
         color: #1d4ed8;
       }
 
-      /* Debug (light): response/curl code blocks should be light (avoid "whole page looks dark") */
+      /* Debug (light): 请求/响应两个区域背景板统一 */
       html[data-theme="light"] #reqBodyPanel .debug-editor,
       html[data-theme="light"] #respBodyPanel .debug-editor {
-        background: rgba(241, 245, 249, 0.70);
+        background: #ffffff !important;
+      }
+      html[data-theme="light"] .debug-editor textarea,
+      html[data-theme="light"] .debug-editor pre#mockResponse {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] .debug-editor textarea:hover {
+        border-color: #d9d9d9;
+        background: #ffffff;
+      }
+      html[data-theme="light"] .debug-editor textarea:focus {
+        border-color: #1890FF;
+        box-shadow: 0 0 0 3px rgba(24, 144, 255, 0.08);
+        background: #ffffff;
+      }
+      html[data-theme="light"] .debug-editor textarea::placeholder {
+        color: #bfbfbf;
+      }
+      html[data-theme="light"] .debug-url {
+        color: #262626 !important;
+        font-weight: 500;
+      }
+      html[data-theme="light"] .debug-url::placeholder {
+        color: #bfbfbf !important;
       }
       html[data-theme="light"] #mockResponse,
       html[data-theme="light"] #debugCurl {
@@ -1166,7 +1545,61 @@
         background: rgba(15, 23, 42, 0.35);
       }
       html[data-theme="light"] .modal .content {
-        color: #0f172a;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] .modal .content * {
+        color: inherit;
+      }
+
+      /* 删除确认弹窗浅色主题 */
+      html[data-theme="light"] .modal .confirm-dialog {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14) !important;
+      }
+      html[data-theme="light"] .modal .confirm-header {
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+      }
+      html[data-theme="light"] .modal .confirm-title {
+        color: #262626 !important;
+      }
+      html[data-theme="light"] .modal .confirm-close {
+        background: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #64748b !important;
+      }
+      html[data-theme="light"] .modal .confirm-close:hover {
+        background: #e2e8f0 !important;
+        border-color: #cbd5e1 !important;
+        color: #334155 !important;
+      }
+      html[data-theme="light"] .modal .confirm-message {
+        color: #475569 !important;
+      }
+      html[data-theme="light"] .modal .confirm-btn-cancel {
+        background: #f1f5f9 !important;
+        border: 1px solid #cbd5e1 !important;
+        color: #475569 !important;
+        box-shadow: none !important;
+      }
+      html[data-theme="light"] .modal .confirm-btn-cancel:hover {
+        background: #e2e8f0 !important;
+        border-color: #94a3b8 !important;
+        color: #334155 !important;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06) !important;
+      }
+      html[data-theme="light"] .modal .confirm-btn-danger {
+        background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%) !important;
+        border: 1px solid #b91c1c !important;
+        color: #fff !important;
+        box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3) !important;
+      }
+      html[data-theme="light"] .modal .confirm-btn-danger:hover {
+        background: linear-gradient(135deg, #f87171 0%, #ef4444 100%) !important;
+        border-color: #991b1b !important;
+        color: #fff !important;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35) !important;
       }
 
       /* Toast variants in light */
@@ -1742,16 +2175,21 @@
       }
 
       .quick-grid.home-features .quick {
-        background: rgba(255, 255, 255, 0.92);
-        border: 1px solid rgba(15, 23, 42, 0.10);
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(99, 102, 241, 0.25);
         border-radius: 22px;
         padding: clamp(110px, 10vw, 150px) clamp(28px, 2.4vw, 46px) clamp(28px, 2vw, 42px); /* scale on large screens */
         text-align: left;
-        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
         backdrop-filter: blur(10px);
         overflow: hidden;
         position: relative;
         transform: none;
+      }
+      html[data-theme="light"] .quick-grid.home-features .quick {
+        background: rgba(255, 255, 255, 0.92);
+        border: 1px solid rgba(15, 23, 42, 0.10);
+        box-shadow: 0 24px 60px rgba(15, 23, 42, 0.10);
       }
       .quick-grid.home-features .quick::before {
         content: "";
@@ -1787,14 +2225,20 @@
         align-items: center;
         justify-content: center;
         margin: 0;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.14) 100%) !important;
+        border: 1px solid rgba(99, 102, 241, 0.35);
+        color: #a5b4fc !important; /* SVG stroke uses currentColor */
+        box-shadow: 0 12px 28px rgba(0, 0, 0, 0.2);
+        transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
+        transform-origin: center;
+      }
+      html[data-theme="light"] .quick-grid.home-features .quick .icon {
         background: linear-gradient(180deg, rgba(245, 249, 255, 0.98) 0%, rgba(234, 244, 255, 0.96) 100%) !important;
         border: 1px solid rgba(47, 109, 246, 0.16);
-        color: #2f6df6 !important; /* SVG stroke uses currentColor */
+        color: #2f6df6 !important;
         box-shadow:
           0 12px 28px rgba(15, 23, 42, 0.10),
           inset 0 1px 0 rgba(255, 255, 255, 0.70);
-        transition: transform 0.22s ease, box-shadow 0.22s ease, background 0.22s ease, border-color 0.22s ease;
-        transform-origin: center;
       }
       .quick-grid.home-features .quick .icon svg {
         display: block;
@@ -1802,14 +2246,20 @@
       .quick-grid.home-features .quick .title {
         font-size: clamp(22px, 2.1vw, 34px);
         font-weight: 900;
-        color: #0f172a;
+        color: #e2e8f0;
         margin-bottom: 10px;
         transition: color 0.22s ease;
       }
+      html[data-theme="light"] .quick-grid.home-features .quick .title {
+        color: #0f172a;
+      }
       .quick-grid.home-features .quick .desc {
         font-size: clamp(14px, 1.2vw, 18px);
-        color: rgba(71, 85, 105, 0.92);
+        color: rgba(203, 213, 225, 0.92);
         line-height: 1.8;
+      }
+      html[data-theme="light"] .quick-grid.home-features .quick .desc {
+        color: rgba(71, 85, 105, 0.92);
       }
       .quick-grid.home-features .desc-list {
         list-style: none;
@@ -1823,8 +2273,11 @@
         align-items: flex-start;
         gap: 10px;
         font-size: clamp(13px, 1.05vw, 16px);
-        color: rgba(71, 85, 105, 0.86);
+        color: rgba(203, 213, 225, 0.86);
         line-height: 1.7;
+      }
+      html[data-theme="light"] .quick-grid.home-features .desc-list li {
+        color: rgba(71, 85, 105, 0.86);
       }
       .quick-grid.home-features .desc-list li::before {
         content: "✓";
@@ -1832,16 +2285,25 @@
         align-items: center;
         justify-content: center;
         font-weight: 800;
-        color: #2f6df6;
+        color: #a5b4fc;
         flex: 0 0 18px;
         margin-top: 2px;
         font-size: 16px;
+      }
+      html[data-theme="light"] .quick-grid.home-features .desc-list li::before {
+        color: #2f6df6;
       }
 
       /* Hover / active: icon grows, title turns blue, border gets blue highlight */
       .quick-grid.home-features .quick:hover,
       .quick-grid.home-features .quick:active,
       .quick-grid.home-features .quick.active {
+        box-shadow: 0 28px 68px rgba(0, 0, 0, 0.4);
+        border-color: rgba(99, 102, 241, 0.45);
+      }
+      html[data-theme="light"] .quick-grid.home-features .quick:hover,
+      html[data-theme="light"] .quick-grid.home-features .quick:active,
+      html[data-theme="light"] .quick-grid.home-features .quick.active {
         box-shadow: 0 28px 68px rgba(15, 23, 42, 0.14);
         border-color: rgba(47, 109, 246, 0.22);
       }
@@ -1860,6 +2322,13 @@
       .quick-grid.home-features .quick:active .icon,
       .quick-grid.home-features .quick.active .icon {
         transform: scale(1.12);
+        border-color: rgba(99, 102, 241, 0.55);
+        box-shadow: 0 18px 44px rgba(99, 102, 241, 0.25);
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.26) 0%, rgba(139, 92, 246, 0.22) 100%) !important;
+      }
+      html[data-theme="light"] .quick-grid.home-features .quick:hover .icon,
+      html[data-theme="light"] .quick-grid.home-features .quick:active .icon,
+      html[data-theme="light"] .quick-grid.home-features .quick.active .icon {
         border-color: rgba(47, 109, 246, 0.22);
         box-shadow:
           0 18px 44px rgba(47, 109, 246, 0.18),
@@ -1870,6 +2339,11 @@
       .quick-grid.home-features .quick:hover .title,
       .quick-grid.home-features .quick:active .title,
       .quick-grid.home-features .quick.active .title {
+        color: #a5b4fc;
+      }
+      html[data-theme="light"] .quick-grid.home-features .quick:hover .title,
+      html[data-theme="light"] .quick-grid.home-features .quick:active .title,
+      html[data-theme="light"] .quick-grid.home-features .quick.active .title {
         color: #2f6df6;
       }
       .card {
@@ -1919,7 +2393,7 @@
         display: block;
         margin-bottom: 8px;
       }
-      input[type="text"], input[type="password"], input[type="file"], textarea, select {
+      input[type="text"], input[type="number"], input[type="password"], input[type="file"], textarea, select {
         padding: 11px 14px;
         border: 1px solid rgba(100, 116, 139, 0.4);
         border-radius: 10px;
@@ -1963,11 +2437,11 @@
         background: #0b1220;
         color: #e2e8f0;
       }
-      input[type="text"]:hover, input[type="password"]:hover, textarea:hover {
+      input[type="text"]:hover, input[type="number"]:hover, input[type="password"]:hover, textarea:hover {
         border-color: rgba(139, 151, 252, 0.4);
         background: rgba(15, 23, 42, 0.7);
       }
-      input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
+      input[type="text"]:focus, input[type="number"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
         outline: none;
         border-color: rgba(139, 151, 252, 0.6);
         box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
@@ -2305,7 +2779,7 @@
         font-size: 12px;
         min-width: auto;
       }
-      /* Compact "刷新日志" button */
+      /* Compact "刷新" button */
       #refreshLogsBtn {
         padding: 6px 12px;
         font-size: 12px;
@@ -2323,15 +2797,16 @@
         border-color: rgba(139, 151, 252, 0.5);
         color: #e2e8f0;
       }
+      /* 浅色下与接口详情右侧 5 个按钮统一：白底、浅灰边框、深灰字（见图片） */
       html[data-theme="light"] .api-actions .action-btn[data-edit] {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.92) 100%);
-        color: #0f172a;
-        border-color: rgba(37, 99, 235, 0.22);
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
+        background: #ffffff !important;
+        color: #333333 !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
       }
       html[data-theme="light"] .api-actions .action-btn[data-edit]:hover {
-        border-color: rgba(37, 99, 235, 0.30);
-        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
+        border-color: #c0c0c0 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
       }
       #saveEditBtn {
         background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 23, 42, 0.9) 100%) !important;
@@ -2370,8 +2845,7 @@
       }
       .doc-grid {
         display: grid;
-        /* keep both panels the same size */
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        grid-template-columns: 1fr;
         gap: 24px;
         align-items: stretch;
         margin-top: 24px;
@@ -2414,20 +2888,122 @@
         width: 32px;
         height: 32px;
         border-radius: 8px;
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
+        background: linear-gradient(135deg, rgba(37, 99, 235, 0.45) 0%, rgba(29, 78, 216, 0.4) 100%);
+        border: 1px solid rgba(59, 130, 246, 0.55);
         display: flex;
         align-items: center;
         justify-content: center;
         font-size: 16px;
+        color: #60a5fa;
+        box-shadow: 0 4px 12px rgba(37, 99, 235, 0.35);
+      }
+      /* 接口文档：选择场景工具栏 + 下拉按钮 */
+      .doc-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .doc-toolbar-label {
+        font-size: 14px;
+        font-weight: 600;
+        color: #e2e8f0;
+        white-space: nowrap;
+      }
+      .doc-scene-wrap {
+        position: relative;
+        display: inline-block;
+        min-width: 180px;
+      }
+      .doc-scene-select {
+        width: 100%;
+        min-width: 180px;
+        height: 40px;
+        padding: 0 36px 0 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(100, 116, 139, 0.45);
+        background: rgba(30, 41, 59, 0.7);
+        color: #e2e8f0;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2393c5fd' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        background-size: 14px;
+        transition: border-color 0.2s ease, background-color 0.2s ease;
+      }
+      .doc-scene-select:hover {
+        border-color: rgba(139, 151, 252, 0.5);
+        background-color: rgba(30, 41, 59, 0.85);
+      }
+      .doc-scene-select:focus {
+        outline: none;
+        border-color: rgba(59, 130, 246, 0.7);
+        box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+      }
+      .doc-hint-scene {
+        margin-top: 0;
+        margin-bottom: 16px;
+        font-size: 12px;
+      }
+      .doc-label-upload {
+        margin-top: 0;
+        margin-bottom: 10px;
+      }
+      /* 浅色主题：选择场景下拉按钮 */
+      html[data-theme="light"] .doc-toolbar-label {
+        color: #262626;
+      }
+      html[data-theme="light"] .doc-scene-select {
+        background-color: #ffffff;
+        color: #262626;
+        border-color: rgba(47, 109, 246, 0.4);
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%232f6df6' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      }
+      html[data-theme="light"] .doc-scene-select:hover {
+        border-color: rgba(47, 109, 246, 0.6);
+        background-color: #fafbff;
+      }
+      html[data-theme="light"] .doc-scene-select:focus {
+        border-color: #2f6df6;
+        box-shadow: 0 0 0 2px rgba(47, 109, 246, 0.15);
+      }
+      html[data-theme="light"] .doc-scene-select {
+        color-scheme: light;
+      }
+      /* 浅色模式下所有 select 的下拉列表为浅色 */
+      html[data-theme="light"] select {
+        color-scheme: light !important;
+      }
+      html[data-theme="light"] select option,
+      html[data-theme="light"] select optgroup {
+        background: #ffffff !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] select option:hover,
+      html[data-theme="light"] select option:checked,
+      html[data-theme="light"] select option:focus {
+        background: #f0f7ff !important;
+        color: #262626 !important;
       }
       .upload-area {
         border: 2px dashed rgba(100, 116, 139, 0.4);
-        border-radius: 12px;
-        padding: 32px 24px;
-        text-align: center;
+        border-radius: 10px;
+        padding: 16px 20px;
+        display: flex;
+        flex-direction: row;
+        flex-wrap: wrap;
+        align-items: center;
+        justify-content: center;
+        gap: 12px 20px;
         color: #cbd5e1;
-        background: rgba(15, 23, 42, 0.4);
-        transition: all 0.3s ease;
+        background: rgba(15, 23, 42, 0.35);
+        transition: all 0.25s ease;
         backdrop-filter: blur(12px);
         cursor: pointer;
         position: relative;
@@ -2441,30 +3017,48 @@
         border-style: solid;
         background: rgba(99, 102, 241, 0.1);
         color: #c7d2fe;
-        box-shadow: 0 0 20px rgba(99, 102, 241, 0.25), inset 0 0 20px rgba(99, 102, 241, 0.1);
+        box-shadow: 0 0 16px rgba(99, 102, 241, 0.2), inset 0 0 12px rgba(99, 102, 241, 0.08);
       }
       .upload-area .icon {
-        width: 48px;
-        height: 48px;
-        border-radius: 12px;
-        background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.1) 100%);
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.15) 100%);
         color: #818cf8;
         display: inline-flex;
         align-items: center;
         justify-content: center;
-        margin-bottom: 14px;
-        font-size: 22px;
-        border: 1px solid rgba(99, 102, 241, 0.2);
+        margin: 0;
+        font-size: 18px;
+        border: 1px solid rgba(99, 102, 241, 0.25);
+        flex-shrink: 0;
+      }
+      .upload-area .upload-copy {
+        display: flex;
+        flex-direction: row;
+        flex-wrap: nowrap;
+        align-items: center;
+        gap: 6px;
+      }
+      .upload-area .upload-text,
+      .upload-area .upload-hint {
+        white-space: nowrap;
       }
       .upload-area .upload-text {
-        font-size: 14px;
+        font-size: 13px;
         font-weight: 500;
         color: #e2e8f0;
-        margin-bottom: 6px;
+        margin: 0;
       }
       .upload-area .upload-hint {
-        font-size: 12px;
+        font-size: 11px;
         color: #94a3b8;
+        margin: 0;
+      }
+      .upload-area #fileNameDisplay {
+        width: 100%;
+        margin-top: 2px;
+        font-size: 12px;
       }
       .doc-actions {
         display: flex;
@@ -2576,20 +3170,20 @@
         align-items: center;
         flex-shrink: 0;
       }
-      /* Scene list: one scene per row */
+      /* Scene list: one scene per row，紧凑布局、随内容自适应 */
       .scene-list {
         display: flex;
         flex-direction: column;
-        gap: 12px;
-        margin-top: 14px;
+        gap: 8px;
+        margin-top: 10px;
       }
       .scene-item {
         border: 1px solid rgba(100, 116, 139, 0.3);
-        border-radius: 14px;
-        padding: 16px 18px;
+        border-radius: 10px;
+        padding: 10px 14px;
         display: flex;
         flex-direction: column;
-        gap: 10px;
+        gap: 6px;
         background: rgba(15, 23, 42, 0.5);
         transition: all 0.25s ease;
         backdrop-filter: blur(12px);
@@ -2606,47 +3200,57 @@
         display: flex;
         justify-content: space-between;
         align-items: flex-start;
-        gap: 10px;
+        gap: 8px;
       }
       .scene-item .name {
         font-weight: 600;
         color: #f1f5f9;
-        font-size: 14px;
+        font-size: 13px;
         display: flex;
         align-items: center;
-        gap: 10px;
+        gap: 6px;
       }
+      /* 深色主题：恢复原有 🎬 图标 */
       .scene-item .name::before {
         content: "🎬";
         font-size: 16px;
         opacity: 0.85;
       }
+      .scene-item .scene-icon {
+        display: none; /* 深色主题不显示，仅浅色主题使用蓝色 SVG */
+        width: 20px;
+        height: 20px;
+        flex-shrink: 0;
+        background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%232563eb' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='3' width='18' height='18' rx='3'/%3E%3Crect x='7' y='7' width='10' height='10' rx='2'/%3E%3Crect x='11' y='11' width='6' height='6' rx='1'/%3E%3C/svg%3E") no-repeat center;
+        background-size: contain;
+        opacity: 0.95;
+      }
       .scene-item .meta {
         font-size: 11px;
         color: #94a3b8;
-        margin-top: 5px;
+        margin-top: 2px;
         font-family: 'Courier New', monospace;
       }
       .scene-desc {
         font-size: 12px;
         color: #cbd5e1;
-        line-height: 1.55;
+        line-height: 1.4;
       }
       .scene-kws {
         display: flex;
         flex-wrap: wrap;
-        gap: 6px;
+        gap: 4px;
       }
       .scene-kws .pill {
         margin: 0;
-        padding: 4px 10px;
+        padding: 2px 8px;
         border-radius: 999px;
         font-size: 11px;
       }
       /* Always show actions (no hover-reveal) */
       .scene-actions {
         display: flex;
-        gap: 8px;
+        gap: 6px;
         flex-wrap: wrap;
         justify-content: flex-end;
         opacity: 1;
@@ -2854,12 +3458,18 @@
         border-color: rgba(37, 99, 235, 0.22);
         box-shadow: 0 22px 60px rgba(15, 23, 42, 0.10);
       }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-list.merged .scene-acc-body {
+        padding-top: 8px !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-list.merged .scene-acc-body-inner .api-card:first-child {
+        margin-top: 8px !important;
+      }
       .scene-list.merged .scene-acc-count {
-        font-size: 12px;
+        font-size: 11px;
         color: #a5b4fc;
         background: rgba(99, 102, 241, 0.14);
         border: 1px solid rgba(99, 102, 241, 0.18);
-        padding: 2px 8px;
+        padding: 2px 6px;
         border-radius: 999px;
         white-space: nowrap;
       }
@@ -2879,15 +3489,15 @@
       }
       .scene-list.merged .scene-acc-body {
         display: none;
-        margin-top: 2px;
-        padding-top: 12px;
+        margin-top: 0;
+        padding-top: 8px;
         border-top: 1px solid rgba(100, 116, 139, 0.22);
       }
       .scene-list.merged .scene-acc.open .scene-acc-body {
         display: block;
       }
       .scene-list.merged .scene-acc-body-inner .api-card:first-child {
-        margin-top: 12px;
+        margin-top: 8px;
       }
 
       /* Make "全部场景" filter + "手动录入" look like one design system */
@@ -3087,21 +3697,12 @@
         box-shadow: 0 4px 14px rgba(0, 0, 0, 0.18);
         background: rgba(15, 23, 42, 0.45);
       }
-      /* Light theme: API action buttons should NOT be dark */
+      /* Light theme: 接口详情右侧 - 前 5 个蓝底白字，删除接口灰底深色字 */
       html[data-theme="light"] .api-actions button {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.96) 0%, rgba(239, 246, 255, 0.92) 100%);
-        color: #0f172a;
-        border-color: rgba(37, 99, 235, 0.22);
-        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08);
         filter: none;
-      }
-      html[data-theme="light"] .api-actions button:hover {
-        filter: none;
-        box-shadow: 0 16px 36px rgba(15, 23, 42, 0.10);
-        border-color: rgba(37, 99, 235, 0.30);
       }
       html[data-theme="light"] .api-actions button:active {
-        box-shadow: 0 12px 30px rgba(15, 23, 42, 0.10);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
       }
       .api-actions button > span {
         width: 16px;
@@ -3128,51 +3729,25 @@
         border-color: rgba(34, 197, 94, 0.45);
         color: #4ade80;
       }
-      html[data-theme="light"] .api-actions .play {
-        background: linear-gradient(135deg, rgba(37, 99, 235, 0.16) 0%, rgba(124, 58, 237, 0.12) 100%);
-        border-color: rgba(37, 99, 235, 0.30);
-        color: #1d4ed8;
-      }
       .api-actions .json {
         background: linear-gradient(135deg, rgba(99, 102, 241, 0.18) 0%, rgba(139, 92, 246, 0.14) 100%);
         border-color: rgba(139, 151, 252, 0.45);
         color: #a5b4fc;
-      }
-      html[data-theme="light"] .api-actions .json {
-        background: linear-gradient(135deg, rgba(124, 58, 237, 0.12) 0%, rgba(37, 99, 235, 0.10) 100%);
-        border-color: rgba(124, 58, 237, 0.26);
-        color: #6d28d9;
       }
       .api-actions .action-btn:not(.danger) {
         background: linear-gradient(135deg, rgba(148, 163, 184, 0.12) 0%, rgba(100, 116, 139, 0.10) 100%);
         border-color: rgba(148, 163, 184, 0.35);
         color: #cbd5e1;
       }
-      html[data-theme="light"] .api-actions .action-btn:not(.danger) {
-        background: linear-gradient(135deg, rgba(255, 255, 255, 0.92) 0%, rgba(241, 245, 249, 0.90) 100%);
-        border-color: rgba(37, 99, 235, 0.18);
-        color: #0f172a;
-        box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
-      }
       .api-actions .action-btn.danger {
         background: linear-gradient(135deg, rgba(239, 68, 68, 0.18) 0%, rgba(220, 38, 38, 0.14) 100%);
         border-color: rgba(239, 68, 68, 0.45);
         color: #fca5a5;
       }
-      html[data-theme="light"] .api-actions .action-btn.danger {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.10) 0%, rgba(220, 38, 38, 0.08) 100%);
-        border-color: rgba(239, 68, 68, 0.28);
-        color: #b91c1c;
-      }
       .api-actions .action-btn.warn {
         background: linear-gradient(135deg, rgba(245, 158, 11, 0.18) 0%, rgba(217, 119, 6, 0.14) 100%);
         border-color: rgba(245, 158, 11, 0.5);
         color: #fbbf24;
-      }
-      html[data-theme="light"] .api-actions .action-btn.warn {
-        background: linear-gradient(135deg, rgba(245, 158, 11, 0.10) 0%, rgba(217, 119, 6, 0.08) 100%);
-        border-color: rgba(245, 158, 11, 0.28);
-        color: #b45309;
       }
       .debug-topbar {
         display: flex;
@@ -3803,47 +4378,114 @@
         overflow: hidden;
         background: rgba(15, 23, 42, 0.4);
       }
-      .manual-toggle {
-        display: inline-flex;
-        gap: 8px;
-        padding: 4px;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.35);
-        border: 1px solid rgba(100, 116, 139, 0.35);
+      /* 手动录入弹窗：请求 Headers / 请求 Query 各占一行；响应 Headers / Body 各占一行 */
+      #manualTableWrap > .grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
       }
-      .manual-toggle button {
-        padding: 6px 12px;
-        font-size: 12px;
-        border-radius: 999px;
-        border: 1px solid transparent;
-        background: transparent;
-        color: #cbd5e1;
+      #manualTableWrap > .grid > div {
+        min-width: 0;
       }
-      .manual-toggle button.active {
-        background: rgba(99, 102, 241, 0.22);
-        border-color: rgba(99, 102, 241, 0.5);
-        color: #e2e8f0;
+      /* 手动录入弹窗表格：浅色主题适配 */
+      html[data-theme="light"] #manualModal .manual-table {
+        background: #f8fafc !important;
+        border-color: #e2e8f0 !important;
       }
+      html[data-theme="light"] #manualModal .manual-table .kv-table {
+        background: #ffffff !important;
+        border: none !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table th {
+        background: #f1f5f9 !important;
+        color: #475569 !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table td {
+        color: #334155 !important;
+        border-bottom: 1px solid #f1f5f9 !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table tbody tr {
+        background: #ffffff !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table tbody tr:nth-child(even) {
+        background: #fafbfc !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table tbody tr:hover td {
+        background: #f8fafc !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-actions {
+        background: #f1f5f9 !important;
+        border-top: 1px solid #e2e8f0 !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table td button {
+        background: #ffffff !important;
+        color: #475569 !important;
+        border: 1px solid #cbd5e1 !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table td button:hover {
+        background: #f1f5f9 !important;
+        border-color: #94a3b8 !important;
+        color: #334155 !important;
+      }
+      html[data-theme="light"] #manualModal .manual-table .kv-table input,
+      html[data-theme="light"] #manualModal .manual-table .kv-table .kv-input {
+        background: #ffffff !important;
+        color: #1e293b !important;
+        border-color: #e2e8f0 !important;
+      }
+      /* 手动录入弹窗：表格/JSON、聊天/手动 按钮组统一样式，选中为半透明浅绿色 */
+      .manual-toggle,
       .manual-mode-tabs {
         display: inline-flex;
-        gap: 8px;
+        gap: 6px;
         padding: 4px;
-        border-radius: 999px;
-        background: rgba(15, 23, 42, 0.35);
-        border: 1px solid rgba(100, 116, 139, 0.35);
+        border-radius: 12px;
+        background: rgba(15, 23, 42, 0.25);
+        border: 1px solid rgba(100, 116, 139, 0.3);
       }
+      html[data-theme="light"] #manualModal .manual-toggle,
+      html[data-theme="light"] #manualModal .manual-mode-tabs {
+        background: #f1f5f9;
+        border-color: #e2e8f0;
+      }
+      .manual-toggle button,
       .manual-mode-tabs button {
-        padding: 6px 12px;
-        font-size: 12px;
-        border-radius: 999px;
+        padding: 8px 16px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 8px;
         border: 1px solid transparent;
         background: transparent;
-        color: #cbd5e1;
+        color: #94a3b8;
+        transition: background 0.2s, color 0.2s, border-color 0.2s;
       }
+      html[data-theme="light"] #manualModal .manual-toggle button,
+      html[data-theme="light"] #manualModal .manual-mode-tabs button {
+        color: #64748b;
+      }
+      .manual-toggle button:hover,
+      .manual-mode-tabs button:hover {
+        background: rgba(34, 197, 94, 0.15);
+        border-color: rgba(34, 197, 94, 0.3);
+        color: #86efac;
+      }
+      html[data-theme="light"] #manualModal .manual-toggle button:hover,
+      html[data-theme="light"] #manualModal .manual-mode-tabs button:hover {
+        background: rgba(34, 197, 94, 0.12);
+        border-color: rgba(34, 197, 94, 0.25);
+        color: #15803d;
+      }
+      .manual-toggle button.active,
       .manual-mode-tabs button.active {
+        background: rgba(34, 197, 94, 0.22);
+        border-color: rgba(34, 197, 94, 0.4);
+        color: #bbf7d0;
+      }
+      html[data-theme="light"] #manualModal .manual-toggle button.active,
+      html[data-theme="light"] #manualModal .manual-mode-tabs button.active {
         background: rgba(34, 197, 94, 0.18);
-        border-color: rgba(34, 197, 94, 0.45);
-        color: #dcfce7;
+        border-color: rgba(34, 197, 94, 0.35);
+        color: #166534;
       }
 
       /* ---------- 登录页专用样式（与首页一致的浅色系、白底） ---------- */
@@ -4202,6 +4844,11 @@
         padding: 16px;
         backdrop-filter: blur(8px);
       }
+      html[data-theme="light"] .chart {
+        background: #ffffff;
+        border: 1px solid #e8e8e8;
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+      }
       .chart .bar {
         display: grid;
         grid-template-columns: 140px 1fr 70px;
@@ -4211,12 +4858,20 @@
         font-size: 13px;
         color: #cbd5e1;
       }
+      html[data-theme="light"] .chart .bar {
+        color: #262626;
+        font-weight: 500;
+      }
       .chart .track {
         height: 12px;
         background: rgba(30, 41, 59, 0.6);
         border-radius: 999px;
         overflow: hidden;
         border: 1px solid rgba(99, 102, 241, 0.2);
+      }
+      html[data-theme="light"] .chart .track {
+        background: #f5f5f5;
+        border: 1px solid #e8e8e8;
       }
       .chart .fill {
         height: 100%;
@@ -4225,6 +4880,10 @@
         width: 0%;
         transition: width 0.6s ease;
         box-shadow: 0 0 12px rgba(99, 102, 241, 0.5);
+      }
+      html[data-theme="light"] .chart .fill {
+        background: linear-gradient(135deg, #1890FF 0%, #2f6df6 100%);
+        box-shadow: none;
       }
       .log-cards {
         display: grid;
@@ -4243,6 +4902,15 @@
         backdrop-filter: blur(8px);
         transition: all 0.3s ease;
       }
+      html[data-theme="light"] .log-card {
+        background: linear-gradient(135deg, #ffffff 0%, #fafafa 100%);
+        border: 1px solid #e8e8e8;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.06);
+      }
+      html[data-theme="light"] .log-card:hover {
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+        border-color: #d9d9d9;
+      }
       .log-card:hover {
         border-color: rgba(99, 102, 241, 0.4);
         box-shadow: 0 12px 40px rgba(99, 102, 241, 0.2);
@@ -4253,10 +4921,20 @@
         text-transform: uppercase;
         letter-spacing: 0.08em;
       }
+      html[data-theme="light"] .log-card .title {
+        color: #8c8c8c;
+        font-weight: 500;
+      }
       .log-card .value {
         font-size: 36px;
         font-weight: 700;
         background: linear-gradient(135deg, #e2e8f0 0%, #a5b4fc 100%);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      html[data-theme="light"] .log-card .value {
+        background: linear-gradient(135deg, #262626 0%, #1890FF 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -4320,6 +4998,7 @@
       .log-table {
         width: 100%;
         border-collapse: collapse;
+        table-layout: fixed;
       }
       .log-table th, .log-table td {
         padding: 14px 18px;
@@ -4327,6 +5006,82 @@
         font-size: 13px;
         text-align: left;
         color: #cbd5e1;
+      }
+      html[data-theme="light"] .log-table th, 
+      html[data-theme="light"] .log-table td {
+        border-bottom: 1px solid #e8e8e8;
+        color: #262626;
+      }
+      .log-table th:nth-child(1),
+      .log-table td:nth-child(1) {
+        width: 80px;
+        text-align: center;
+        white-space: nowrap;
+      }
+      .log-table th:nth-child(2),
+      .log-table td:nth-child(2) {
+        width: 150px;
+      }
+      .log-table th:nth-child(3),
+      .log-table td:nth-child(3) {
+        width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        position: relative;
+      }
+      .log-table td:nth-child(3) {
+        cursor: help;
+      }
+      .log-table td:nth-child(3):hover::after {
+        content: attr(title);
+        position: absolute;
+        left: 0;
+        top: calc(100% + 4px);
+        background: #ffffff;
+        border: 1px solid #d9d9d9;
+        padding: 10px 14px;
+        border-radius: 8px;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        z-index: 1000;
+        min-width: 250px;
+        max-width: 450px;
+        word-break: break-all;
+        font-size: 12px;
+        line-height: 1.6;
+        color: #262626;
+        white-space: normal;
+      }
+      html[data-theme="dark"] .log-table td:nth-child(3):hover::after {
+        background: rgba(30, 41, 59, 0.98);
+        border-color: rgba(99, 102, 241, 0.4);
+        color: #e2e8f0;
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.4);
+      }
+      .log-table th:nth-child(4),
+      .log-table td:nth-child(4) {
+        width: 280px;
+      }
+      .log-table th:nth-child(5),
+      .log-table td:nth-child(5) {
+        width: 220px;
+        text-align: center;
+      }
+      .log-table th:nth-child(6),
+      .log-table td:nth-child(6) {
+        width: 140px;
+        text-align: center;
+      }
+      .log-table td:nth-child(6) button {
+        padding: 6px 12px;
+        font-size: 12px;
+        min-width: auto;
+      }
+      #logModal #closeLogModal,
+      #jsonModal #closeJsonModal {
+        padding: 6px 12px;
+        font-size: 12px;
+        min-width: auto;
       }
 
       /* --- Responsive Layouts --- */
@@ -4462,8 +5217,17 @@
         font-size: 11px;
         background: rgba(15, 23, 42, 0.6);
       }
+      html[data-theme="light"] .log-table th {
+        color: #262626;
+        background: #fafafa;
+        font-weight: 700;
+        font-size: 12px;
+      }
       .log-row:hover {
         background: rgba(99, 102, 241, 0.1);
+      }
+      html[data-theme="light"] .log-row:hover {
+        background: #f5f5f5;
       }
       .status-dot {
         width: 8px;
@@ -4611,6 +5375,97 @@
         backdrop-filter: blur(12px);
       }
 
+      /* 探索灵感弹窗：文案 + 二维码图 */
+      #inspirationModal .inspiration-dialog {
+        width: min(640px, 96vw);
+        max-width: 640px;
+        background: linear-gradient(135deg, rgba(30, 41, 59, 0.98) 0%, rgba(15, 23, 42, 0.98) 100%);
+        border: 1px solid rgba(100, 116, 139, 0.4);
+        border-radius: 20px;
+        overflow: hidden;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+        backdrop-filter: blur(20px);
+        animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      }
+      #inspirationModal .inspiration-header {
+        padding: 24px 48px 20px 48px;
+        position: relative;
+        border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        background: linear-gradient(135deg, rgba(15, 23, 42, 0.6) 0%, rgba(30, 41, 59, 0.4) 100%);
+        box-sizing: border-box;
+        min-width: 0;
+      }
+      #inspirationModal .inspiration-title {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        line-height: 1.5;
+        color: #e2e8f0;
+        text-align: center;
+        max-width: 100%;
+        word-break: keep-all;
+      }
+      #inspirationModal .inspiration-close {
+        position: absolute;
+        top: 14px;
+        right: 14px;
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        background: rgba(30, 41, 59, 0.6);
+        border: 1px solid rgba(100, 116, 139, 0.3);
+        color: #94a3b8;
+        font-size: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.2s ease;
+      }
+      #inspirationModal .inspiration-close:hover {
+        background: rgba(30, 41, 59, 0.9);
+        color: #f1f5f9;
+        border-color: rgba(148, 163, 184, 0.5);
+      }
+      #inspirationModal .inspiration-body {
+        padding: 20px 24px 24px;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        background: rgba(15, 23, 42, 0.4);
+      }
+      #inspirationModal .inspiration-qr {
+        max-width: 100%;
+        height: auto;
+        display: block;
+        border-radius: 8px;
+      }
+      html[data-theme="light"] #inspirationModal .inspiration-dialog {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14) !important;
+      }
+      html[data-theme="light"] #inspirationModal .inspiration-header {
+        background: #f8fafc !important;
+        border-bottom: 1px solid #e2e8f0 !important;
+      }
+      html[data-theme="light"] #inspirationModal .inspiration-title {
+        color: #262626 !important;
+      }
+      html[data-theme="light"] #inspirationModal .inspiration-close {
+        background: #f1f5f9 !important;
+        border: 1px solid #e2e8f0 !important;
+        color: #64748b !important;
+      }
+      html[data-theme="light"] #inspirationModal .inspiration-close:hover {
+        background: #e2e8f0 !important;
+        border-color: #cbd5e1 !important;
+        color: #334155 !important;
+      }
+      html[data-theme="light"] #inspirationModal .inspiration-body {
+        background: #ffffff !important;
+      }
+
       /* Manual modal is tall; avoid vertical-centering jump when content height changes */
       #manualModal.modal.open {
         align-items: flex-start;
@@ -4618,6 +5473,33 @@
       }
       #manualModal .content {
         margin: 0 auto;
+        width: min(720px, 90vw) !important;
+        max-width: 720px;
+      }
+      /* 手动录入弹窗：接口标题、请求方式各占一行 */
+      #manualModal .content > .grid {
+        grid-template-columns: 1fr !important;
+        gap: 12px !important;
+      }
+      #manualModal .content > .grid > div {
+        min-width: 0;
+      }
+      /* 手动录入弹窗：标题变大 */
+      #manualModal .content > .row:first-child .label {
+        font-size: 20px !important;
+        font-weight: 700 !important;
+      }
+      html[data-theme="light"] #manualModal .content > .row:first-child .label {
+        color: #0f172a !important;
+      }
+      /* 聊天模式/手动录入、表格/JSON 同一行紧凑布局 */
+      #manualModal .content > .row:nth-child(2) {
+        display: flex !important;
+        justify-content: flex-start !important;
+        align-items: center !important;
+        gap: 20px !important;
+        flex-wrap: wrap !important;
+        margin-top: 14px !important;
       }
       /* 确保手动录入模态框的保存按钮区域始终可见 */
       #manualModal .content > .row:last-child {
@@ -4629,6 +5511,41 @@
         margin-top: 12px;
         border-top: 1px solid rgba(99, 102, 241, 0.2);
         z-index: auto;
+      }
+      /* 手动录入弹窗内按钮：小尺寸、蓝色半透明 */
+      #manualModal .content button.secondary {
+        padding: 6px 14px !important;
+        font-size: 13px !important;
+        font-weight: 600 !important;
+        min-height: auto !important;
+        height: auto !important;
+        border-radius: 10px !important;
+        background: rgba(47, 109, 246, 0.2) !important;
+        color: #1d4ed8 !important;
+        border: 1px solid rgba(47, 109, 246, 0.35) !important;
+      }
+      #manualModal .content button.secondary:hover:not(:disabled) {
+        background: rgba(47, 109, 246, 0.3) !important;
+        border-color: rgba(47, 109, 246, 0.5) !important;
+      }
+      html[data-theme="light"] #manualModal .content button.secondary {
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.3) !important;
+      }
+      html[data-theme="light"] #manualModal .content button.secondary:hover:not(:disabled) {
+        background: rgba(47, 109, 246, 0.26) !important;
+      }
+      #manualModal .content .btn-outline {
+        padding: 4px 10px !important;
+        font-size: 12px !important;
+        border-radius: 8px !important;
+        background: rgba(47, 109, 246, 0.12) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.3) !important;
+      }
+      #manualModal .content .btn-outline:hover:not(:disabled) {
+        background: rgba(47, 109, 246, 0.2) !important;
       }
       .modal .content pre {
         min-height: 160px;
@@ -4991,16 +5908,141 @@
         grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
       }
       @media (min-width: 1600px) {
-        .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .doc-grid { grid-template-columns: 1fr; }
         .debug-layout { grid-template-columns: 1fr 1fr; }
       }
       @media (min-width: 1900px) {
-        .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+        .doc-grid { grid-template-columns: 1fr; }
       }
       /* 4K / ultra-wide desktops */
       @media (min-width: 2400px) {
         .main { max-width: min(2600px, 96vw); }
         .quick-grid { grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); }
-        .doc-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 22px; }
+        .doc-grid { grid-template-columns: 1fr; gap: 22px; }
         .debug-layout { gap: 22px; }
+      }
+
+      /* ========== 浅色主题：接口详情内按钮文字与左侧 api-meta（如「默认场景」）一致：白底、#262626、font-weight 500、灰边框 ========== */
+      html[data-theme="light"] #api .api-card.api-card-detail .api-actions button:not(.btn-primary):not(.home-entry-btn):not(.method-pill) {
+        background: #ffffff !important;
+        color: #262626 !important;
+        font-weight: 500 !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      }
+      html[data-theme="light"] #api .api-card.api-card-detail .api-actions button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):hover {
+        background: #f0f0f0 !important;
+        border-color: #c0c0c0 !important;
+        color: #262626 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+      }
+      html[data-theme="light"] #api .api-card.api-card-detail .api-url button:not(.btn-primary):not(.home-entry-btn):not(.method-pill) {
+        background: #ffffff !important;
+        color: #262626 !important;
+        font-weight: 500 !important;
+        border: 1px solid #dcdcdc !important;
+      }
+      html[data-theme="light"] #api .api-card.api-card-detail .api-url button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):hover {
+        background: #f0f0f0 !important;
+        border-color: #c0c0c0 !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card.api-card-detail .api-actions button:not(.btn-primary):not(.home-entry-btn):not(.method-pill) {
+        background: #ffffff !important;
+        color: #262626 !important;
+        font-weight: 500 !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card.api-card-detail .api-actions button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):hover {
+        background: #f0f0f0 !important;
+        border-color: #c0c0c0 !important;
+        color: #262626 !important;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06) !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card.api-card-detail .api-url button:not(.btn-primary):not(.home-entry-btn):not(.method-pill) {
+        background: #ffffff !important;
+        color: #262626 !important;
+        font-weight: 500 !important;
+        border: 1px solid #dcdcdc !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card.api-card-detail .api-url button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):hover {
+        background: #f0f0f0 !important;
+        border-color: #c0c0c0 !important;
+        color: #262626 !important;
+      }
+      /* 删除接口在同一卡片内也与 api-meta 文字一致 */
+      html[data-theme="light"] #api .api-card.api-card-detail .api-actions button.danger {
+        background: #ffffff !important;
+        color: #262626 !important;
+        font-weight: 500 !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      }
+      html[data-theme="light"] #api .api-card.api-card-detail .api-actions button.danger:hover {
+        background: #f0f0f0 !important;
+        border-color: #c0c0c0 !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card.api-card-detail .api-actions button.danger {
+        background: #ffffff !important;
+        color: #262626 !important;
+        font-weight: 500 !important;
+        border: 1px solid #dcdcdc !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+      }
+      html[data-theme="light"] #sceneDetailModal .api-card.api-card-detail .api-actions button.danger:hover {
+        background: #f0f0f0 !important;
+        border-color: #c0c0c0 !important;
+        color: #262626 !important;
+      }
+
+      /* ========== 全站页脚：与顶部 topbar 同高、固定底栏，与主内容分割 ========== */
+      .site-footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 100;
+        min-height: 76px;
+        padding: 16px 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        text-align: center;
+        font-size: 13px;
+        font-weight: 400;
+        line-height: 1.4;
+        color: #94a3b8;
+        background: linear-gradient(135deg, rgba(10, 14, 39, 0.95) 0%, rgba(15, 23, 42, 0.95) 100%);
+        border-top: 1px solid rgba(99, 102, 241, 0.25);
+        box-shadow: 0 -4px 32px rgba(0, 0, 0, 0.4), 0 0 1px rgba(99, 102, 241, 0.3);
+      }
+      body { padding-bottom: 76px; }
+      .site-footer a {
+        color: #60a5fa;
+        text-decoration: none;
+      }
+      .site-footer a:hover {
+        text-decoration: underline;
+      }
+      .site-footer-line1 { margin-bottom: 0; }
+      .site-footer-line2 { color: inherit; }
+      html[data-theme="light"] .site-footer {
+        color: #595959;
+        background: #ffffff;
+        border-top: 1px solid #d9d9d9;
+        box-shadow: 0 -1px 3px rgba(0, 0, 0, 0.06);
+      }
+      html[data-theme="light"] .site-footer a {
+        color: #2f6df6;
+      }
+      html[data-theme="light"] .site-footer a:hover {
+        color: #1d4ed8;
+      }
+      @media (max-width: 768px) {
+        .site-footer { padding: 12px 16px; min-height: 68px; gap: 4px; font-size: 12px; }
+        body { padding-bottom: 68px; }
       }

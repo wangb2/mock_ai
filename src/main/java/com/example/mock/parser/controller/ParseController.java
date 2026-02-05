@@ -750,6 +750,8 @@ public class ParseController {
     @DeleteMapping(path = "/endpoint/file/{fileId}")
     public ResponseEntity<?> deleteFile(@PathVariable("fileId") String fileId) throws IOException {
         int removed = mockEndpointService.deleteBySourceFileId(fileId);
+        // 删除UploadedFileEntity记录
+        uploadedFileRepository.findById(fileId).ifPresent(uploadedFileRepository::delete);
         Path dir = Paths.get(uploadDir);
         if (Files.exists(dir)) {
             Path match = findFileById(dir, fileId);
@@ -759,6 +761,7 @@ public class ParseController {
         }
         ObjectNode result = objectMapper.createObjectNode();
         result.put("removed", removed);
+        logger.info("Deleted file. fileId={}, removedEndpoints={}", fileId, removed);
         return ResponseEntity.ok(result);
     }
 
