@@ -92,7 +92,10 @@ public class FeishuCallbackService {
                 cached.getRequiredFields(),
                 sceneId,
                 sceneName,
-                cached.getErrorHttpStatus(),0);
+                cached.getErrorHttpStatus(),
+                0,
+                "template",
+                "");
 
         if (created == null) {
             replyTextToChat(cached.getChatId(), cached.getSenderUserId(), cached.getChatType(), "创建失败：请求/响应数据无效。");

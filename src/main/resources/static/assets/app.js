@@ -67,6 +67,9 @@ const endpointInput = document.getElementById("endpoint");
       const editResp = document.getElementById("editResp");
       const editErr = document.getElementById("editErr");
       const editDelayMs = document.getElementById("editDelayMs");
+      const editResponseMode = document.getElementById("editResponseMode");
+      const editResponseScript = document.getElementById("editResponseScript");
+      const editResponseScriptWrap = document.getElementById("editResponseScriptWrap");
       const saveEditBtn = document.getElementById("saveEditBtn");
       const sceneSelect = document.getElementById("sceneSelect");
       const sceneList = document.getElementById("sceneList");
@@ -114,6 +117,13 @@ const endpointInput = document.getElementById("endpoint");
       const manualChatProvider = document.getElementById("manualChatProvider");
       const manualRequired = document.getElementById("manualRequired");
       const manualSaveBtn = document.getElementById("manualSaveBtn");
+      const manualResponseMode = document.getElementById("manualResponseMode");
+      const manualResponseScript = document.getElementById("manualResponseScript");
+      const manualResponseScriptWrap = document.getElementById("manualResponseScriptWrap");
+      const debugScriptWrap = document.getElementById("debugScriptWrap");
+      const debugScriptTextarea = document.getElementById("debugScriptTextarea");
+      let currentDebugScriptMode = false;
+      let currentDebugMockId = null;
       const manualAddReqHeader = document.getElementById("manualAddReqHeader");
       const manualAddReqQuery = document.getElementById("manualAddReqQuery");
       const manualAddReqBody = document.getElementById("manualAddReqBody");
@@ -1241,11 +1251,12 @@ const endpointInput = document.getElementById("endpoint");
         const title = item.title || "API";
         const method = (item.method || "").toUpperCase() || (/post/i.test(title) ? "POST" : "GET");
         const isPost = method === "POST";
+        const scriptBadge = (item.responseMode === "script") ? '<span class="pill" style="margin-left:6px;font-size:11px;">脚本</span>' : "";
         div.innerHTML = `
           <div>
             <div class="row">
               <span class="method ${String(method || "").toLowerCase()}">${method}</span>
-              <h3>${escapeHtml(title)}</h3>
+              <h3>${escapeHtml(title)}${scriptBadge}</h3>
             </div>
             <div class="api-meta api-meta-source">Source: <span class="api-meta-strong">${escapeHtml(item.sourceFileName || "-")}</span>
               ${downloadUrl ? `<a href="${downloadUrl}" target="_blank">下载</a>` : ""}
@@ -1305,6 +1316,15 @@ const endpointInput = document.getElementById("endpoint");
             if (editDelayMs) {
               editDelayMs.value = item.responseDelayMs != null ? String(item.responseDelayMs) : "";
             }
+            if (editResponseMode) {
+              editResponseMode.value = (item.responseMode === "script" ? "script" : "template");
+            }
+            if (editResponseScript) {
+              editResponseScript.value = item.responseScript != null ? item.responseScript : "";
+            }
+            if (editResponseScriptWrap) {
+              editResponseScriptWrap.style.display = (editResponseMode && editResponseMode.value === "script") ? "block" : "none";
+            }
             editModal.classList.add("open");
           });
         }
@@ -1356,6 +1376,16 @@ const endpointInput = document.getElementById("endpoint");
           }
         });
       }
+      if (editResponseMode && editResponseScriptWrap) {
+        editResponseMode.addEventListener("change", () => {
+          editResponseScriptWrap.style.display = editResponseMode.value === "script" ? "block" : "none";
+        });
+      }
+      if (manualResponseMode && manualResponseScriptWrap) {
+        manualResponseMode.addEventListener("change", () => {
+          manualResponseScriptWrap.style.display = manualResponseMode.value === "script" ? "block" : "none";
+        });
+      }
 
       if (saveEditBtn) {
         saveEditBtn.addEventListener("click", async () => {
@@ -1375,6 +1405,8 @@ const endpointInput = document.getElementById("endpoint");
             setStatus("JSON 格式错误");
             return;
           }
+          const responseMode = editResponseMode ? editResponseMode.value : "template";
+          const responseScript = editResponseScript ? editResponseScript.value : "";
           try {
             const res = await fetch(`/parse/endpoint/${editingMockId}`, {
               method: "PUT",
@@ -1383,7 +1415,9 @@ const endpointInput = document.getElementById("endpoint");
                 requestExample: reqJson,
                 responseExample: respJson,
                 errorResponseExample: errJson,
-                responseDelayMs: delayMsValue
+                responseDelayMs: delayMsValue,
+                responseMode: responseMode,
+                responseScript: responseScript
               })
             });
             if (res.ok) {
@@ -1553,6 +1587,8 @@ const endpointInput = document.getElementById("endpoint");
           const responseDelayMs = manualDelayMsInput && manualDelayMsInput.value.trim()
             ? Number(manualDelayMsInput.value.trim())
             : null;
+          const responseMode = manualResponseMode ? manualResponseMode.value : "template";
+          const responseScript = manualResponseScript ? manualResponseScript.value : "";
           try {
             manualSaveBtn.disabled = true;
             const res = await fetch("/parse/endpoint/manual", {
@@ -1567,7 +1603,9 @@ const endpointInput = document.getElementById("endpoint");
                 errorResponseExample: errObj,
                 requiredFields: requiredArr,
                 errorHttpStatus: errorHttpStatus,
-                responseDelayMs: responseDelayMs
+                responseDelayMs: responseDelayMs,
+                responseMode,
+                responseScript
               })
             });
             if (res.ok) {
@@ -2084,6 +2122,14 @@ const endpointInput = document.getElementById("endpoint");
           }
           setTableValue(headersTable, "__mock_error", "1");
         }
+        currentDebugMockId = item.id || null;
+        currentDebugScriptMode = (item.responseMode === "script");
+        if (debugScriptWrap) {
+          debugScriptWrap.classList.toggle("hidden", !currentDebugScriptMode);
+        }
+        if (debugScriptTextarea) {
+          debugScriptTextarea.value = (item.responseScript != null ? item.responseScript : "");
+        }
         mockResponse.textContent = "{}";
         if (navigate) {
           switchTab("debug");
@@ -2160,14 +2206,29 @@ const endpointInput = document.getElementById("endpoint");
         if (debugStatus) debugStatus.textContent = "Status: -";
         if (debugTime) debugTime.textContent = "Time: -";
         if (debugSize) debugSize.textContent = "Size: ...";
+        let requestUrl = buildUrlWithQuery(url, query);
+        let requestMethod = currentMethod;
+        let requestBody = currentMethod === "POST" ? JSON.stringify(body) : undefined;
+        if (currentDebugScriptMode && debugScriptTextarea && debugScriptTextarea.value.trim()) {
+          const match = url.match(/\/parse\/mock\/([a-zA-Z0-9]+)/);
+          if (match) {
+            requestUrl = url.replace(/\?.*$/, "").replace(/\/?$/, "") + "/debug";
+            requestMethod = "POST";
+            requestBody = JSON.stringify({
+              body: body,
+              query: query,
+              headers: headers,
+              script: debugScriptTextarea.value.trim()
+            });
+          }
+        }
         try {
           const start = performance.now();
-          const fullUrl = buildUrlWithQuery(url, query);
           if (debugStatus) debugStatus.textContent = "Status: 请求中";
-          const res = await fetch(fullUrl, {
-            method: currentMethod,
+          const res = await fetch(requestUrl, {
+            method: requestMethod,
             headers: headers,
-            body: currentMethod === "POST" ? JSON.stringify(body) : undefined
+            body: requestMethod === "POST" ? requestBody : undefined
           });
           const text = await res.text();
           const elapsed = Math.round(performance.now() - start);
@@ -2198,7 +2259,10 @@ const endpointInput = document.getElementById("endpoint");
             debugTime.innerHTML = `Time: <span style="color: ${timeColor}; font-weight: 600;">${elapsed}ms</span>`;
           }
           if (debugSize) debugSize.textContent = `Size: ${text.length} bytes`;
-          if (debugCurl) debugCurl.textContent = buildCurl(fullUrl, headers, body, currentMethod);
+          const curlBody = (requestMethod === "POST" && currentDebugScriptMode && debugScriptTextarea && debugScriptTextarea.value.trim())
+            ? { body, query, headers, script: debugScriptTextarea.value.trim() }
+            : body;
+          if (debugCurl) debugCurl.textContent = buildCurl(requestUrl, headers, curlBody, requestMethod);
           if (responseHeadersTable) {
             renderKeyValueTableReadonly(responseHeadersTable, res.headers);
           }
@@ -2219,6 +2283,28 @@ const endpointInput = document.getElementById("endpoint");
           // Keep success/error color briefly, then return to idle.
           setTimeout(() => setSendBtnUi("idle"), 900);
         }
+      }
+
+      async function loadDebugMockInfoFromUrl() {
+        const url = mockUrlInput && mockUrlInput.value ? mockUrlInput.value.trim() : "";
+        const match = url.match(/\/parse\/mock\/([a-zA-Z0-9]+)/);
+        if (!match || !debugScriptWrap || !debugScriptTextarea) return;
+        try {
+          const base = url.replace(/\/parse\/mock\/[a-zA-Z0-9]+.*$/, "");
+          const res = await fetch(base + "/parse/mock/" + match[1] + "/info");
+          if (!res.ok) return;
+          const info = await res.json();
+          currentDebugMockId = info.id || match[1];
+          currentDebugScriptMode = (info.responseMode === "script");
+          debugScriptWrap.classList.toggle("hidden", !currentDebugScriptMode);
+          debugScriptTextarea.value = (info.responseScript != null ? info.responseScript : "");
+        } catch (e) {
+          // ignore
+        }
+      }
+
+      if (mockUrlInput) {
+        mockUrlInput.addEventListener("blur", () => { loadDebugMockInfoFromUrl(); });
       }
 
       if (debugMethodSelect) {

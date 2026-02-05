@@ -39,10 +39,10 @@ filter:
 # 飞书入口（可选，不配置 app-id 则飞书相关接口不生效）
 feishu:
   enabled: true
-  app-id: "cli_a90b66453f39dcd1"
-  app-secret: "YXsqsp5tSXfGzw0t5qcbThP8Xg7M561d"
-  verification-token: "nznrPlGqGLBCiGiguTc8Vc4vn67vI7kw"
-  encrypt-key: "2bv6UnjRPN82yKtjzohz2dTNEUUAlgob"
+  app-id: "cli_a90eace403799cb1"
+  app-secret: "RUgxLE4xAxPoN9v6QjdFVb0VTkr0GRgz"
+#  verification-token: "nznrPlGqGLBCiGiguTc8Vc4vn67vI7kw"
+#  encrypt-key: "2bv6UnjRPN82yKtjzohz2dTNEUUAlgob"
   default-scene-id: "a067102fcbfa4701b93e96512b7f6587"
   preview-cache-ttl-minutes: 30
 

@@ -3,9 +3,9 @@ package com.example.mock.parser.service;
 import com.example.mock.parser.entity.MockEndpointEntity;
 import com.example.mock.parser.entity.MockOperationLogEntity;
 import com.example.mock.parser.entity.MockResponseCacheEntity;
+import com.example.mock.parser.model.ManualPreviewResult;
 import com.example.mock.parser.model.MockEndpointItem;
 import com.example.mock.parser.model.MockEndpointResult;
-import com.example.mock.parser.model.ManualPreviewResult;
 import com.example.mock.parser.model.ParsedDocument;
 import com.example.mock.parser.model.Section;
 import com.example.mock.parser.model.TableData;
@@ -25,17 +25,17 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestTemplate;
 
+import javax.annotation.PostConstruct;
 import java.io.IOException;
+import java.security.MessageDigest;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
-import java.util.LinkedHashMap;
-import java.util.regex.Pattern;
 import java.util.UUID;
-import java.security.MessageDigest;
-import javax.annotation.PostConstruct;
-import java.time.LocalDateTime;
+import java.util.regex.Pattern;
 
 @Service
 public class MockEndpointService {
@@ -47,6 +47,7 @@ public class MockEndpointService {
     private final MockResponseCacheRepository responseCacheRepository;
     private final MockOperationLogRepository logRepository;
     private final com.example.mock.parser.service.llm.LLMProviderFactory llmProviderFactory;
+    private final ScriptResponseService scriptResponseService;
     private static final org.slf4j.Logger logger = org.slf4j.LoggerFactory.getLogger(MockEndpointService.class);
 
     @Value("${zhipu.api-key:}")
@@ -78,13 +79,15 @@ public class MockEndpointService {
                                MockEndpointRepository repository,
                                MockResponseCacheRepository responseCacheRepository,
                                MockOperationLogRepository logRepository,
-                               com.example.mock.parser.service.llm.LLMProviderFactory llmProviderFactory) {
+                               com.example.mock.parser.service.llm.LLMProviderFactory llmProviderFactory,
+                               ScriptResponseService scriptResponseService) {
         this.restTemplate = restTemplate;
         this.objectMapper = objectMapper;
         this.repository = repository;
         this.responseCacheRepository = responseCacheRepository;
         this.logRepository = logRepository;
         this.llmProviderFactory = llmProviderFactory;
+        this.scriptResponseService = scriptResponseService;
     }
 
     @PostConstruct
@@ -551,6 +554,15 @@ public class MockEndpointService {
                     // ignore invalid
                 }
             }
+            JsonNode responseModeNode = body.get("responseMode");
+            if (responseModeNode != null && !responseModeNode.isMissingNode()) {
+                String mode = responseModeNode.isTextual() ? responseModeNode.asText().trim() : "template";
+                entity.setResponseMode("script".equalsIgnoreCase(mode) ? "script" : "template");
+            }
+            JsonNode responseScriptNode = body.get("responseScript");
+            if (responseScriptNode != null && !responseScriptNode.isMissingNode()) {
+                entity.setResponseScript(responseScriptNode.isTextual() ? responseScriptNode.asText() : null);
+            }
             repository.save(entity);
             responseCacheRepository.deleteByMockId(id);
             logOperation("MOCK_UPDATE", id, entity.getSourceFileName(), "更新请求/响应示例");
@@ -629,6 +641,16 @@ public class MockEndpointService {
         if (item == null) {
             return null;
         }
+        String mode = item.getResponseMode();
+        String script = item.getResponseScript();
+        if ("script".equals(mode) && script != null && !script.trim().isEmpty()) {
+            JsonNode scriptResponse = scriptResponseService.execute(script, requestBody);
+            if (scriptResponse != null) {
+                logOperation("MOCK_GEN", item.getId(), item.getSourceFileName(), "脚本响应");
+                return scriptResponse;
+            }
+            return item.getResponseExample();
+        }
         String signature = buildRequestSignature(item, requestBody);
         if (signature == null || signature.isEmpty()) {
             return item.getResponseExample();
@@ -648,6 +670,25 @@ public class MockEndpointService {
         return generated;
     }
 
+    /**
+     * 调试用：使用请求上下文与可选脚本覆盖计算响应。
+     * 若 scriptOverride 非空则执行该脚本；否则与 getDynamicResponse 行为一致。
+     */
+    public JsonNode getDynamicResponseWithScriptOverride(MockEndpointItem item, JsonNode requestPayload, String scriptOverride) throws IOException {
+        if (item == null) {
+            return null;
+        }
+        if (scriptOverride != null && !scriptOverride.trim().isEmpty()) {
+            JsonNode scriptResponse = scriptResponseService.execute(scriptOverride.trim(), requestPayload);
+            if (scriptResponse != null) {
+                logOperation("MOCK_GEN", item.getId(), item.getSourceFileName(), "脚本调试");
+                return scriptResponse;
+            }
+            return item.getResponseExample();
+        }
+        return getDynamicResponse(item, requestPayload);
+    }
+
     public MockEndpointItem createManualEndpoint(String title,
                                                  String method,
                                                  JsonNode requestExample,
@@ -657,7 +698,9 @@ public class MockEndpointService {
                                                  String sceneId,
                                                  String sceneName,
                                                  Integer errorHttpStatus,
-                                                 Integer responseDelayMs) {
+                                                 Integer responseDelayMs,
+                                                 String responseMode,
+                                                 String responseScript) {
         MockEndpointItem item = new MockEndpointItem();
         item.setTitle(title == null ? "" : title.trim());
         item.setMethod(method == null ? "" : method.trim().toUpperCase(Locale.ROOT));
@@ -677,6 +720,12 @@ public class MockEndpointService {
             item.setResponseDelayMs(responseDelayMs);
         }
         item.setErrorHttpStatus(errorHttpStatus);
+        if (responseMode != null && !responseMode.trim().isEmpty()) {
+            item.setResponseMode("script".equalsIgnoreCase(responseMode.trim()) ? "script" : "template");
+        } else {
+            item.setResponseMode("template");
+        }
+        item.setResponseScript(responseScript != null ? responseScript : "");
         
         // 对于手动录入，使用更宽松的检查：只要有标题和方法，或者有请求/响应示例之一即可
         if (item.getTitle().trim().isEmpty()) {
@@ -1508,6 +1557,8 @@ public class MockEndpointService {
         entity.setResponseExample(stringify(item.getResponseExample()));
         entity.setErrorResponseExample(stringify(item.getErrorResponseExample()));
         entity.setRequiredFields(stringify(item.getRequiredFields()));
+        entity.setResponseMode(item.getResponseMode());
+        entity.setResponseScript(item.getResponseScript());
         return entity;
     }
 
@@ -1530,6 +1581,8 @@ public class MockEndpointService {
         item.setResponseExample(parseJson(entity.getResponseExample()));
         item.setErrorResponseExample(parseJson(entity.getErrorResponseExample()));
         item.setRequiredFields(parseList(entity.getRequiredFields()));
+        item.setResponseMode(entity.getResponseMode());
+        item.setResponseScript(entity.getResponseScript());
         return item;
     }
 

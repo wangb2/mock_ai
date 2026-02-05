@@ -326,8 +326,44 @@ public class ParseController {
         info.set("requestExample", item.getRequestExample());
         info.set("responseExample", item.getResponseExample());
         info.set("errorResponseExample", item.getErrorResponseExample());
+        info.put("responseMode", item.getResponseMode() != null ? item.getResponseMode() : "template");
+        info.put("responseScript", item.getResponseScript() != null ? item.getResponseScript() : "");
         info.put("hint", "POST JSON to mockUrl to get mock response with validation");
         return ResponseEntity.ok(info);
+    }
+
+    /**
+     * 脚本调试：POST 体可带 body/query/headers/script。
+     * 若带 script 则用该脚本计算响应（不落库）；否则与普通 mock 行为一致。
+     */
+    @PostMapping(path = "/mock/{id}/debug", consumes = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<?> mockDebug(@PathVariable("id") String id, @RequestBody JsonNode body) {
+        MockEndpointItem item = mockEndpointService.getById(id);
+        if (item == null) {
+            return ResponseEntity.notFound().build();
+        }
+        ObjectNode requestNode = objectMapper.createObjectNode();
+        JsonNode q = body != null && body.has("query") ? body.get("query") : objectMapper.createObjectNode();
+        JsonNode h = body != null && body.has("headers") ? body.get("headers") : objectMapper.createObjectNode();
+        JsonNode b = body != null && body.has("body") ? body.get("body") : (body != null ? body : objectMapper.createObjectNode());
+        requestNode.set("query", q.isObject() ? q : objectMapper.createObjectNode());
+        requestNode.set("headers", h.isObject() ? h : objectMapper.createObjectNode());
+        requestNode.set("body", b.isObject() ? b : objectMapper.createObjectNode());
+        String scriptOverride = null;
+        if (body != null && body.has("script") && body.get("script").isTextual()) {
+            scriptOverride = body.get("script").asText();
+        }
+        if (scriptOverride != null && !scriptOverride.trim().isEmpty()) {
+            try {
+                JsonNode response = mockEndpointService.getDynamicResponseWithScriptOverride(item, requestNode, scriptOverride);
+                applyResponseDelay(item);
+                return buildMockResponse(response, null);
+            } catch (IOException ex) {
+                applyResponseDelay(item);
+                return buildMockResponse(item.getResponseExample(), null);
+            }
+        }
+        return mockByIdInternal(id, requestNode, requestNode);
     }
 
     private ResponseEntity<?> mockByIdInternal(String id, JsonNode validationNode, JsonNode requestPayload) {
@@ -816,16 +852,19 @@ public class ParseController {
                 }
             }
         }
-        
-        logger.info("Manual endpoint creation. title={}, method={}, sceneId={}, hasRequest={}, hasResponse={}, hasError={}, requiredFields={}", 
+        String responseMode = textOr(body == null ? null : body.get("responseMode"), "template");
+        String responseScript = body != null && body.has("responseScript") && body.get("responseScript").isTextual()
+                ? body.get("responseScript").asText() : "";
+
+        logger.info("Manual endpoint creation. title={}, method={}, sceneId={}, hasRequest={}, hasResponse={}, hasError={}, requiredFields={}, responseMode={}", 
                 title, method, sceneId, 
                 requestExample != null && !requestExample.isNull() && !requestExample.isEmpty(), 
                 responseExample != null && !responseExample.isNull() && !responseExample.isEmpty(),
                 errorResponseExample != null && !errorResponseExample.isNull() && !errorResponseExample.isEmpty(),
-                requiredFields.size());
-        
+                requiredFields.size(), responseMode);
+
         MockEndpointItem item = mockEndpointService.createManualEndpoint(title, method, requestExample,
-                responseExample, errorResponseExample, requiredFields, scene.getId(), scene.getName(), errorHttpStatus, responseDelayMs);
+                responseExample, errorResponseExample, requiredFields, scene.getId(), scene.getName(), errorHttpStatus, responseDelayMs, responseMode, responseScript);
         if (item == null) {
             logger.warn("Manual endpoint creation failed: createManualEndpoint returned null. title={}, method={}", title, method);
             return ResponseEntity.badRequest().body("Empty request/response or invalid data");

@@ -46,6 +46,13 @@ public class MockEndpointEntity {
     @Column(length = 512)
     private String apiPath;
 
+    @Column(name = "response_mode", length = 32)
+    private String responseMode;
+
+    @Lob
+    @Column(name = "response_script")
+    private String responseScript;
+
     private LocalDateTime createdAt;
 
     @PrePersist
@@ -189,6 +196,22 @@ public class MockEndpointEntity {
 
     public void setApiPath(String apiPath) {
         this.apiPath = apiPath;
+    }
+
+    public String getResponseMode() {
+        return responseMode;
+    }
+
+    public void setResponseMode(String responseMode) {
+        this.responseMode = responseMode;
+    }
+
+    public String getResponseScript() {
+        return responseScript;
+    }
+
+    public void setResponseScript(String responseScript) {
+        this.responseScript = responseScript;
     }
 
     public LocalDateTime getCreatedAt() {
