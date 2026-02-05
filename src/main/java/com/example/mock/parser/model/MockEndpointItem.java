@@ -23,6 +23,8 @@ public class MockEndpointItem {
     private Integer errorHttpStatus;
     private Integer responseDelayMs;
     private String apiPath;
+    private String responseMode;
+    private String responseScript;
 
     public String getId() {
         return id;
@@ -158,5 +160,21 @@ public class MockEndpointItem {
 
     public void setApiPath(String apiPath) {
         this.apiPath = apiPath;
+    }
+
+    public String getResponseMode() {
+        return responseMode;
+    }
+
+    public void setResponseMode(String responseMode) {
+        this.responseMode = responseMode;
+    }
+
+    public String getResponseScript() {
+        return responseScript;
+    }
+
+    public void setResponseScript(String responseScript) {
+        this.responseScript = responseScript;
     }
 }

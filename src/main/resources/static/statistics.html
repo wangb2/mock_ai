@@ -185,6 +185,10 @@
                 <button id="addQueryRow" class="btn-outline">+ 添加参数</button>
               </div>
             </div>
+            <div id="debugScriptWrap" class="hidden" style="margin-top: 12px;">
+              <div class="label">脚本调试（仅脚本响应模式，可直接修改脚本后发送）</div>
+              <textarea id="debugScriptTextarea" rows="10" placeholder="可访问 request.headers / request.query / request.body，返回 { headers: {}, body: {} }"></textarea>
+            </div>
           </div>
 
           <div class="debug-card">
@@ -402,6 +406,15 @@
           </div>
           <div class="label" style="margin-top: 8px;">错误响应示例（JSON）</div>
           <textarea id="editErr"></textarea>
+          <div class="label" style="margin-top: 8px;">响应模式</div>
+          <select id="editResponseMode">
+            <option value="template">模板（默认）</option>
+            <option value="script">脚本</option>
+          </select>
+          <div id="editResponseScriptWrap" style="margin-top: 8px; display: none;">
+            <div class="label">响应脚本（JavaScript）</div>
+            <textarea id="editResponseScript" rows="8" placeholder="可访问 request.headers / request.query / request.body，返回 { headers: {}, body: {} }"></textarea>
+          </div>
           <div class="label" style="margin-top: 8px;">响应时长（毫秒）</div>
           <input id="editDelayMs" type="number" min="0" placeholder="例如：2000" />
           <div class="row" style="margin-top: 12px; justify-content:flex-end;">
@@ -576,6 +589,17 @@
           <div style="margin-top: 8px;">
             <div class="label">响应时长（毫秒）</div>
             <input id="manualDelayMsInput" type="number" min="0" placeholder="例如：2000" />
+          </div>
+          <div style="margin-top: 8px;">
+            <div class="label">响应模式</div>
+            <select id="manualResponseMode">
+              <option value="template">模板（默认）</option>
+              <option value="script">脚本</option>
+            </select>
+          </div>
+          <div id="manualResponseScriptWrap" style="margin-top: 8px; display: none;">
+            <div class="label">响应脚本（JavaScript）</div>
+            <textarea id="manualResponseScript" rows="8" placeholder="可访问 request.headers / request.query / request.body，返回 { headers: {}, body: {} }"></textarea>
           </div>
           <div class="label" style="margin-top: 8px;">必填字段（JSON数组）</div>
           <textarea id="manualRequired"></textarea>
