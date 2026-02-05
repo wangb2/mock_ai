@@ -459,7 +459,7 @@ public class MockEndpointService {
         if (sceneId == null || sceneId.trim().isEmpty()) {
             return items;
         }
-        for (MockEndpointEntity entity : repository.findBySceneId(sceneId)) {
+        for (MockEndpointEntity entity : repository.findBySceneIdOrderByCreatedAtDesc(sceneId)) {
             items.add(toItem(entity));
         }
         return items;
