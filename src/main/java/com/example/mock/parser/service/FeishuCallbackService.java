@@ -1,11 +1,13 @@
 package com.example.mock.parser.service;
 
 import com.example.mock.parser.config.FeishuProperties;
+import com.example.mock.parser.config.MockProperties;
 import com.example.mock.parser.model.MockEndpointItem;
 import com.example.mock.parser.model.MockSceneItem;
 import com.example.mock.parser.model.feishu.FeishuCachedPreview;
 import com.example.mock.parser.model.feishu.FeishuCallbackPayload;
 import com.example.mock.parser.service.feishu.CallbackActionValueParser;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -26,6 +28,7 @@ public class FeishuCallbackService {
     private static final String CHAT_TYPE_GROUP = "group";
 
     private final FeishuProperties feishuProperties;
+    private final MockProperties mockProperties;
     private final FeishuApiService feishuApiService;
     private final FeishuPreviewCache feishuPreviewCache;
     private final MockEndpointService mockEndpointService;
@@ -138,7 +141,7 @@ public class FeishuCallbackService {
     }
 
     /**
-     * 构建「接口创建成功」交互卡片（飞书卡片 JSON 2.0），仅展示接口地址。
+     * 构建「接口创建成功」交互卡片（飞书卡片 JSON 2.0），全部使用飞书官方卡片元素。
      */
     private String buildCreateSuccessCard(MockEndpointItem item, String chatType, String senderUserId) {
         ObjectNode card = objectMapper.createObjectNode();
@@ -156,25 +159,78 @@ public class FeishuCallbackService {
         card.set("header", header);
 
         ArrayNode elements = card.putArray("elements");
+
+        // 群聊时 @ 用户（lark_md）
         if (CHAT_TYPE_GROUP.equals(chatType) && senderUserId != null && !senderUserId.isEmpty()) {
             String atContent = "<at id=\"" + escapeLarkMd(senderUserId) + "\"></at> 接口已创建，地址如下：";
-            ObjectNode div = elements.addObject();
-            div.put("tag", "div");
-            div.putObject("text").put("tag", "lark_md").put("content", atContent);
+            addDivLarkMd(elements, atContent);
         }
-        String mockUrl = item.getMockUrl() != null ? item.getMockUrl() : "";
-        String urlContent = "**接口地址**\n`" + escapeCodeBlock(mockUrl) + "`";
-        ObjectNode div = elements.addObject();
-        div.put("tag", "div");
-        div.putObject("text").put("tag", "lark_md").put("content", urlContent);
+
+        // 接口地址：使用 mock.base-url 转为可直接访问的完整 URL，未配置则用 path
+        String path = item.getMockUrl() != null ? item.getMockUrl() : "";
+        String mockUrl = mockProperties.toAbsoluteMockUrl(path);
+        addDivLarkMd(elements, "**接口地址**\n");
+        ObjectNode urlDiv = elements.addObject();
+        urlDiv.put("tag", "div");
+        ObjectNode urlText = urlDiv.putObject("text");
+        urlText.put("tag", "plain_text");
+        urlText.put("content", mockUrl);
+        urlText.put("lines", 3);
+
+        // curl 脚本（可直接复制执行）
+        String curlScript = buildCurlScript(mockUrl, item);
+        if (!curlScript.isEmpty()) {
+            addDivLarkMd(elements, "**curl**\n");
+            ObjectNode curlDiv = elements.addObject();
+            curlDiv.put("tag", "div");
+            ObjectNode curlText = curlDiv.putObject("text");
+            curlText.put("tag", "plain_text");
+            curlText.put("content", curlScript);
+            curlText.put("lines", 10);
+        }
+
         return card.toString();
     }
 
-    private static String escapeCodeBlock(String s) {
-        if (s == null) {
+    /**
+     * 根据接口方法与请求示例生成 curl 命令（可直接复制执行）。
+     */
+    private String buildCurlScript(String mockUrl, MockEndpointItem item) {
+        if (mockUrl == null || mockUrl.isEmpty()) {
             return "";
         }
-        return s.replace("`", "` "); // 避免连续反引号破坏 lark_md 代码块
+        String method = item.getMethod() != null ? item.getMethod().trim().toUpperCase() : "POST";
+        if ("GET".equals(method)) {
+            return "curl -X GET '" + escapeShell(mockUrl) + "'";
+        }
+        // POST：带 Content-Type 与 -d body
+        JsonNode requestExample = item.getRequestExample();
+        String bodyJson = "{}";
+        if (requestExample != null && !requestExample.isNull()) {
+            try {
+                if (requestExample.has("body") && requestExample.get("body").isObject()) {
+                    bodyJson = objectMapper.writeValueAsString(requestExample.get("body"));
+                } else {
+                    bodyJson = objectMapper.writeValueAsString(requestExample);
+                }
+            } catch (Exception e) {
+                log.warn("Build curl: serialize request body failed", e);
+            }
+        }
+        bodyJson = bodyJson.replace("\\", "\\\\").replace("'", "'\\''");
+        return "curl -X POST '" + escapeShell(mockUrl) + "' -H 'Content-Type: application/json' -d '" + bodyJson + "'";
+    }
+
+    private static String escapeShell(String s) {
+        if (s == null) return "";
+        return s.replace("'", "'\\''");
+    }
+
+    /** 飞书卡片：div + lark_md（官方元素） */
+    private void addDivLarkMd(ArrayNode elements, String content) {
+        ObjectNode div = elements.addObject();
+        div.put("tag", "div");
+        div.putObject("text").put("tag", "lark_md").put("content", content);
     }
 
     private static String escapeLarkMd(String s) {

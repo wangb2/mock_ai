@@ -500,11 +500,23 @@ public class FeishuEventService {
         return root.toString();
     }
 
-    private static final int CARD_JSON_MAX_LEN = 400;
+    /**
+     * 将 JsonNode 格式化为完整、带缩进的 JSON 字符串后用于卡片展示（不截断）。
+     */
+    private String formatJsonForCard(com.fasterxml.jackson.databind.JsonNode node) {
+        if (node == null || node.isNull()) {
+            return "";
+        }
+        try {
+            return objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(node);
+        } catch (Exception e) {
+            log.warn("Format JSON for card failed", e);
+            return node.toString();
+        }
+    }
 
     /**
-     * 构建「创建接口」交互卡片（飞书卡片 JSON 2.0），包含接口全部预览信息。
-     * 群聊时在卡片内用 lark_md 直接 @ 用户，仅发一条消息。
+     * 构建「创建接口」交互卡片（飞书卡片 JSON 2.0），全部使用飞书官方卡片元素，布局清晰美观。
      */
     private String buildCreateButtonCard(String previewResultId, MockEndpointItem item, String chatType, String senderUserId) {
         ObjectNode card = objectMapper.createObjectNode();
@@ -513,7 +525,7 @@ public class FeishuEventService {
         card.set("config", config);
 
         ObjectNode header = objectMapper.createObjectNode();
-        header.put("template", "blue");
+        header.put("template", "wathet");
         ObjectNode headerTitle = objectMapper.createObjectNode();
         headerTitle.put("tag", "plain_text");
         headerTitle.put("content", "接口预览");
@@ -523,66 +535,68 @@ public class FeishuEventService {
 
         ArrayNode elements = card.putArray("elements");
 
-        // 群聊时在卡片内 @ 用户（lark_md 语法 <at id="ou_xxx"></at>，@所有人用 id=all）
+        // 群聊时 @ 用户（lark_md）
         if (CHAT_TYPE_GROUP.equals(chatType) && senderUserId != null && !senderUserId.isEmpty()) {
-            String atContent = "<at id=\"" + escapeLarkMd(senderUserId) + "\"></at> 请查看以下接口预览，确认无误后点击下方「创建接口」保存到 Mock 服务。";
+            String atContent = "<at id=\"" + escapeLarkMd(senderUserId) + "\"></at> 请查看以下接口预览，确认无误后点击「创建接口」保存。";
             addDivLarkMd(elements, atContent);
         }
 
-        // 1. 基本信息：接口名称 · 请求方法（同一行更紧凑）
         String title = item.getTitle() != null ? item.getTitle() : "";
         String method = item.getMethod() != null ? item.getMethod() : "";
-        addDivLarkMd(elements, "**接口名称**：" + title + "　·　**请求方法**：`" + method + "`");
 
-        // 2. 必填参数
+        // 基本信息：两行 div（lark_md）
+        addDivLarkMd(elements, "**接口名称**\n" + title);
+        addDivLarkMd(elements, "**请求方法**\n" + method);
+
+        // 必填参数
         if (item.getRequiredFields() != null && !item.getRequiredFields().isEmpty()) {
-            addDivLarkMd(elements, "**必填参数**：" + String.join("、", item.getRequiredFields()));
+            addDivLarkMd(elements, "**必填参数**\n" + String.join("、", item.getRequiredFields()));
         }
 
-        // 3. 错误状态码（有则显示，放在示例前）
+        // 错误状态码
         if (item.getErrorHttpStatus() != null) {
-            addDivLarkMd(elements, "**错误状态码**：`" + item.getErrorHttpStatus() + "`");
+            addDivLarkMd(elements, "**错误状态码**\n" + item.getErrorHttpStatus());
         }
 
+        // 分割线
         elements.addObject().put("tag", "hr");
 
-        // 4. 请求示例（有内容才展示）
+        // 请求示例
         if (item.getRequestExample() != null && !item.getRequestExample().isNull()) {
-            String req = truncateForCard(item.getRequestExample().toString());
+            String req = formatJsonForCard(item.getRequestExample());
             if (!isBlankJson(req)) {
-                addDivWithLabel(elements, "请求示例", req);
+                addSectionWithCode(elements, "请求示例", req);
             }
         }
 
-        // 5. 响应示例（有内容才展示）
+        // 响应示例
         if (item.getResponseExample() != null && !item.getResponseExample().isNull()) {
-            String resp = truncateForCard(item.getResponseExample().toString());
+            String resp = formatJsonForCard(item.getResponseExample());
             if (!isBlankJson(resp)) {
-                addDivWithLabel(elements, "响应示例", resp);
+                addSectionWithCode(elements, "响应示例", resp);
             }
         }
 
-        // 6. 错误响应示例（仅当非空且不是 {} 时展示）
+        // 错误响应示例
         if (item.getErrorResponseExample() != null && !item.getErrorResponseExample().isNull()) {
-            String err = truncateForCard(item.getErrorResponseExample().toString());
+            String err = formatJsonForCard(item.getErrorResponseExample());
             if (!isBlankJson(err)) {
-                addDivWithLabel(elements, "错误响应示例", err);
+                addSectionWithCode(elements, "错误响应示例", err);
             }
         }
 
         elements.addObject().put("tag", "hr");
 
-        // 非群聊或未 @ 时仍显示说明文案
-        if (!CHAT_TYPE_GROUP.equals(chatType) || senderUserId == null || senderUserId.isEmpty()) {
-            ObjectNode note = elements.addObject();
-            note.put("tag", "note");
-            ArrayNode noteElements = note.putArray("elements");
-            ObjectNode noteText = noteElements.addObject();
-            noteText.put("tag", "plain_text");
-            noteText.put("content", "确认无误后点击下方「创建接口」，将接口保存到 Mock 服务。");
-            noteText.put("lines", 1);
-        }
+        // 说明文案（note 灰色提示框）
+        ObjectNode note = elements.addObject();
+        note.put("tag", "note");
+        ArrayNode noteElements = note.putArray("elements");
+        ObjectNode noteText = noteElements.addObject();
+        noteText.put("tag", "plain_text");
+        noteText.put("content", "确认无误后点击下方「创建接口」，将接口保存到 Mock 服务。");
+        noteText.put("lines", 1);
 
+        // 操作按钮（action + button）
         ObjectNode action = elements.addObject();
         action.put("tag", "action");
         ArrayNode actions = action.putArray("actions");
@@ -595,21 +609,22 @@ public class FeishuEventService {
         return card.toString();
     }
 
+    /** 飞书卡片：div + lark_md（官方元素） */
     private void addDivLarkMd(ArrayNode elements, String content) {
         ObjectNode div = elements.addObject();
         div.put("tag", "div");
         div.putObject("text").put("tag", "lark_md").put("content", content);
     }
 
-    private void addDivWithLabel(ArrayNode elements, String label, String body) {
-        addDivLarkMd(elements, "**" + label + "**\n```\n" + escapeCodeBlock(body) + "\n```");
-    }
-
-    private static String escapeCodeBlock(String s) {
-        if (s == null) {
-            return "";
-        }
-        return s.replace("```", "` ` `");
+    /** 飞书卡片：带标题的代码区块（标题 lark_md + 内容 plain_text 多行） */
+    private void addSectionWithCode(ArrayNode elements, String label, String codeBody) {
+        addDivLarkMd(elements, "**" + label + "**");
+        ObjectNode codeDiv = elements.addObject();
+        codeDiv.put("tag", "div");
+        ObjectNode textObj = codeDiv.putObject("text");
+        textObj.put("tag", "plain_text");
+        textObj.put("content", codeBody != null ? codeBody : "");
+        textObj.put("lines", 50);
     }
 
     /**
@@ -631,17 +646,6 @@ public class FeishuEventService {
         }
         String t = s.trim();
         return t.isEmpty() || "{}".equals(t) || "null".equals(t);
-    }
-
-    private String truncateForCard(String json) {
-        if (json == null) {
-            return "";
-        }
-        json = json.trim();
-        if (json.length() <= CARD_JSON_MAX_LEN) {
-            return json;
-        }
-        return json.substring(0, CARD_JSON_MAX_LEN) + "\n...";
     }
 
     private void replyText(String chatId, String chatType, String senderUserId, String text) {

@@ -24,6 +24,8 @@ doubao:
   temperature: 0
 mock:
   upload-dir: "uploads"
+  # Mock 接口根地址（飞书卡片等返回可直接访问的完整 URL）。不配置则仅返回 path，如：/parse/mock/xxx
+  base-url: "https://60i8062b21.goho.co"  # 示例：http://10.18.40.27:8080 或 https://mock.example.com
   processing:
     concurrent-limit: 2  # 并发处理文件数量
 qiniu:
