@@ -7,55 +7,57 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>登录 - RSMS 智能Mock系统</title>
-    <link rel="stylesheet" href="/assets/app.css?v=20260203-3" />
+    <link rel="stylesheet" href="/assets/app.css?v=20260204-9" />
   </head>
   <body data-page="login">
     <header class="topbar">
       <div class="brand">
         <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
       </div>
-      <nav class="nav">
-        <span data-tab="home" onclick="location.href='/index.html'">首页</span>
-      </nav>
     </header>
 
     <main class="main">
-      <section class="card" style="max-width: 520px; margin: 40px auto;">
-        <div class="row" style="justify-content:space-between; align-items:center;">
-          <div class="label">账号登录</div>
-          <div class="muted">仅支持用户名/密码</div>
-        </div>
-        <div class="row" style="margin-top: 12px;">
-          <div class="manual-mode-tabs">
-            <button id="loginTab" class="active">登录</button>
-            <button id="registerTab">注册</button>
-          </div>
+      <section class="card login-card">
+        <h1 class="card-title">账号登录</h1>
+        <p class="card-subtitle">仅支持用户名 / 密码</p>
+
+        <div class="login-tabs" role="tablist">
+          <button id="loginTab" type="button" class="active" role="tab" aria-selected="true" aria-controls="loginPanel">登录</button>
+          <button id="registerTab" type="button" role="tab" aria-selected="false" aria-controls="registerPanel">注册</button>
         </div>
 
-        <div id="loginPanel" style="margin-top: 16px;">
-          <div class="label">用户名</div>
-          <input id="loginUsername" type="text" placeholder="请输入用户名" />
-          <div class="label" style="margin-top: 12px;">密码</div>
-          <input id="loginPassword" type="password" placeholder="请输入密码" />
-          <div class="row" style="margin-top: 16px; justify-content:flex-end;">
-            <button id="loginBtn" class="btn-primary">登录</button>
+        <form id="loginForm" class="login-panel" role="tabpanel" aria-labelledby="loginTab">
+          <div class="field">
+            <label class="label" for="loginUsername">用户名</label>
+            <input id="loginUsername" type="text" placeholder="请输入用户名" autocomplete="username" />
           </div>
-        </div>
-
-        <div id="registerPanel" class="hidden" style="margin-top: 16px;">
-          <div class="label">用户名</div>
-          <input id="registerUsername" type="text" placeholder="请输入用户名" />
-          <div class="label" style="margin-top: 12px;">密码</div>
-          <input id="registerPassword" type="password" placeholder="请输入密码" />
-          <div class="row" style="margin-top: 16px; justify-content:flex-end;">
-            <button id="registerBtn" class="secondary">注册</button>
+          <div class="field">
+            <label class="label" for="loginPassword">密码</label>
+            <input id="loginPassword" type="password" placeholder="请输入密码" autocomplete="current-password" />
           </div>
-        </div>
+          <div class="login-actions">
+            <button id="loginBtn" type="submit" class="btn-primary">登录</button>
+          </div>
+        </form>
 
-        <div id="authMessage" class="hint" style="margin-top: 12px;"></div>
+        <form id="registerForm" class="login-panel hidden" role="tabpanel" aria-labelledby="registerTab" aria-hidden="true">
+          <div class="field">
+            <label class="label" for="registerUsername">用户名</label>
+            <input id="registerUsername" type="text" placeholder="请输入用户名" autocomplete="username" />
+          </div>
+          <div class="field">
+            <label class="label" for="registerPassword">密码</label>
+            <input id="registerPassword" type="password" placeholder="请输入密码" autocomplete="new-password" />
+          </div>
+          <div class="login-actions">
+            <button id="registerBtn" type="submit" class="secondary">注册</button>
+          </div>
+        </form>
+
+        <div id="authMessage" class="hint" role="status" aria-live="polite"></div>
       </section>
     </main>
 
-    <script src="/assets/auth.js?v=20260203-3"></script>
+    <script src="/assets/auth.js?v=20260204-9"></script>
   </body>
 </html>

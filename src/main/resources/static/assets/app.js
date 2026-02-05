@@ -186,11 +186,59 @@ const endpointInput = document.getElementById("endpoint");
 
       function initThemeToggle() {
         applyTheme(getPreferredTheme());
+        window.addEventListener("pageshow", (e) => {
+          if (e.persisted) applyTheme(getPreferredTheme());
+        });
         const btn = document.getElementById("themeToggle");
         if (!btn) return;
         btn.addEventListener("click", () => {
           const current = document.documentElement.getAttribute("data-theme") || "dark";
           applyTheme(current === "light" ? "dark" : "light");
+        });
+      }
+
+      function initSettingsMenu() {
+        const settings = document.querySelector(".settings");
+        const toggle = document.getElementById("settingsToggle");
+        const menu = document.getElementById("settingsMenu");
+        if (!settings || !toggle || !menu) return;
+        const closeMenu = () => {
+          if (!settings.classList.contains("open")) return;
+          settings.classList.remove("open");
+          toggle.setAttribute("aria-expanded", "false");
+        };
+        const openMenu = () => {
+          settings.classList.add("open");
+          toggle.setAttribute("aria-expanded", "true");
+        };
+        toggle.addEventListener("click", (event) => {
+          event.stopPropagation();
+          if (settings.classList.contains("open")) {
+            closeMenu();
+          } else {
+            openMenu();
+          }
+        });
+        menu.addEventListener("click", (event) => {
+          event.stopPropagation();
+          const loginLinkEl = document.getElementById("navLoginLink");
+          if (!loginLinkEl || !loginLinkEl.contains(event.target)) return;
+          const isLogout = (loginLinkEl.textContent || "").trim() === "退出";
+          if (isLogout) {
+            event.preventDefault();
+            fetch("/auth/logout", { method: "POST" }).catch(() => {});
+            window.location.replace("/login.html");
+          }
+        });
+        document.addEventListener("click", (event) => {
+          if (!settings.contains(event.target)) {
+            closeMenu();
+          }
+        });
+        document.addEventListener("keydown", (event) => {
+          if (event.key === "Escape") {
+            closeMenu();
+          }
         });
       }
 
@@ -1124,7 +1172,14 @@ const endpointInput = document.getElementById("endpoint");
           const errorMessage = file.errorMessage || "";
           div.innerHTML = `
             <div>
-              <div class="name">${escapeHtml(file.fileName || "文件")}</div>
+              <div class="name">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin-right: 8px; flex-shrink: 0;">
+                  <path d="M14 2H7a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8l-5-6Z" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M14 2v6h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M9 13h6M9 17h6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                ${escapeHtml(file.fileName || "文件")}
+              </div>
               <div class="meta">
                 文件ID: ${escapeHtml(file.fileId || "-")}
                 ${file.sceneName ? ` | 场景: ${escapeHtml(file.sceneName)}` : ""}
@@ -2909,8 +2964,9 @@ const endpointInput = document.getElementById("endpoint");
             return;
           }
           const me = await res.json();
+          const isAdmin = String(me.role || "").toUpperCase() === "ADMIN";
           if (userBadge) {
-            userBadge.textContent = me.username + " (" + me.role + ")";
+            userBadge.textContent = me.username + " (" + (me.role || "USER") + ")";
             userBadge.classList.remove("hidden");
           }
           window.__currentUserId = me.id || "";
@@ -2918,17 +2974,21 @@ const endpointInput = document.getElementById("endpoint");
             loadChatHistoryForUser(window.__currentUserId || "anonymous");
           }
           if (adminLink) {
-            if (me.role === "ADMIN") {
+            if (isAdmin) {
               adminLink.classList.remove("hidden");
               adminLink.onclick = () => (location.href = "/admin.html");
             } else {
               adminLink.classList.add("hidden");
+              adminLink.onclick = null;
+              adminLink.removeAttribute("onclick");
             }
           }
           if (loginLink) {
             loginLink.textContent = "退出";
-            loginLink.onclick = async () => {
-              await fetch("/auth/logout", { method: "POST" });
+            loginLink.setAttribute("role", "button");
+            loginLink.style.cursor = "pointer";
+            loginLink.onclick = () => {
+              fetch("/auth/logout", { method: "POST" }).catch(() => {});
               location.href = "/login.html";
             };
           }
@@ -2941,6 +3001,7 @@ const endpointInput = document.getElementById("endpoint");
       // Initial render (avoid navigation loop in multi-page mode)
       (function init() {
         initThemeToggle();
+        initSettingsMenu();
         initAuthNav();
         const initTab = window.__initialTab || "home";
         __renderTab__(initTab);

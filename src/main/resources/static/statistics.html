@@ -7,24 +7,35 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>统计 - RSMS 智能Mock系统</title>
-    <link rel="stylesheet" href="/assets/app.css?v=20260203" />
+    <link rel="stylesheet" href="/assets/app.css?v=20260205-11" />
   </head>
   <body>
     <header class="topbar">
       <div class="brand">
         <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
       </div>
-      <nav class="nav">
-        <span data-tab="home">首页</span>
-        <span data-tab="doc">接口文档</span>
-        <span data-tab="api">接口管理</span>
-        <span data-tab="debug">在线调试</span>
-        <span class="active" data-tab="statistics">请求日志</span>
-        <span id="navAdminLink" class="hidden">管理</span>
-        <span id="navUserBadge" class="hidden" style="cursor:default;"></span>
-        <span id="navLoginLink">登录</span>
-      </nav>
-      <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">浅色</button>
+      <div class="topbar-actions">
+        <nav class="nav">
+          <span data-tab="home">首页</span>
+          <span data-tab="doc">接口文档</span>
+          <span data-tab="api">接口管理</span>
+          <span data-tab="debug">在线调试</span>
+          <span class="active" data-tab="statistics">请求日志</span>
+          <div class="settings">
+            <button id="settingsToggle" class="settings-toggle nav-item" type="button" aria-expanded="false">设置</button>
+            <div id="settingsMenu" class="settings-menu">
+              <div class="settings-group">
+                <span id="navUserBadge" class="settings-item settings-item--badge hidden" style="cursor:default;"></span>
+                <span id="navAdminLink" class="settings-item hidden">管理</span>
+                <a id="navLoginLink" class="settings-item" href="/login.html" data-action="auth">登录</a>
+              </div>
+              <div class="settings-group">
+                <button id="themeToggle" type="button" class="theme-toggle" aria-label="切换主题">深色</button>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
     </header>
 
     <main class="main">
@@ -607,7 +618,7 @@
       window.__multiPageMode = true;
       window.__initialTab = "statistics";
     </script>
-    <script src="/assets/app.js?v=20260203"></script>
+    <script src="/assets/app.js?v=20260205-1"></script>
   </body>
 </html>
 

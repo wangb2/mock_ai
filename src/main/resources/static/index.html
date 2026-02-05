@@ -7,27 +7,38 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>RSMS 智能Mock系统</title>
-    <link rel="stylesheet" href="/assets/app.css?v=20260203-3" />
+    <link rel="stylesheet" href="/assets/app.css?v=20260205-11" />
   </head>
-  <body>
+  <body class="page-home">
     <div id="appVersionBadge" style="position:fixed;bottom:10px;right:10px;padding:4px 8px;background:#0f172a;color:#e2e8f0;font-size:12px;border-radius:6px;z-index:9999;opacity:0.85;">
       index-v20260203-3 (pending app.js)
     </div>
-<header class="topbar">
+    <header class="topbar">
       <div class="brand">
         <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
       </div>
-      <nav class="nav">
-        <span class="active" data-tab="home">首页</span>
-        <span data-tab="doc">接口文档</span>
-        <span data-tab="api">接口管理</span>
-        <span data-tab="debug">在线调试</span>
-        <span data-tab="statistics">请求日志</span>
-        <span id="navAdminLink" class="hidden">管理</span>
-        <span id="navUserBadge" class="hidden" style="cursor:default;"></span>
-        <span id="navLoginLink">登录</span>
-      </nav>
-      <button id="themeToggle" class="theme-toggle" type="button" aria-pressed="false">浅色</button>
+      <div class="topbar-actions">
+        <nav class="nav">
+          <span class="active" data-tab="home">首页</span>
+          <span data-tab="doc">接口文档</span>
+          <span data-tab="api">接口管理</span>
+          <span data-tab="debug">在线调试</span>
+          <span data-tab="statistics">请求日志</span>
+          <div class="settings">
+            <button id="settingsToggle" class="settings-toggle nav-item" type="button" aria-expanded="false">设置</button>
+            <div id="settingsMenu" class="settings-menu">
+              <div class="settings-group">
+                <span id="navUserBadge" class="settings-item settings-item--badge hidden" style="cursor:default;"></span>
+                <span id="navAdminLink" class="settings-item hidden">管理</span>
+                <a id="navLoginLink" class="settings-item" href="/login.html" data-action="auth">登录</a>
+              </div>
+              <div class="settings-group">
+                <button id="themeToggle" type="button" class="theme-toggle" aria-label="切换主题">深色</button>
+              </div>
+            </div>
+          </div>
+        </nav>
+      </div>
     </header>
 
     <main class="main main-home">
@@ -692,7 +703,7 @@
       const badge = document.getElementById("appVersionBadge");
       if (badge) badge.textContent = window.__indexVersion + " (pending app.js)";
     </script>
-    <script src="/assets/app.js?v=20260203-3"></script>
+    <script src="/assets/app.js?v=20260205-1"></script>
   </body>
 </html>
 

@@ -29,11 +29,15 @@
         filter: brightness(1.05);
       }
 
-      /* Light theme overrides (white tech style) */
+      /* Light theme overrides (参考灵感库: 白底、深灰字、主色 #3A82F6、浅灰按钮) */
       html[data-theme="light"] { color-scheme: light !important; }
       html[data-theme="light"] body {
+        background: #ffffff;
+        color: #262626;
+      }
+      /* 首页保留渐变背景 */
+      html[data-theme="light"] body.page-home {
         background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 45%, #f6f8ff 100%);
-        color: #0f172a;
       }
       html[data-theme="light"] body::before {
         background:
@@ -63,31 +67,33 @@
       }
 
       html[data-theme="light"] .topbar {
-        background: rgba(255, 255, 255, 0.82);
-        border-bottom: 1px solid rgba(37, 99, 235, 0.18);
-        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08), 0 0 1px rgba(37, 99, 235, 0.18);
-        backdrop-filter: blur(14px);
+        background: #ffffff;
+        border-bottom: 1px solid #d9d9d9;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+        backdrop-filter: none;
       }
       html[data-theme="light"] .brand-logo {
         filter: none;
       }
       html[data-theme="light"] .nav {
-        background: rgba(255, 255, 255, 0.9);
-        border: 1px solid rgba(47, 109, 246, 0.22);
-        color: #334155;
+        background: #ffffff;
+        border: 1px solid #d9d9d9;
+        color: #262626;
       }
       html[data-theme="light"] .nav span {
-        color: #334155;
+        color: #262626;
+      }
+      html[data-theme="light"] .nav .nav-item {
+        color: #262626;
       }
       html[data-theme="light"] .nav span::before {
-        background: linear-gradient(135deg, rgba(47, 109, 246, 0.10) 0%, rgba(47, 109, 246, 0.08) 100%);
+        background: transparent;
       }
       html[data-theme="light"] .nav .active {
         background: #2f6df6;
         color: #fff;
-        box-shadow: 0 10px 24px rgba(47, 109, 246, 0.22);
+        box-shadow: 0 1px 2px rgba(47, 109, 246, 0.25);
       }
-
       html[data-theme="light"] .hero {
         background: transparent;
         border-color: transparent;
@@ -186,9 +192,9 @@
         box-shadow: 0 24px 70px rgba(15, 23, 42, 0.14);
       }
       html[data-theme="light"] .theme-toggle {
-        background: linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(239,246,255,0.9) 100%);
-        color: #0f172a;
-        border-color: rgba(37, 99, 235, 0.22);
+        background: #ffffff;
+        color: #262626;
+        border-color: #d9d9d9;
       }
 
       /* Light theme: API toolbar + scene cards should not be dark */
@@ -227,8 +233,603 @@
         color: rgba(71, 85, 105, 0.9);
       }
 
-      /* --- Light theme: full component adaptation (blue/purple tech) --- */
-      html[data-theme="light"] a { color: #2563eb; }
+      /* --- Light theme: 接口文档页 参考高级选项 主字/次要/边框 --- */
+      html[data-theme="light"] .doc-title {
+        color: #262626;
+        border-bottom-color: #d9d9d9;
+      }
+      html[data-theme="light"] .doc-title .icon {
+        background: #fafafa;
+        border: 1px solid #d9d9d9;
+      }
+      html[data-theme="light"] .doc-card .label,
+      html[data-theme="light"] .label {
+        color: #595959;
+      }
+      html[data-theme="light"] .doc-card .hint,
+      html[data-theme="light"] .doc-card .label + .hint {
+        color: #595959;
+      }
+      html[data-theme="light"] .upload-area {
+        background: #fafafa !important;
+        border-color: #d9d9d9;
+        color: #262626;
+      }
+      html[data-theme="light"] .upload-area:hover {
+        border-color: #1890FF;
+        background: #ffffff !important;
+      }
+      html[data-theme="light"] .upload-area.dragover {
+        border-color: #1890FF;
+        background: #E6F7FF !important;
+      }
+      html[data-theme="light"] .upload-area .icon {
+        background: #E6F7FF;
+        border-color: rgba(24, 144, 255, 0.3);
+        color: #1890FF;
+      }
+      html[data-theme="light"] .upload-area .upload-text {
+        color: #262626;
+      }
+      html[data-theme="light"] .upload-area .upload-hint {
+        color: #595959;
+      }
+      html[data-theme="light"] .doc-actions .doc-action-btn,
+      html[data-theme="light"] .doc-actions #status.doc-action-btn {
+        background: #ffffff;
+        color: #262626;
+        border: 1px solid #d9d9d9;
+        box-shadow: none;
+      }
+      html[data-theme="light"] .doc-actions button.doc-action-btn:hover:not(:disabled) {
+        background: #fafafa;
+        border-color: #1890FF;
+        color: #262626;
+      }
+      html[data-theme="light"] .doc-actions button.doc-action-btn:disabled {
+        color: #8c8c8c;
+        background: #f5f5f5;
+      }
+      html[data-theme="light"] .doc-actions .btn-outline-gray {
+        background: #ffffff;
+        color: #595959;
+        border-color: #d9d9d9;
+      }
+      html[data-theme="light"] .doc-actions .btn-outline-gray:hover {
+        background: #fafafa;
+        border-color: #1890FF;
+        color: #262626;
+      }
+      html[data-theme="light"] .custom-file-upload.doc-btn-green {
+        background: rgba(34, 197, 94, 0.08) !important;
+        border-color: rgba(34, 197, 94, 0.4);
+        color: #389e0d;
+      }
+      html[data-theme="light"] .custom-file-upload.doc-btn-green:hover {
+        background: rgba(34, 197, 94, 0.12) !important;
+        border-color: rgba(34, 197, 94, 0.55);
+        color: #237804;
+      }
+      html[data-theme="light"] #sendBtn.doc-btn-blue,
+      html[data-theme="light"] .doc-card #sendBtn.doc-btn-blue {
+        background: #2f6df6 !important;
+        border-color: rgba(47, 109, 246, 0.35);
+        color: #fff;
+        box-shadow: 0 1px 2px rgba(47, 109, 246, 0.2);
+      }
+      html[data-theme="light"] #sendBtn.doc-btn-blue:hover,
+      html[data-theme="light"] .doc-card #sendBtn.doc-btn-blue:hover {
+        filter: brightness(1.05);
+        box-shadow: 0 2px 4px rgba(47, 109, 246, 0.3);
+      }
+      html[data-theme="light"] .file-name-display {
+        background: rgba(34, 197, 94, 0.08);
+        border-color: rgba(34, 197, 94, 0.35);
+        color: #389e0d;
+      }
+      html[data-theme="light"] #doc .section-title,
+      html[data-theme="light"] .main .section-title {
+        color: #262626;
+      }
+      html[data-theme="light"] .card .row strong {
+        color: #262626;
+      }
+      html[data-theme="light"] .card .row .muted {
+        color: #595959;
+      }
+
+      /* --- Light theme: 非首页 参考高级选项：白底、主字 #262626、次要 #595959、边框 #d9d9d9、主蓝 #1890FF、未选按钮白底灰边 --- */
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .section-title,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .title,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) strong {
+        color: #262626;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .muted,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .hint,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .label,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) label {
+        color: #595959;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .card,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-card,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-card,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-card,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-curl,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-panel,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .item,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) details {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-title {
+        color: #262626;
+        border-bottom-color: #d9d9d9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-title .icon {
+        background: #fafafa;
+        border-color: #d9d9d9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button:not(.btn-primary):not(.home-entry-btn):not(.method-pill) {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: none !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) button:not(.btn-primary):not(.home-entry-btn):not(.method-pill):hover:not(:disabled) {
+        background: #fafafa !important;
+        border-color: #1890FF !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-primary {
+        background: #1890FF !important;
+        border-color: #1890FF !important;
+        color: #fff !important;
+        box-shadow: 0 1px 2px rgba(24, 144, 255, 0.2) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-primary:hover:not(:disabled) {
+        filter: brightness(1.05);
+        box-shadow: 0 2px 4px rgba(24, 144, 255, 0.3) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline-gray {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline:hover:not(:disabled),
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .btn-outline-gray:hover:not(:disabled) {
+        background: #fafafa !important;
+        border-color: #1890FF !important;
+        color: #262626 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .secondary {
+        background: #1890FF !important;
+        color: #fff !important;
+        border-color: #1890FF !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) a {
+        color: #1890FF;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .upload-area {
+        background: #fafafa !important;
+        border-color: #d9d9d9;
+        color: #262626;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .upload-area .upload-text {
+        color: #262626;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .upload-area .upload-hint {
+        color: #595959;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) input[type="text"],
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) textarea,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) select,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-input {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-toolbar {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-toolbar .search {
+        background: #ffffff !important;
+        border-color: #d9d9d9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .api-toolbar .summary {
+        color: #595959;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item:hover {
+        background: #fafafa !important;
+        border-color: #1890FF !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .name,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .name::before {
+        color: #262626;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-desc,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .scene-item .meta {
+        color: #595959;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-topbar {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .debug-url-wrap {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .method-pill {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .method-pill.active {
+        background: #E6F7FF !important;
+        color: #1890FF !important;
+        border-color: #1890FF !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-actions .doc-action-btn,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-actions #status.doc-action-btn {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .custom-file-upload.doc-btn-green {
+        background: rgba(34, 197, 94, 0.08) !important;
+        border-color: rgba(34, 197, 94, 0.4);
+        color: #389e0d;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) #sendBtn.doc-btn-blue {
+        background: #2f6df6 !important;
+        border-color: rgba(47, 109, 246, 0.35) !important;
+        color: #fff !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-table {
+        background: #ffffff;
+        border: 1px solid #d9d9d9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-table th {
+        color: #595959;
+        background: #fafafa;
+        border-bottom-color: #d9d9d9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .kv-table td {
+        color: #262626;
+        border-bottom-color: #f0f0f0;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .theme-toggle {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .settings-menu {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .settings-menu .settings-item,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .settings-menu .theme-toggle {
+        color: #262626 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .settings-menu .settings-item:hover,
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .settings-menu .theme-toggle:hover {
+        background: #fafafa !important;
+      }
+
+      /* 已上传文档列表：文件名、文件ID、场景、状态说明 清晰可读，与首页/高级选项配色一致 */
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item:hover {
+        border-color: #1890FF !important;
+        background: #fafafa !important;
+        box-shadow: 0 2px 6px rgba(24, 144, 255, 0.08) !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .name {
+        color: #262626 !important;
+        font-weight: 600;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .name::before {
+        opacity: 0.9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .meta {
+        color: #595959 !important;
+        font-size: 12px;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-info {
+        color: #595959;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .generated-count {
+        color: #595959 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .error-msg {
+        color: #cf1322 !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-badge.status-completed {
+        background: rgba(82, 196, 26, 0.12);
+        color: #389e0d;
+        border-color: rgba(82, 196, 26, 0.35);
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-badge.status-failed {
+        background: rgba(255, 77, 79, 0.12);
+        color: #cf1322;
+        border-color: rgba(255, 77, 79, 0.35);
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-badge.status-pending {
+        background: #f5f5f5;
+        color: #595959;
+        border-color: #d9d9d9;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .status-badge.status-processing {
+        background: #E6F7FF;
+        color: #1890FF;
+        border-color: #91d5ff;
+      }
+      /* 已上传文档：下载/删除 按钮参考「高级选项」样式：浅色底+彩色边框+彩色字、圆角、轻阴影 */
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .action-btn {
+        border-radius: 8px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-weight: 500;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .action-btn:not(.danger) {
+        background: #E6F7FF !important;
+        color: #1890FF !important;
+        border: 1px solid #91D5FF !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .action-btn:not(.danger):hover {
+        background: #bae7ff !important;
+        border-color: #69c0ff !important;
+        color: #096dd9 !important;
+        box-shadow: 0 2px 4px rgba(24, 144, 255, 0.12);
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .action-btn.danger {
+        background: #fff2f0 !important;
+        color: #cf1322 !important;
+        border: 1px solid #ffa39e !important;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .doc-item .action-btn.danger:hover {
+        background: #ffccc7 !important;
+        border-color: #ff7875 !important;
+        color: #a8071a !important;
+        box-shadow: 0 2px 4px rgba(255, 77, 79, 0.12);
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .card .row strong {
+        color: #262626;
+      }
+      html[data-theme="light"] :is(#doc, #api, #debug, #statistics, #scene) .card .row .muted {
+        color: #595959;
+      }
+
+      /* Light theme: 接口文档按首页配色重设（更清晰、更协调） */
+      html[data-theme="light"] #doc .card {
+        background: rgba(255, 255, 255, 0.92) !important;
+        border-color: rgba(47, 109, 246, 0.22) !important;
+        box-shadow: 0 12px 28px rgba(15, 23, 42, 0.08) !important;
+      }
+      html[data-theme="light"] #doc .card .row strong {
+        color: #0f172a;
+      }
+      html[data-theme="light"] #doc .card .row .muted {
+        color: #475569;
+      }
+      html[data-theme="light"] #doc .doc-item {
+        background: rgba(255, 255, 255, 0.96) !important;
+        border-color: rgba(47, 109, 246, 0.25) !important;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08) !important;
+      }
+      html[data-theme="light"] #doc .doc-item:hover {
+        border-color: #2f6df6 !important;
+        background: rgba(239, 246, 255, 0.9) !important;
+        box-shadow: 0 10px 24px rgba(47, 109, 246, 0.16) !important;
+      }
+      html[data-theme="light"] #doc .doc-item .name {
+        color: #0f172a !important;
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      html[data-theme="light"] #doc .doc-item .name::before {
+        content: none;
+      }
+      html[data-theme="light"] #doc .doc-item .name svg {
+        width: 24px;
+        height: 24px;
+        flex-shrink: 0;
+        padding: 6px;
+        border-radius: 8px;
+        background: linear-gradient(180deg, rgba(245, 249, 255, 0.98) 0%, rgba(234, 244, 255, 0.96) 100%);
+        border: 1px solid rgba(47, 109, 246, 0.16);
+        color: #2f6df6;
+        box-shadow: 0 2px 8px rgba(15, 23, 42, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.70);
+      }
+      html[data-theme="light"] #doc .doc-item .meta {
+        color: #64748b !important;
+        font-size: 12px;
+      }
+      html[data-theme="light"] #doc .doc-item .status-info {
+        color: #475569 !important;
+        font-size: 12px;
+        gap: 10px;
+      }
+      html[data-theme="light"] #doc .doc-item .generated-count {
+        color: #15803d !important;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      html[data-theme="light"] #doc .doc-item .error-msg {
+        color: #b91c1c !important;
+        font-weight: 600;
+        font-size: 12px;
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge {
+        min-width: 120px;
+        height: 36px;
+        padding: 0 16px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 600;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-completed {
+        background: rgba(34, 197, 94, 0.18);
+        color: #15803d;
+        border-color: rgba(34, 197, 94, 0.45);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-failed {
+        background: rgba(239, 68, 68, 0.18);
+        color: #b91c1c;
+        border-color: rgba(239, 68, 68, 0.45);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-processing {
+        background: rgba(47, 109, 246, 0.18);
+        color: #2f6df6;
+        border-color: rgba(47, 109, 246, 0.45);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-pending {
+        background: rgba(148, 163, 184, 0.18);
+        color: #475569;
+        border-color: rgba(148, 163, 184, 0.45);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge {
+        min-width: 92px;
+        height: 32px;
+        border-radius: 10px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        letter-spacing: 0.2px;
+        padding: 0 12px;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.10);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-completed {
+        background: rgba(47, 109, 246, 0.85);
+        border-color: rgba(47, 109, 246, 0.85);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-failed {
+        background: rgba(239, 68, 68, 0.85);
+        border-color: rgba(239, 68, 68, 0.85);
+      }
+      html[data-theme="light"] #doc .doc-item .status-badge.status-pending {
+        background: rgba(148, 163, 184, 0.85);
+        border-color: rgba(148, 163, 184, 0.85);
+      }
+      html[data-theme="light"] #doc .doc-item .action-btn {
+        border-radius: 10px;
+        padding: 8px 18px;
+        font-weight: 600;
+        min-width: 120px;
+        height: 36px;
+        line-height: 1;
+        justify-content: center;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.12);
+      }
+      html[data-theme="light"] #doc .doc-item .action-btn:not(.danger) {
+        background: rgba(47, 109, 246, 0.18) !important;
+        color: #2f6df6 !important;
+        border: 1px solid rgba(47, 109, 246, 0.45) !important;
+      }
+      html[data-theme="light"] #doc .doc-item .action-btn:not(.danger):hover {
+        background: rgba(47, 109, 246, 0.26) !important;
+        border-color: rgba(47, 109, 246, 0.65) !important;
+        box-shadow: 0 8px 18px rgba(47, 109, 246, 0.22);
+      }
+      html[data-theme="light"] #doc .doc-item .action-btn.danger {
+        background: rgba(239, 68, 68, 0.16) !important;
+        color: #b91c1c !important;
+        border: 1px solid rgba(239, 68, 68, 0.45) !important;
+      }
+      html[data-theme="light"] #doc .doc-item .action-btn.danger:hover {
+        background: rgba(239, 68, 68, 0.26) !important;
+        border-color: rgba(239, 68, 68, 0.7) !important;
+        color: #991b1b !important;
+      }
+      html[data-theme="light"] #doc .upload-area {
+        background: rgba(255, 255, 255, 0.96) !important;
+        border-color: rgba(47, 109, 246, 0.25) !important;
+      }
+      html[data-theme="light"] #doc .upload-area .upload-text {
+        color: #0f172a;
+      }
+      html[data-theme="light"] #doc .upload-area .upload-hint {
+        color: #475569;
+      }
+      html[data-theme="light"] #doc input[type="text"],
+      html[data-theme="light"] #doc textarea,
+      html[data-theme="light"] #doc select {
+        background: #ffffff !important;
+        color: #0f172a !important;
+        border-color: rgba(47, 109, 246, 0.25) !important;
+      }
+      html[data-theme="light"] #doc .doc-actions .doc-action-btn,
+      html[data-theme="light"] #doc .doc-actions #status.doc-action-btn {
+        background: rgba(255, 255, 255, 0.96) !important;
+        color: #1d4ed8 !important;
+        border-color: rgba(47, 109, 246, 0.28) !important;
+        box-shadow: none;
+      }
+      html[data-theme="light"] #doc .doc-actions #status.doc-action-btn {
+        color: #475569 !important;
+      }
+
+      /* 管理页 admin 同套高级选项浅色风格 */
+      html[data-theme="light"] body[data-page="admin"] .card {
+        background: #ffffff !important;
+        border-color: #d9d9d9 !important;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03) !important;
+      }
+      html[data-theme="light"] body[data-page="admin"] .section-title {
+        color: #262626;
+      }
+      html[data-theme="light"] body[data-page="admin"] .label,
+      html[data-theme="light"] body[data-page="admin"] .muted {
+        color: #595959;
+      }
+      html[data-theme="light"] body[data-page="admin"] .btn-primary {
+        background: #1890FF !important;
+        border-color: #1890FF !important;
+        color: #fff !important;
+      }
+      html[data-theme="light"] body[data-page="admin"] .theme-toggle {
+        background: #ffffff !important;
+        color: #262626 !important;
+        border-color: #d9d9d9 !important;
+      }
+      html[data-theme="light"] body[data-page="admin"] .kv-table {
+        background: #ffffff;
+        border-color: #d9d9d9;
+      }
+      html[data-theme="light"] body[data-page="admin"] .kv-table th {
+        background: #fafafa;
+        color: #595959;
+        border-color: #d9d9d9;
+      }
+      html[data-theme="light"] body[data-page="admin"] .kv-table td {
+        color: #262626;
+      }
+
+      /* --- Light theme: full component adaptation --- */
+      html[data-theme="light"] a { color: #1890FF; }
 
       /* Buttons */
       html[data-theme="light"] button {
@@ -313,10 +914,10 @@
         box-shadow: 0 18px 42px rgba(37, 99, 235, 0.24);
       }
       html[data-theme="light"] .btn-primary {
-        background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
-        border-color: rgba(37, 99, 235, 0.22);
+        background: #1890FF;
+        border-color: #1890FF;
         color: #fff;
-        box-shadow: 0 16px 44px rgba(37, 99, 235, 0.22);
+        box-shadow: 0 1px 2px rgba(24, 144, 255, 0.25);
       }
       /* Home cards in light: softer, more \"landing\" feel */
       html[data-theme="light"] .quick {
@@ -347,8 +948,8 @@
         box-shadow: none !important;
       }
 
-      /* Inputs / selects / placeholders */
-      html[data-theme="light"] ::placeholder { color: rgba(71, 85, 105, 0.8); }
+      /* Inputs / selects / placeholders 参考高级选项 */
+      html[data-theme="light"] ::placeholder { color: #bfbfbf; }
       html[data-theme="light"] textarea,
       html[data-theme="light"] input[type="text"],
       html[data-theme="light"] input[type="file"],
@@ -364,14 +965,62 @@
       }
 
       /* Tables */
+      html[data-theme="light"] .kv-table {
+        background: #ffffff;
+        border-radius: 10px;
+        overflow: hidden;
+        box-shadow: 0 1px 3px rgba(15, 23, 42, 0.06);
+      }
       html[data-theme="light"] .kv-table th {
-        color: #64748b;
-        background: rgba(241, 245, 249, 0.85);
-        border-bottom: 1px solid rgba(37, 99, 235, 0.14);
+        color: #475569;
+        background: #f1f5f9;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 12px 14px;
       }
       html[data-theme="light"] .kv-table td {
-        color: #0f172a;
-        border-bottom: 1px solid rgba(37, 99, 235, 0.10);
+        color: #334155;
+        background: #ffffff;
+        border-bottom: 1px solid #f1f5f9;
+      }
+      html[data-theme="light"] .kv-table tbody tr:nth-child(even) td {
+        background: #fafbfc;
+      }
+      html[data-theme="light"] .kv-table tbody tr:hover td {
+        background: #f8fafc;
+      }
+      html[data-theme="light"] .kv-table td button {
+        background: #ffffff;
+        color: #475569;
+        border: 1px solid #cbd5e1;
+        padding: 6px 12px;
+        border-radius: 8px;
+        font-size: 12px;
+      }
+      html[data-theme="light"] .kv-table td button:hover {
+        background: #f1f5f9;
+        border-color: #94a3b8;
+        color: #334155;
+      }
+      html[data-theme="light"] .kv-table td button[data-action="approve"] {
+        border-color: rgba(34, 197, 94, 0.5);
+        color: #15803d;
+      }
+      html[data-theme="light"] .kv-table td button[data-action="approve"]:hover {
+        background: rgba(34, 197, 94, 0.08);
+      }
+      html[data-theme="light"] .kv-table td button[data-action="reject"] {
+        border-color: rgba(239, 68, 68, 0.45);
+        color: #b91c1c;
+      }
+      html[data-theme="light"] .kv-table td button[data-action="reject"]:hover {
+        background: rgba(239, 68, 68, 0.08);
+      }
+      html[data-theme="light"] .kv-table td button[data-action="toggle-role"] {
+        border-color: rgba(59, 130, 246, 0.45);
+        color: #1d4ed8;
+      }
+      html[data-theme="light"] .kv-table td button[data-action="toggle-role"]:hover {
+        background: rgba(59, 130, 246, 0.08);
       }
       html[data-theme="light"] .log-table th {
         color: #64748b;
@@ -573,7 +1222,7 @@
         display: flex;
         align-items: center;
         gap: 24px;
-        justify-content: flex-end;
+        justify-content: space-between;
         box-shadow: 0 4px 32px rgba(0, 0, 0, 0.4), 0 0 1px rgba(99, 102, 241, 0.3);
         position: sticky;
         top: 0;
@@ -583,7 +1232,12 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        margin-right: auto;
+      }
+      .topbar-actions {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-left: auto;
       }
       .brand-logo {
         height: 44px;
@@ -624,9 +1278,127 @@
         padding: 6px;
         border-radius: 999px;
         border: 1px solid rgba(99, 102, 241, 0.15);
-        margin-left: auto;
+        position: relative;
+        z-index: 1;
       }
-      .nav span {
+      .settings {
+        position: relative;
+        display: flex;
+        align-items: center;
+        z-index: 3;
+      }
+      .settings-toggle {
+        background: transparent;
+        box-shadow: none;
+        font-size: 14px;
+        font-weight: 500;
+        position: relative;
+        z-index: 4;
+        pointer-events: auto;
+      }
+
+      /* ---------- 设置下拉菜单（统一重写） ---------- */
+      .settings-menu {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        margin-top: 6px;
+        min-width: 220px;
+        padding: 6px 0;
+        border-radius: 10px;
+        border: 1px solid rgba(100, 116, 139, 0.3);
+        background: #1e293b;
+        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+        display: none;
+        flex-direction: column;
+        z-index: 400;
+      }
+      .settings.open .settings-menu {
+        display: flex;
+      }
+      .settings-group {
+        display: flex;
+        flex-direction: column;
+      }
+      .settings-menu .settings-item,
+      .settings-menu .settings-item--badge,
+      .settings-menu .settings-label,
+      .settings-menu .theme-toggle {
+        display: block;
+        width: 100%;
+        box-sizing: border-box;
+        padding: 12px 16px;
+        margin: 0;
+        border: none;
+        background: transparent;
+        font-size: 13px;
+        font-weight: 500;
+        line-height: 1.35;
+        text-align: left;
+        color: #e2e8f0;
+        cursor: pointer;
+        transition: background 0.12s ease;
+        text-decoration: none;
+      }
+      .settings-menu a.settings-item {
+        text-decoration: none;
+      }
+      .settings-menu .settings-item:hover,
+      .settings-menu .theme-toggle:hover {
+        background: rgba(99, 102, 241, 0.2);
+      }
+      .settings-menu .settings-item--badge {
+        cursor: default;
+        color: #94a3b8;
+        font-size: 12px;
+      }
+      .settings-menu .settings-item--badge:hover {
+        background: transparent;
+      }
+      .settings-menu .settings-label {
+        padding: 10px 16px 6px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: #94a3b8;
+        cursor: default;
+      }
+      .settings-menu .settings-label:hover {
+        background: transparent;
+      }
+      .settings-divider {
+        height: 1px;
+        background: rgba(148, 163, 184, 0.3);
+        margin: 6px 16px;
+        padding: 0;
+        flex-shrink: 0;
+      }
+      html[data-theme="light"] .settings-menu {
+        background: #ffffff;
+        border-color: #d9d9d9;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+      html[data-theme="light"] .settings-menu .settings-item,
+      html[data-theme="light"] .settings-menu .theme-toggle {
+        color: #262626;
+      }
+      html[data-theme="light"] .settings-menu .settings-item:hover,
+      html[data-theme="light"] .settings-menu .theme-toggle:hover {
+        background: #fafafa;
+      }
+      html[data-theme="light"] .settings-menu .settings-item--badge {
+        color: #595959;
+      }
+      html[data-theme="light"] .settings-menu .settings-label {
+        color: #595959;
+      }
+      html[data-theme="light"] .settings-divider {
+        background: #d9d9d9;
+      }
+
+      .nav span,
+      .nav .nav-item {
         padding: 8px 18px;
         border-radius: 999px;
         cursor: pointer;
@@ -634,8 +1406,14 @@
         font-weight: 500;
         position: relative;
         white-space: nowrap;
+        background: transparent;
+        border: none;
+        color: inherit;
+        font-family: inherit;
+        line-height: 1.2;
       }
-      .nav span::before {
+      .nav span::before,
+      .nav .nav-item::before {
         content: "";
         position: absolute;
         inset: 0;
@@ -643,12 +1421,15 @@
         background: linear-gradient(135deg, rgba(99, 102, 241, 0.1) 0%, rgba(139, 92, 246, 0.1) 100%);
         opacity: 0;
         transition: opacity 0.3s ease;
+        pointer-events: none;
       }
-      .nav span:hover {
+      .nav span:hover,
+      .nav .nav-item:hover {
         color: #e2e8f0;
         transform: translateY(-1px);
       }
-      .nav span:hover::before {
+      .nav span:hover::before,
+      .nav .nav-item:hover::before {
         opacity: 1;
       }
       .nav .active {
@@ -1138,7 +1919,7 @@
         display: block;
         margin-bottom: 8px;
       }
-      input[type="text"], input[type="file"], textarea, select {
+      input[type="text"], input[type="password"], input[type="file"], textarea, select {
         padding: 11px 14px;
         border: 1px solid rgba(100, 116, 139, 0.4);
         border-radius: 10px;
@@ -1182,11 +1963,11 @@
         background: #0b1220;
         color: #e2e8f0;
       }
-      input[type="text"]:hover, textarea:hover {
+      input[type="text"]:hover, input[type="password"]:hover, textarea:hover {
         border-color: rgba(139, 151, 252, 0.4);
         background: rgba(15, 23, 42, 0.7);
       }
-      input[type="text"]:focus, textarea:focus, select:focus {
+      input[type="text"]:focus, input[type="password"]:focus, textarea:focus, select:focus {
         outline: none;
         border-color: rgba(139, 151, 252, 0.6);
         box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.15);
@@ -2924,10 +3705,12 @@
         width: 100%;
         border-collapse: collapse;
         font-size: 12px;
-        background: rgba(15, 23, 42, 0.3);
+        background: rgba(30, 41, 59, 0.4);
+        border-radius: 10px;
+        overflow: hidden;
       }
       .kv-table th, .kv-table td {
-        border-bottom: 1px solid rgba(100, 116, 139, 0.2);
+        border-bottom: 1px solid rgba(100, 116, 139, 0.25);
         padding: 10px 12px;
         text-align: left;
         color: #e2e8f0;
@@ -2938,27 +3721,52 @@
         font-size: 11px;
         letter-spacing: 0.08em;
         font-weight: 600;
-        background: rgba(15, 23, 42, 0.6);
+        background: rgba(51, 65, 85, 0.6);
       }
       .kv-table tbody tr {
-        background: rgba(15, 23, 42, 0.2);
+        background: rgba(30, 41, 59, 0.35);
+      }
+      .kv-table tbody tr:nth-child(even) {
+        background: rgba(30, 41, 59, 0.45);
       }
       .kv-table tbody tr:hover {
-        background: rgba(30, 41, 59, 0.5);
+        background: rgba(51, 65, 85, 0.5);
       }
       .kv-table td button {
-        background: rgba(239, 68, 68, 0.2);
-        border: 1px solid rgba(239, 68, 68, 0.4);
-        color: #fca5a5;
-        padding: 4px 8px;
-        border-radius: 4px;
-        font-size: 11px;
+        background: rgba(51, 65, 85, 0.6);
+        border: 1px solid rgba(148, 163, 184, 0.4);
+        color: #cbd5e1;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 12px;
         cursor: pointer;
-        transition: all 0.3s ease;
+        transition: all 0.2s ease;
       }
       .kv-table td button:hover {
-        background: rgba(239, 68, 68, 0.3);
-        border-color: rgba(239, 68, 68, 0.6);
+        background: rgba(71, 85, 105, 0.7);
+        border-color: rgba(148, 163, 184, 0.6);
+        color: #e2e8f0;
+      }
+      .kv-table td button[data-action="approve"] {
+        border-color: rgba(34, 197, 94, 0.5);
+        color: #86efac;
+      }
+      .kv-table td button[data-action="approve"]:hover {
+        background: rgba(34, 197, 94, 0.2);
+      }
+      .kv-table td button[data-action="reject"] {
+        border-color: rgba(239, 68, 68, 0.45);
+        color: #fca5a5;
+      }
+      .kv-table td button[data-action="reject"]:hover {
+        background: rgba(239, 68, 68, 0.2);
+      }
+      .kv-table td button[data-action="toggle-role"] {
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #93c5fd;
+      }
+      .kv-table td button[data-action="toggle-role"]:hover {
+        background: rgba(59, 130, 246, 0.2);
       }
       .kv-input {
         width: 100%;
@@ -3037,6 +3845,188 @@
         border-color: rgba(34, 197, 94, 0.45);
         color: #dcfce7;
       }
+
+      /* ---------- 登录页专用样式（与首页一致的浅色系、白底） ---------- */
+      body[data-page="login"] {
+        background: linear-gradient(180deg, #ffffff 0%, #f5f9ff 45%, #f6f8ff 100%);
+        color: #0f172a;
+        color-scheme: light;
+      }
+      body[data-page="login"]::before {
+        background:
+          radial-gradient(1100px 560px at 50% 34%, rgba(59, 130, 246, 0.18) 0%, transparent 58%),
+          radial-gradient(900px 520px at 10% 0%, rgba(37, 99, 235, 0.12) 0%, transparent 60%),
+          radial-gradient(900px 520px at 92% 20%, rgba(37, 99, 235, 0.10) 0%, transparent 62%),
+          linear-gradient(180deg, #ffffff 0%, #f3f8ff 100%);
+        opacity: 1;
+      }
+      body[data-page="login"]::after {
+        opacity: 0.28;
+        background-image:
+          url("data:image/svg+xml,%3Csvg%20xmlns%3D%27http%3A//www.w3.org/2000/svg%27%20width%3D%27560%27%20height%3D%27560%27%20viewBox%3D%270%200%20560%20560%27%3E%3Cg%20fill%3D%27none%27%20stroke%3D%27%2393c5fd%27%20stroke-width%3D%2714%27%20stroke-linecap%3D%27round%27%20stroke-linejoin%3D%27round%27%20opacity%3D%270.55%27%3E%3Crect%20x%3D%2790%27%20y%3D%27250%27%20width%3D%27120%27%20height%3D%27230%27%20rx%3D%2734%27/%3E%3Crect%20x%3D%27240%27%20y%3D%27200%27%20width%3D%27120%27%20height%3D%27280%27%20rx%3D%2734%27/%3E%3Crect%20x%3D%27390%27%20y%3D%27150%27%20width%3D%27120%27%20height%3D%27330%27%20rx%3D%2734%27/%3E%3C/g%3E%3C/svg%3E"),
+          repeating-linear-gradient(0deg, rgba(37, 99, 235, 0.035) 0px, transparent 1px, transparent 2px, rgba(37, 99, 235, 0.035) 3px),
+          repeating-linear-gradient(90deg, rgba(37, 99, 235, 0.035) 0px, transparent 1px, transparent 2px, rgba(37, 99, 235, 0.035) 3px);
+        background-repeat: no-repeat, repeat, repeat;
+        background-position: right 8% center, 0 0, 0 0;
+        background-size: 520px 520px, 64px 64px, 64px 64px;
+      }
+      body[data-page="login"] .topbar {
+        background: rgba(255, 255, 255, 0.82);
+        border-bottom: 1px solid rgba(37, 99, 235, 0.18);
+        box-shadow: 0 10px 28px rgba(15, 23, 42, 0.08), 0 0 1px rgba(37, 99, 235, 0.18);
+        backdrop-filter: blur(14px);
+      }
+      body[data-page="login"] .brand-logo {
+        filter: none;
+      }
+      body[data-page="login"] .nav {
+        background: rgba(255, 255, 255, 0.9);
+        border: 1px solid rgba(47, 109, 246, 0.22);
+        color: #334155;
+      }
+      body[data-page="login"] .nav span {
+        color: #334155;
+      }
+      body[data-page="login"] .nav span::before {
+        background: linear-gradient(135deg, rgba(47, 109, 246, 0.10) 0%, rgba(47, 109, 246, 0.08) 100%);
+      }
+
+      body[data-page="login"] .main {
+        min-height: calc(100vh - 120px);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 16px;
+      }
+      body[data-page="login"] .login-card {
+        max-width: 420px;
+        width: 100%;
+        margin: 0 auto;
+        padding: 32px 28px;
+        border-radius: 20px;
+        background: linear-gradient(145deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 250, 252, 0.99) 100%);
+        border: 1px solid rgba(37, 99, 235, 0.2);
+        box-shadow: 0 20px 50px rgba(15, 23, 42, 0.08), 0 0 0 1px rgba(255, 255, 255, 0.9) inset;
+      }
+      body[data-page="login"] .login-card .card-title {
+        font-size: 18px;
+        font-weight: 700;
+        color: #0f172a;
+        margin: 0 0 4px 0;
+        letter-spacing: -0.02em;
+      }
+      body[data-page="login"] .login-card .card-subtitle {
+        font-size: 12px;
+        color: #64748b;
+        margin: 0 0 24px 0;
+      }
+      body[data-page="login"] .login-tabs {
+        display: flex;
+        gap: 0;
+        padding: 4px;
+        border-radius: 12px;
+        background: rgba(248, 250, 252, 0.95);
+        border: 1px solid rgba(203, 213, 225, 0.6);
+        margin-bottom: 20px;
+      }
+      body[data-page="login"] .login-tabs button {
+        flex: 1;
+        padding: 10px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        border-radius: 10px;
+        border: 1px solid transparent;
+        background: rgba(255, 255, 255, 0.6);
+        color: #64748b;
+        cursor: pointer;
+        transition: color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+      }
+      body[data-page="login"] .login-tabs button:hover {
+        color: #334155;
+        background: rgba(255, 255, 255, 0.9);
+      }
+      body[data-page="login"] .login-tabs button.active {
+        background: #2f6df6;
+        color: #fff;
+        border: 1px solid rgba(47, 109, 246, 0.5);
+        box-shadow: 0 2px 10px rgba(47, 109, 246, 0.3);
+      }
+      body[data-page="login"] .login-tabs button:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.4);
+      }
+      body[data-page="login"] .login-panel .label {
+        font-size: 13px;
+        font-weight: 500;
+        color: #475569;
+        margin-bottom: 8px;
+      }
+      body[data-page="login"] .login-panel input {
+        margin-top: 0;
+        background: rgba(255, 255, 255, 0.94) !important;
+        color: #0f172a !important;
+        border: 1px solid rgba(148, 163, 184, 0.5);
+      }
+      body[data-page="login"] .login-panel input:hover {
+        border-color: rgba(37, 99, 235, 0.4);
+        background: #fff !important;
+      }
+      body[data-page="login"] .login-panel input:focus {
+        border-color: rgba(37, 99, 235, 0.6);
+        box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
+        background: #fff !important;
+      }
+      body[data-page="login"] .login-panel input::placeholder {
+        color: #94a3b8;
+      }
+      body[data-page="login"] .login-panel .field {
+        margin-top: 16px;
+      }
+      body[data-page="login"] .login-panel .field:first-child {
+        margin-top: 0;
+      }
+      body[data-page="login"] .login-actions {
+        margin-top: 24px;
+        display: flex;
+        justify-content: stretch;
+        gap: 12px;
+      }
+      body[data-page="login"] .login-actions .btn-primary,
+      body[data-page="login"] .login-actions .secondary {
+        flex: 1;
+        padding: 12px 20px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 12px;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        background: #2f6df6;
+        color: #fff !important;
+        border: 1px solid rgba(47, 109, 246, 0.4);
+      }
+      body[data-page="login"] .login-actions .btn-primary:hover:not(:disabled),
+      body[data-page="login"] .login-actions .secondary:hover:not(:disabled) {
+        filter: brightness(1.05);
+        box-shadow: 0 10px 24px rgba(47, 109, 246, 0.35);
+      }
+      body[data-page="login"] .login-actions .btn-primary:focus-visible,
+      body[data-page="login"] .login-actions .secondary:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.4);
+      }
+      body[data-page="login"] #authMessage {
+        min-height: 20px;
+        margin-top: 16px;
+        font-size: 13px;
+        text-align: center;
+        border-radius: 8px;
+        padding: 8px 12px;
+      }
+      body[data-page="login"] #authMessage:not(:empty) {
+        background: rgba(241, 245, 249, 0.9);
+        border: 1px solid rgba(148, 163, 184, 0.35);
+        color: #475569;
+      }
+
       .debug-tab-panel {
         display: none;
       }
@@ -3941,12 +4931,15 @@
       }
 
       /* horizontal nav on small screens (avoid wrapping overflow) */
-      .nav {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none; /* Firefox */
+      @media (max-width: 960px) {
+        .nav {
+          overflow-x: auto;
+          overflow-y: visible;
+          -webkit-overflow-scrolling: touch;
+          scrollbar-width: none; /* Firefox */
+        }
+        .nav::-webkit-scrollbar { height: 0; }
       }
-      .nav::-webkit-scrollbar { height: 0; }
 
       /* consistent selection + scrollbar */
       ::selection { background: rgba(99, 102, 241, 0.35); color: #fff; }
@@ -3978,8 +4971,10 @@
         .quick-grid { grid-template-columns: 1fr; gap: 12px; }
         .quick { padding: 18px 14px; border-radius: 16px; }
         .card { padding: 16px; }
+        .topbar-actions { width: 100%; flex-wrap: wrap; justify-content: flex-end; }
         .nav { width: 100%; }
         .nav span { padding: 8px 12px; }
+        .settings { margin-left: auto; }
         .modal .content { width: min(980px, 96vw); padding: 12px; }
       }
 

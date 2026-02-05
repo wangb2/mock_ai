@@ -7,18 +7,25 @@
     <meta http-equiv="Pragma" content="no-cache" />
     <meta http-equiv="Expires" content="0" />
     <title>管理后台 - RSMS 智能Mock系统</title>
-    <link rel="stylesheet" href="/assets/app.css?v=20260203-3" />
+    <script>
+      (function() {
+        try {
+          var t = localStorage.getItem("uiThemeV1");
+          if (t === "light" || t === "dark") document.documentElement.setAttribute("data-theme", t);
+          else document.documentElement.setAttribute("data-theme", "dark");
+        } catch (e) {}
+      })();
+    </script>
+    <link rel="stylesheet" href="/assets/app.css?v=20260205-11" />
   </head>
   <body data-page="admin">
     <header class="topbar">
       <div class="brand">
         <img class="brand-logo" src="/logo.png" alt="Redtea Mobile" />
       </div>
-      <nav class="nav">
-        <span data-tab="home" onclick="location.href='/index.html'">首页</span>
-        <span class="active">管理</span>
-      </nav>
-      <button id="adminLogoutBtn" class="theme-toggle" type="button">退出</button>
+      <div class="topbar-actions" style="margin-left: auto;">
+        <button id="adminBackBtn" class="theme-toggle" type="button" onclick="location.href='/index.html'">返回</button>
+      </div>
     </header>
 
     <main class="main">

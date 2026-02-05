@@ -243,15 +243,15 @@ async function initAdminPage() {
     return;
   }
   const me = await meRes.json();
-  if (!me || me.role !== "ADMIN") {
-    setMessage("仅管理员可访问此页面", true);
+  const isAdmin = me && String(me.role || "").toUpperCase() === "ADMIN";
+  if (!isAdmin) {
+    location.replace("/index.html");
     return;
   }
-  const logoutBtn = $("adminLogoutBtn");
-  if (logoutBtn) {
-    logoutBtn.addEventListener("click", async () => {
-      await fetch("/auth/logout", { method: "POST" });
-      location.href = "/login.html";
+  const backBtn = $("adminBackBtn");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      location.href = "/index.html";
     });
   }
   const saveConfigBtn = $("saveConfigBtn");
