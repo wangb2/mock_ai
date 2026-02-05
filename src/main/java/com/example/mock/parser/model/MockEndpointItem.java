@@ -25,6 +25,7 @@ public class MockEndpointItem {
     private String apiPath;
     private String responseMode;
     private String responseScript;
+    private String createdAt;
 
     public String getId() {
         return id;
@@ -176,5 +177,13 @@ public class MockEndpointItem {
 
     public void setResponseScript(String responseScript) {
         this.responseScript = responseScript;
+    }
+
+    public String getCreatedAt() {
+        return createdAt;
+    }
+
+    public void setCreatedAt(String createdAt) {
+        this.createdAt = createdAt;
     }
 }

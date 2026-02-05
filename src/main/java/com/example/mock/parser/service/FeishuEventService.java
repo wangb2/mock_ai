@@ -27,6 +27,10 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 /**
  * 飞书 Event 处理：接收消息事件（im.message.receive_v1）生成预览并回复 post + 交互卡片。
@@ -53,6 +57,138 @@ public class FeishuEventService {
 
     @Value("${llm.chat-provider:doubao}")
     private String defaultChatProvider;
+
+    /**
+     * 用户会话存储：key为senderUserId，value为会话消息列表和最后更新时间
+     */
+    private final ConcurrentHashMap<String, UserSession> userSessions = new ConcurrentHashMap<>();
+    
+    /**
+     * 会话过期时间：30分钟（毫秒）
+     */
+    private static final long SESSION_TTL_MS = 30 * 60 * 1000L;
+    
+    /**
+     * 定时清理过期会话的调度器
+     */
+    private final ScheduledExecutorService sessionCleaner = Executors.newSingleThreadScheduledExecutor(r -> {
+        Thread t = new Thread(r, "feishu-session-cleaner");
+        t.setDaemon(true);
+        return t;
+    });
+
+    /**
+     * 用户会话数据结构
+     */
+    private static class UserSession {
+        final List<Object> messages;
+        volatile long lastUpdatedAt;
+
+        UserSession(List<Object> messages) {
+            this.messages = new ArrayList<>(messages != null ? messages : Collections.emptyList());
+            this.lastUpdatedAt = System.currentTimeMillis();
+        }
+
+        void update(List<Object> newMessages) {
+            if (newMessages != null && !newMessages.isEmpty()) {
+                this.messages.addAll(newMessages);
+            }
+            this.lastUpdatedAt = System.currentTimeMillis();
+        }
+
+        boolean isExpired() {
+            return System.currentTimeMillis() - lastUpdatedAt > SESSION_TTL_MS;
+        }
+    }
+
+    /**
+     * 初始化：启动定时清理过期会话任务
+     */
+    @javax.annotation.PostConstruct
+    public void initSessionCleaner() {
+        sessionCleaner.scheduleWithFixedDelay(this::cleanExpiredSessions, 5, 5, TimeUnit.MINUTES);
+        log.info("Feishu session cleaner started. TTL={}ms", SESSION_TTL_MS);
+    }
+
+    /**
+     * 清理过期的会话
+     */
+    private void cleanExpiredSessions() {
+        int cleaned = 0;
+        for (java.util.Map.Entry<String, UserSession> entry : userSessions.entrySet()) {
+            if (entry.getValue().isExpired()) {
+                userSessions.remove(entry.getKey());
+                cleaned++;
+            }
+        }
+        if (cleaned > 0) {
+            log.debug("Cleaned {} expired Feishu sessions", cleaned);
+        }
+    }
+
+    /**
+     * 获取用户的历史会话消息（如果存在且未过期）
+     */
+    private List<Object> getHistoryMessages(String senderUserId) {
+        if (senderUserId == null || senderUserId.isEmpty()) {
+            return Collections.emptyList();
+        }
+        UserSession session = userSessions.get(senderUserId);
+        if (session == null || session.isExpired()) {
+            if (session != null) {
+                userSessions.remove(senderUserId);
+            }
+            return Collections.emptyList();
+        }
+        return new ArrayList<>(session.messages);
+    }
+
+    /**
+     * 更新用户会话：将新消息追加到历史中
+     */
+    private void updateSession(String senderUserId, List<Object> newMessages) {
+        if (senderUserId == null || senderUserId.isEmpty() || newMessages == null || newMessages.isEmpty()) {
+            return;
+        }
+        userSessions.compute(senderUserId, (key, existing) -> {
+            if (existing == null || existing.isExpired()) {
+                return new UserSession(newMessages);
+            }
+            existing.update(newMessages);
+            return existing;
+        });
+    }
+
+    /**
+     * 清除用户会话
+     */
+    private void clearSession(String senderUserId) {
+        if (senderUserId != null && !senderUserId.isEmpty()) {
+            UserSession removed = userSessions.remove(senderUserId);
+            if (removed != null) {
+                log.debug("Cleared Feishu session for user: {}", senderUserId);
+            }
+        }
+    }
+
+    /**
+     * 更新会话：同时保存用户消息和LLM响应
+     */
+    private void updateSessionWithResponse(String senderUserId, List<Object> userMessages, String assistantResponse) {
+        if (senderUserId == null || senderUserId.isEmpty()) {
+            return;
+        }
+        List<Object> allMessages = new ArrayList<>();
+        if (userMessages != null && !userMessages.isEmpty()) {
+            allMessages.addAll(userMessages);
+        }
+        if (assistantResponse != null && !assistantResponse.trim().isEmpty()) {
+            allMessages.add(assistantResponse);
+        }
+        if (!allMessages.isEmpty()) {
+            updateSession(senderUserId, allMessages);
+        }
+    }
 
     /**
      * 处理飞书事件。根据 event_id 查询是否已存在，已存在则直接返回；否则先插入事件记录（占位），再处理，利用唯一约束防止并发重复处理。
@@ -150,9 +286,22 @@ public class FeishuEventService {
             return;
         }
 
+        // 获取用户历史会话消息
+        List<Object> historyMessages = getHistoryMessages(senderUserId);
+        
+        // 合并历史消息和当前消息
+        List<Object> mergedMessages = new ArrayList<>();
+        if (!historyMessages.isEmpty()) {
+            mergedMessages.addAll(historyMessages);
+        }
+        mergedMessages.addAll(extracted.messages);
+        
+        log.debug("Feishu message merged. sender_user_id={}, history_count={}, current_count={}, merged_count={}", 
+                senderUserId, historyMessages.size(), extracted.messages.size(), mergedMessages.size());
+
         ManualPreviewResult previewResult;
         try {
-            previewResult = mockEndpointService.generateManualPreviewResult(extracted.messages, defaultChatProvider);
+            previewResult = mockEndpointService.generateManualPreviewResult(mergedMessages, defaultChatProvider);
         } catch (IOException e) {
             log.error("Feishu manual preview failed", e);
             replyText(chatId, chatType, senderUserId, "生成预览失败，请稍后重试。");
@@ -160,20 +309,29 @@ public class FeishuEventService {
         }
 
         if (previewResult == null) {
-            replyText(chatId, chatType, senderUserId, "无法生成预览，请补充接口描述（如：请求方式、接口名称、请求/响应字段）。");
+            String errorMsg = "无法生成预览，请补充接口描述（如：请求方式、接口名称、请求/响应字段）。";
+            replyText(chatId, chatType, senderUserId, errorMsg);
+            // 保存用户消息和错误响应到会话历史
+            updateSessionWithResponse(senderUserId, extracted.messages, errorMsg);
             return;
         }
+        
         if (previewResult.isNeedMoreInfo()) {
             String msg = previewResult.getMessage() != null && !previewResult.getMessage().trim().isEmpty()
                     ? previewResult.getMessage()
                     : "请补充以下信息后再生成：" + (previewResult.getMissingFields() != null ? String.join("、", previewResult.getMissingFields()) : "");
             replyText(chatId, chatType, senderUserId, msg);
+            // 保存用户消息和LLM响应（需要更多信息的提示）到会话历史
+            updateSessionWithResponse(senderUserId, extracted.messages, msg);
             return;
         }
 
         MockEndpointItem item = previewResult.getItem();
         if (item == null) {
-            replyText(chatId, chatType, senderUserId, "无法生成预览。");
+            String errorMsg = "无法生成预览。";
+            replyText(chatId, chatType, senderUserId, errorMsg);
+            // 保存用户消息和错误响应到会话历史
+            updateSessionWithResponse(senderUserId, extracted.messages, errorMsg);
             return;
         }
 
@@ -195,6 +353,9 @@ public class FeishuEventService {
 
         feishuApiService.sendInteractiveToChat(chatId, buildCreateButtonCard(previewResultId, item, chatType, senderUserId));
         log.info("Feishu preview sent. chat_id={}, title={}, method={}, preview_result_id={}", chatId, item.getTitle(), item.getMethod(), previewResultId);
+        
+        // 创建接口卡片后，清除该用户的会话缓存，表示会话完成
+        clearSession(senderUserId);
     }
 
     /**

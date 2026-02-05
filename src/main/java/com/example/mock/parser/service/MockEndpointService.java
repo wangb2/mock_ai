@@ -1583,6 +1583,9 @@ public class MockEndpointService {
         item.setRequiredFields(parseList(entity.getRequiredFields()));
         item.setResponseMode(entity.getResponseMode());
         item.setResponseScript(entity.getResponseScript());
+        if (entity.getCreatedAt() != null) {
+            item.setCreatedAt(entity.getCreatedAt().toString());
+        }
         return item;
     }
 

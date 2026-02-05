@@ -1263,6 +1263,7 @@ const endpointInput = document.getElementById("endpoint");
             </div>
             <div class="api-meta">Scene: <span class="api-meta-strong">${escapeHtml(item.sceneName || "-")}</span></div>
             ${apiPath ? `<div class="api-meta">Path: <span class="api-meta-strong">${escapeHtml(apiPath)}</span></div>` : ""}
+            ${item.createdAt ? `<div class="api-meta">创建时间: <span class="api-meta-strong">${formatDateTime(item.createdAt)}</span></div>` : ""}
             <div class="api-url">
               <span>${escapeHtml(mockUrl)}</span>
               <button class="action-btn" data-copy="${mockUrl}">复制</button>
@@ -2047,6 +2048,32 @@ const endpointInput = document.getElementById("endpoint");
       // Display-only formatter for required fields.
       // Rule: split by "_" / "-" / whitespace, capitalize each segment's first letter, join with spaces.
       // Examples: "user_id" -> "User Id", "user-name" -> "User Name", "userId" -> "UserId" (camelCase not split)
+      function formatDateTime(dateTimeStr) {
+        if (!dateTimeStr) return "-";
+        try {
+          const date = new Date(dateTimeStr);
+          if (isNaN(date.getTime())) {
+            // 尝试解析 LocalDateTime 格式 (如 "2026-02-03T15:30:00")
+            const parts = dateTimeStr.split("T");
+            if (parts.length === 2) {
+              const datePart = parts[0];
+              const timePart = parts[1].split(".")[0]; // 移除毫秒部分
+              return `${datePart} ${timePart}`;
+            }
+            return dateTimeStr;
+          }
+          const year = date.getFullYear();
+          const month = String(date.getMonth() + 1).padStart(2, "0");
+          const day = String(date.getDate()).padStart(2, "0");
+          const hours = String(date.getHours()).padStart(2, "0");
+          const minutes = String(date.getMinutes()).padStart(2, "0");
+          const seconds = String(date.getSeconds()).padStart(2, "0");
+          return `${year}-${month}-${day} ${hours}:${minutes}:${seconds}`;
+        } catch (e) {
+          return dateTimeStr;
+        }
+      }
+
       function formatRequiredFieldLabel(field) {
         const raw = String(field == null ? "" : field).trim();
         if (!raw) return "";
