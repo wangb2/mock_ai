@@ -203,22 +203,28 @@ public class FeishuCallbackService {
         if ("GET".equals(method)) {
             return "curl -X GET '" + escapeShell(mockUrl) + "'";
         }
-        // POST：带 Content-Type 与 -d body
+        // POST：带 Content-Type 与 -d body，美化格式
         JsonNode requestExample = item.getRequestExample();
         String bodyJson = "{}";
         if (requestExample != null && !requestExample.isNull()) {
             try {
                 if (requestExample.has("body") && requestExample.get("body").isObject()) {
-                    bodyJson = objectMapper.writeValueAsString(requestExample.get("body"));
+                    bodyJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(requestExample.get("body"));
                 } else {
-                    bodyJson = objectMapper.writeValueAsString(requestExample);
+                    bodyJson = objectMapper.writerWithDefaultPrettyPrinter().writeValueAsString(requestExample);
                 }
             } catch (Exception e) {
                 log.warn("Build curl: serialize request body failed", e);
             }
         }
+        // 转义单引号用于 shell
         bodyJson = bodyJson.replace("\\", "\\\\").replace("'", "'\\''");
-        return "curl -X POST '" + escapeShell(mockUrl) + "' -H 'Content-Type: application/json' -d '" + bodyJson + "'";
+        // 美化：使用反斜杠换行，每部分独立一行
+        StringBuilder sb = new StringBuilder();
+        sb.append("curl -X POST '").append(escapeShell(mockUrl)).append("' \\\n");
+        sb.append("  -H 'Content-Type: application/json' \\\n");
+        sb.append("  -d '").append(bodyJson).append("'");
+        return sb.toString();
     }
 
     private static String escapeShell(String s) {
