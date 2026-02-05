@@ -127,16 +127,35 @@ public class FeishuEventService {
     }
 
     /**
+     * 获取会话key：优先使用unionId，如果没有则使用userId作为fallback
+     */
+    private String getSessionKey(FeishuSender sender) {
+        if (sender == null || sender.getSenderId() == null) {
+            return "";
+        }
+        FeishuSenderId senderId = sender.getSenderId();
+        // 优先使用unionId
+        if (senderId.getUnionId() != null && !senderId.getUnionId().trim().isEmpty()) {
+            return senderId.getUnionId().trim();
+        }
+        // fallback到userId
+        if (senderId.getUserId() != null && !senderId.getUserId().trim().isEmpty()) {
+            return senderId.getUserId().trim();
+        }
+        return "";
+    }
+
+    /**
      * 获取用户的历史会话消息（如果存在且未过期）
      */
-    private List<Object> getHistoryMessages(String senderUserId) {
-        if (senderUserId == null || senderUserId.isEmpty()) {
+    private List<Object> getHistoryMessages(String sessionKey) {
+        if (sessionKey == null || sessionKey.isEmpty()) {
             return Collections.emptyList();
         }
-        UserSession session = userSessions.get(senderUserId);
+        UserSession session = userSessions.get(sessionKey);
         if (session == null || session.isExpired()) {
             if (session != null) {
-                userSessions.remove(senderUserId);
+                userSessions.remove(sessionKey);
             }
             return Collections.emptyList();
         }
@@ -146,11 +165,11 @@ public class FeishuEventService {
     /**
      * 更新用户会话：将新消息追加到历史中
      */
-    private void updateSession(String senderUserId, List<Object> newMessages) {
-        if (senderUserId == null || senderUserId.isEmpty() || newMessages == null || newMessages.isEmpty()) {
+    private void updateSession(String sessionKey, List<Object> newMessages) {
+        if (sessionKey == null || sessionKey.isEmpty() || newMessages == null || newMessages.isEmpty()) {
             return;
         }
-        userSessions.compute(senderUserId, (key, existing) -> {
+        userSessions.compute(sessionKey, (key, existing) -> {
             if (existing == null || existing.isExpired()) {
                 return new UserSession(newMessages);
             }
@@ -162,11 +181,11 @@ public class FeishuEventService {
     /**
      * 清除用户会话
      */
-    private void clearSession(String senderUserId) {
-        if (senderUserId != null && !senderUserId.isEmpty()) {
-            UserSession removed = userSessions.remove(senderUserId);
+    private void clearSession(String sessionKey) {
+        if (sessionKey != null && !sessionKey.isEmpty()) {
+            UserSession removed = userSessions.remove(sessionKey);
             if (removed != null) {
-                log.debug("Cleared Feishu session for user: {}", senderUserId);
+                log.debug("Cleared Feishu session for session_key: {}", sessionKey);
             }
         }
     }
@@ -174,8 +193,8 @@ public class FeishuEventService {
     /**
      * 更新会话：同时保存用户消息和LLM响应
      */
-    private void updateSessionWithResponse(String senderUserId, List<Object> userMessages, String assistantResponse) {
-        if (senderUserId == null || senderUserId.isEmpty()) {
+    private void updateSessionWithResponse(String sessionKey, List<Object> userMessages, String assistantResponse) {
+        if (sessionKey == null || sessionKey.isEmpty()) {
             return;
         }
         List<Object> allMessages = new ArrayList<>();
@@ -186,7 +205,7 @@ public class FeishuEventService {
             allMessages.add(assistantResponse);
         }
         if (!allMessages.isEmpty()) {
-            updateSession(senderUserId, allMessages);
+            updateSession(sessionKey, allMessages);
         }
     }
 
@@ -268,13 +287,15 @@ public class FeishuEventService {
         String chatId = nullToEmpty(message.getChatId());
         String chatType = nullToEmpty(message.getChatType());
         String senderUserId = sender != null && sender.getSenderId() != null ? nullToEmpty(sender.getSenderId().getUserId()) : "";
+        // 优先使用unionId作为会话key，如果没有则使用userId作为fallback
+        String sessionKey = getSessionKey(sender);
         if (chatId.isEmpty()) {
             log.warn("Feishu event missing chat_id");
             return;
         }
 
         String messageType = message.getMessageType() != null ? message.getMessageType() : "text";
-        log.info("Feishu message event. chat_id={}, message_type={}", chatId, messageType);
+        log.info("Feishu message event. chat_id={}, message_type={}, session_key={}", chatId, messageType, sessionKey);
 
         MessageExtractResult extracted = extractMessages(message);
         if (extracted.errorMessage != null) {
@@ -286,8 +307,8 @@ public class FeishuEventService {
             return;
         }
 
-        // 获取用户历史会话消息
-        List<Object> historyMessages = getHistoryMessages(senderUserId);
+        // 获取用户历史会话消息（使用unionId作为key）
+        List<Object> historyMessages = getHistoryMessages(sessionKey);
         
         // 合并历史消息和当前消息
         List<Object> mergedMessages = new ArrayList<>();
@@ -296,8 +317,8 @@ public class FeishuEventService {
         }
         mergedMessages.addAll(extracted.messages);
         
-        log.debug("Feishu message merged. sender_user_id={}, history_count={}, current_count={}, merged_count={}", 
-                senderUserId, historyMessages.size(), extracted.messages.size(), mergedMessages.size());
+        log.debug("Feishu message merged. session_key={}, history_count={}, current_count={}, merged_count={}", 
+                sessionKey, historyMessages.size(), extracted.messages.size(), mergedMessages.size());
 
         ManualPreviewResult previewResult;
         try {
@@ -311,8 +332,8 @@ public class FeishuEventService {
         if (previewResult == null) {
             String errorMsg = "无法生成预览，请补充接口描述（如：请求方式、接口名称、请求/响应字段）。";
             replyText(chatId, chatType, senderUserId, errorMsg);
-            // 保存用户消息和错误响应到会话历史
-            updateSessionWithResponse(senderUserId, extracted.messages, errorMsg);
+            // 保存用户消息和错误响应到会话历史（使用unionId作为key）
+            updateSessionWithResponse(sessionKey, extracted.messages, errorMsg);
             return;
         }
         
@@ -321,8 +342,8 @@ public class FeishuEventService {
                     ? previewResult.getMessage()
                     : "请补充以下信息后再生成：" + (previewResult.getMissingFields() != null ? String.join("、", previewResult.getMissingFields()) : "");
             replyText(chatId, chatType, senderUserId, msg);
-            // 保存用户消息和LLM响应（需要更多信息的提示）到会话历史
-            updateSessionWithResponse(senderUserId, extracted.messages, msg);
+            // 保存用户消息和LLM响应（需要更多信息的提示）到会话历史（使用unionId作为key）
+            updateSessionWithResponse(sessionKey, extracted.messages, msg);
             return;
         }
 
@@ -330,8 +351,8 @@ public class FeishuEventService {
         if (item == null) {
             String errorMsg = "无法生成预览。";
             replyText(chatId, chatType, senderUserId, errorMsg);
-            // 保存用户消息和错误响应到会话历史
-            updateSessionWithResponse(senderUserId, extracted.messages, errorMsg);
+            // 保存用户消息和错误响应到会话历史（使用unionId作为key）
+            updateSessionWithResponse(sessionKey, extracted.messages, errorMsg);
             return;
         }
 
@@ -354,8 +375,8 @@ public class FeishuEventService {
         feishuApiService.sendInteractiveToChat(chatId, buildCreateButtonCard(previewResultId, item, chatType, senderUserId));
         log.info("Feishu preview sent. chat_id={}, title={}, method={}, preview_result_id={}", chatId, item.getTitle(), item.getMethod(), previewResultId);
         
-        // 创建接口卡片后，清除该用户的会话缓存，表示会话完成
-        clearSession(senderUserId);
+        // 创建接口卡片后，清除该用户的会话缓存，表示会话完成（使用unionId作为key）
+        clearSession(sessionKey);
     }
 
     /**
