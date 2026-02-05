@@ -357,12 +357,7 @@ public class ParseController {
         }
         JsonNode payload = requestPayload != null ? requestPayload : validationNode;
         try {
-            JsonNode response;
-            if (shouldUseDynamicResponse(validationNode)) {
-                response = mockEndpointService.getDynamicResponse(item, payload);
-            } else {
-                response = item.getResponseExample();
-            }
+            JsonNode response = mockEndpointService.getDynamicResponse(item, payload);
             applyResponseDelay(item);
             return buildMockResponse(response, null);
         } catch (IOException ex) {
@@ -443,27 +438,6 @@ public class ParseController {
             code = body.get("headers").get("__mock_error_code");
         }
         return code != null && (code.isTextual() || code.isInt());
-    }
-
-    private boolean shouldUseDynamicResponse(JsonNode body) {
-        if (body == null || !body.isObject()) {
-            return true;
-        }
-        JsonNode flag = body.get("__mock_no_ai");
-        if (flag == null && body.has("query") && body.get("query").isObject()) {
-            flag = body.get("query").get("__mock_no_ai");
-        }
-        if (flag == null && body.has("headers") && body.get("headers").isObject()) {
-            flag = body.get("headers").get("__mock_no_ai");
-        }
-        if (flag == null) {
-            return true;
-        }
-        if (flag.isBoolean()) {
-            return !flag.asBoolean();
-        }
-        String value = flag.asText().trim();
-        return value.isEmpty() || "0".equals(value) || "false".equalsIgnoreCase(value);
     }
 
     private void applyResponseDelay(MockEndpointItem item) {

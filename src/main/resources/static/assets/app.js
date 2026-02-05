@@ -2145,9 +2145,6 @@ const endpointInput = document.getElementById("endpoint");
         if (!hasHeader(headers, "Accept")) {
           headers["Accept"] = "application/json";
         }
-        // 在线调试固定使用示例响应，不走 AI 动态生成
-        headers["__mock_no_ai"] = "1";
-        const noAi = true;
         if (currentMethod === "GET") {
           body = {};
         }
@@ -2159,20 +2156,6 @@ const endpointInput = document.getElementById("endpoint");
           body = extractBodyFromRequest(req);
         }
         setStatus("🚀 请求处理中...");
-        if (!noAi && aiLoadingOverlay) {
-          aiLoadingOverlay.classList.add("show");
-          // Animate horse running with better frames
-          const horseEl = aiLoadingOverlay.querySelector(".ai-horse");
-          const horseFrames = ["🐴", "🐎", "🏇", "🐎"];
-          let frameIndex = 0;
-          const horseAnimInterval = setInterval(() => {
-            if (horseEl) {
-              frameIndex = (frameIndex + 1) % horseFrames.length;
-              horseEl.textContent = horseFrames[frameIndex];
-            }
-          }, 120);
-          aiLoadingOverlay.dataset.animInterval = horseAnimInterval;
-        }
         mockResponse.textContent = "";
         if (debugStatus) debugStatus.textContent = "Status: -";
         if (debugTime) debugTime.textContent = "Time: -";
@@ -2205,7 +2188,7 @@ const endpointInput = document.getElementById("endpoint");
             setStatus("❌ 请求失败：" + res.status);
             setSendBtnUi("error");
           } else {
-            const cacheHint = noAi ? " (示例响应)" : (elapsed < 500 ? " (缓存命中)" : " (AI生成)");
+            const cacheHint = elapsed < 500 ? " (缓存命中)" : " (示例响应)";
             setStatus("✅ 完成" + cacheHint);
             setSendBtnUi("success");
           }

@@ -640,12 +640,11 @@ public class MockEndpointService {
             logOperation("MOCK_HIT", item.getId(), item.getSourceFileName(), "命中缓存");
             return parseJson(cached.getResponseBody());
         }
-        JsonNode generated = generateResponseWithAi(item, requestBody);
-        if (generated == null) {
-            generated = buildDynamicResponse(item.getResponseExample(), requestBody);
+        JsonNode generated = buildDynamicResponse(item.getResponseExample(), requestBody);
+        if (generated != null) {
+            persistResponseCache(item.getId(), signature, requestBody, generated);
+            logOperation("MOCK_GEN", item.getId(), item.getSourceFileName(), "示例响应");
         }
-        persistResponseCache(item.getId(), signature, requestBody, generated);
-        logOperation("MOCK_GEN", item.getId(), item.getSourceFileName(), "AI生成响应");
         return generated;
     }
 
@@ -1790,31 +1789,6 @@ public class MockEndpointService {
         } catch (Exception ex) {
             return input;
         }
-    }
-
-    private JsonNode generateResponseWithAi(MockEndpointItem item, JsonNode requestBody) throws IOException {
-        if (item.getResponseExample() == null) {
-            return null;
-        }
-        ObjectNode payload = objectMapper.createObjectNode();
-        payload.set("request", requestBody);
-        payload.set("responseExample", item.getResponseExample());
-        if (item.getErrorResponseExample() != null) {
-            payload.set("errorResponseExample", item.getErrorResponseExample());
-        }
-        if (item.getRequiredFields() != null) {
-            payload.putPOJO("requiredFields", item.getRequiredFields());
-        }
-        String prompt = "你是接口响应生成助手。根据输入的请求参数与响应示例，生成新的响应JSON。\n"
-                + "要求：\n"
-                + "1. 输出严格JSON，不要包含解释文字。\n"
-                + "2. 尽量保持响应结构与 responseExample 一致。\n"
-                + "3. 对于查询类接口，响应中与请求相关的字段需要体现请求值变化。\n"
-                + "4. 如果无法确定字段含义，保持示例值不变。\n\n"
-                + "输入：\n"
-                + objectMapper.writeValueAsString(payload);
-        String raw = callZhipu(prompt);
-        return readJsonLoosely(raw);
     }
 
     private JsonNode buildDynamicResponse(JsonNode responseExample, JsonNode requestBody) {
